@@ -22,9 +22,9 @@
         <button class="module-card is-active" data-module="announcements" onclick="setActiveModule('announcements')">ANNOUNCEMENTS</button>
         <button class="module-card" data-module="rules" onclick="setActiveModule('rules')">RULES</button>
         <button class="module-card" data-module="warehouse" onclick="setActiveModule('warehouse')">WAREHOUSE</button>
-        <button class="module-card" data-module="events" onclick="setActiveModule('events')">EVENTS</button>
         <button class="module-card" data-module="accounts" onclick="setActiveModule('accounts')">ACCOUNTS</button>
         <button class="module-card" data-module="requests" onclick="setActiveModule('requests')">REQUESTS</button>
+        <a href="/events.html" class="module-card" style="text-decoration: none; text-align: center; display: flex; align-items: center; justify-content: center;">EVENTS</a>
       </div>
 
       <div class="module-stage">
@@ -222,54 +222,6 @@
           </div>
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- Events Module -->
-  <div class="module-panel" data-module="events">
-    <div class="dashboard-grid">
-      <section class="card">
-        <h2>EVENTS MANAGEMENT</h2>
-        
-        <div class="events-tabs">
-          <button class="events-tab is-active" data-tab="create" onclick="setEventsTab('create')">CREATE EVENT</button>
-          <button class="events-tab" data-tab="manage" onclick="setEventsTab('manage')">MANAGE EVENTS</button>
-          <button class="events-tab" data-tab="attendance" onclick="setEventsTab('attendance')">MANAGE ATTENDANCE</button>
-        </div>
-
-        <div id="events-tab-create" class="events-tab-content is-active">
-          <form id="event-form" class="form">
-            <div class="form-group">
-              <label>Event Name</label>
-              <input type="text" id="event-name" class="input" placeholder="Enter event name" required />
-            </div>
-            <div class="form-group">
-              <label>Description</label>
-              <textarea id="event-description" class="input" placeholder="Enter event description" rows="3"></textarea>
-            </div>
-            <div class="form-group">
-              <label>Points</label>
-              <input type="number" id="event-points" class="input" placeholder="Enter points" required min="0" />
-            </div>
-            <div class="form-group">
-              <label>Event Date</label>
-              <input type="datetime-local" id="event-date" class="input" />
-            </div>
-            <button type="submit" class="btn btn-primary">CREATE EVENT</button>
-          </form>
-          <p id="event-status" class="status-text"></p>
-        </div>
-
-        <div id="events-tab-manage" class="events-tab-content">
-          <p id="events-status" class="status-text"></p>
-          <div id="events-list"></div>
-        </div>
-
-        <div id="events-tab-attendance" class="events-tab-content">
-          <p id="attendance-status" class="status-text"></p>
-          <div id="attendance-list"></div>
-        </div>
-      </section>
     </div>
   </div>
 

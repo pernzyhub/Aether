@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aether Clan Events Management</title>
+  <link rel="stylesheet" href="styles-admin.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="logo">AETHER CLAN EVENTS</div>
+    <div class="nav-links">
+      <span id="admin-welcome" style="color: #ff6688; text-transform: uppercase;"></span>
+      <a href="/admin-dashboard.html" class="nav-link">DASHBOARD</a>
+      <a href="/portal.html" class="nav-link">PORTAL</a>
+      <button class="nav-link" style="background: none; cursor: pointer;" onclick="logout()">LOGOUT</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <section class="card">
+      <h2>EVENTS MANAGEMENT</h2>
+      
+      <div class="events-tabs">
+        <button class="events-tab is-active" data-tab="create" onclick="setEventsTab('create')">CREATE EVENT</button>
+        <button class="events-tab" data-tab="manage" onclick="setEventsTab('manage')">MANAGE EVENTS</button>
+        <button class="events-tab" data-tab="attendance" onclick="setEventsTab('attendance')">MANAGE ATTENDANCE</button>
+      </div>
+
+      <div id="events-tab-create" class="events-tab-content is-active">
+        <form id="event-form" class="form">
+          <div class="form-group">
+            <label>Event Name</label>
+            <input type="text" id="event-name" class="input" placeholder="Enter event name" required />
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea id="event-description" class="input" placeholder="Enter event description" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Points</label>
+            <input type="number" id="event-points" class="input" placeholder="Enter points" required min="0" />
+          </div>
+          <div class="form-group">
+            <label>Event Date</label>
+            <input type="datetime-local" id="event-date" class="input" />
+          </div>
+          <button type="submit" class="btn btn-primary">CREATE EVENT</button>
+        </form>
+        <p id="event-status" class="status-text"></p>
+      </div>
+
+      <div id="events-tab-manage" class="events-tab-content">
+        <p id="events-status" class="status-text"></p>
+        <div id="events-list"></div>
+      </div>
+
+      <div id="events-tab-attendance" class="events-tab-content">
+        <p id="attendance-status" class="status-text"></p>
+        <div id="attendance-list"></div>
+      </div>
+    </section>
+  </div>
+
+  <footer class="footer">
+    AETHER CLAN ADMIN SYSTEM © 2026 | VERSION 2.0.4 | ALL ACTIONS LOGGED
+  </footer>
+
+  <script type="module" src="script-events.js"></script>
+</body>
+</html>
