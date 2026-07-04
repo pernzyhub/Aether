@@ -19,11 +19,11 @@
       padding: 20px;
       background: #2a2a3d;
       border-radius: 8px;
-      width: 300px;
+      width: 320px;
     }
     button {
       padding: 10px 20px;
-      margin-top: 10px;
+      margin: 5px;
       border: none;
       border-radius: 4px;
       cursor: pointer;
@@ -34,6 +34,10 @@
     }
     .admin-btn {
       background: #ff4444;
+      color: white;
+    }
+    .logout-btn {
+      background: #444;
       color: white;
     }
     pre {
@@ -61,8 +65,27 @@
         JSON.stringify(data.session?.user || "Not logged in", null, 2);
     }
 
+    async function logout() {
+      await supabase.auth.signOut();
+      document.getElementById("user").textContent = "Logged out.";
+    }
+
+    // Automatically update when auth state changes
+    supabase.auth.onAuthStateChange((_event, session) => {
+      document.getElementById("user").textContent =
+        JSON.stringify(session?.user || "Not logged in", null, 2);
+    });
+
+    // Check session on page load
+    window.addEventListener("load", async () => {
+      const { data } = await supabase.auth.getSession();
+      document.getElementById("user").textContent =
+        JSON.stringify(data.session?.user || "Not logged in", null, 2);
+    });
+
     window.discordLogin = discordLogin;
     window.checkUser = checkUser;
+    window.logout = logout;
   </script>
 </head>
 <body>
@@ -74,13 +97,14 @@
     <p>Log in with Discord to access community features.</p>
     <button class="discord-btn" onclick="discordLogin()">Login with Discord</button>
     <button onclick="checkUser()">Check User</button>
-    <pre id="user"></pre>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+    <pre id="user">Not logged in</pre>
   </div>
 
   <div class="login-box">
     <h2>Admin Login</h2>
     <p>Reserved for superusers. Use your admin credentials.</p>
-    <button class="admin-btn" onclick="window.location.href='/admin-login.html'">
+    <button class="admin-btn" onclick="window.location.href='/admin-login'">
       Admin Login
     </button>
   </div>
