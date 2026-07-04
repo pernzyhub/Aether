@@ -6,6 +6,42 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 let currentUser = null;
 
+function setActiveModule(moduleName) {
+  document.querySelectorAll('.module-card').forEach(btn => {
+    btn.classList.toggle('is-active', btn.dataset.module === moduleName);
+  });
+  document.querySelectorAll('.module-panel').forEach(panel => {
+    panel.classList.toggle('is-active', panel.dataset.module === moduleName);
+  });
+}
+
+function applyEditorCommand(command, value, editorId) {
+  const editor = document.getElementById(editorId);
+  if (!editor) return;
+  editor.focus();
+  if (command === 'insertHTML') {
+    document.execCommand('insertHTML', false, value);
+  } else {
+    document.execCommand(command, false, value);
+  }
+}
+
+function attachEditorUploadHandlers() {
+  document.querySelectorAll('.editor-file-input').forEach(input => {
+    input.addEventListener('change', function () {
+      const file = this.files?.[0];
+      const editor = document.getElementById(this.dataset.editor);
+      if (!file || !editor) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const imgHtml = `<img src="${reader.result}" alt="uploaded" style="max-width:100%; margin:8px 0;" />`;
+        document.execCommand('insertHTML', false, imgHtml);
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+}
+
 async function checkAuth() {
   const { data } = await supabase.auth.getSession();
   const user = data.session?.user;
@@ -50,7 +86,7 @@ async function loadAnnouncements() {
         <div class="list-item-content">
           <div class="list-item-title">${escapeHtml(ann.title)}</div>
           <div class="list-item-meta">${new Date(ann.created_at).toLocaleString()}</div>
-          <div class="list-item-text">${escapeHtml(ann.content)}</div>
+          <div class="list-item-text">${ann.content || ""}</div>
         </div>
         <div class="list-item-actions">
           <button class="btn btn-danger" onclick="deleteAnnouncement('${ann.id}')">DELETE</button>
@@ -67,13 +103,13 @@ async function loadAnnouncements() {
 async function postAnnouncement(event) {
   event.preventDefault();
   const title = document.getElementById("announcement-title").value;
-  const content = document.getElementById("announcement-content").value;
   const statusEl = document.getElementById("announcements-status");
 
   statusEl.textContent = "Posting...";
   statusEl.className = "status-text";
 
   try {
+    const content = document.getElementById("announcement-editor").innerHTML;
     const { error } = await supabase
       .from("announcements")
       .insert([{ title, content, created_by: currentUser.id }]);
@@ -83,6 +119,7 @@ async function postAnnouncement(event) {
     statusEl.textContent = "Announcement posted successfully!";
     statusEl.className = "status-text success";
     document.getElementById("announcement-form").reset();
+    document.getElementById("announcement-editor").innerHTML = "";
     loadAnnouncements();
   } catch (err) {
     statusEl.textContent = "Error posting announcement: " + err.message;
@@ -132,7 +169,7 @@ async function loadRules() {
       <div class="list-item" data-id="${rule.id}">
         <div class="list-item-content">
         <div class="list-item-title">Rule #${rule.order_num}: ${escapeHtml(rule.title)}</div>
-          <div class="list-item-text">${escapeHtml(rule.content)}</div>
+          <div class="list-item-text">${rule.content || ""}</div>
         </div>
         <div class="list-item-actions">
           <button class="btn btn-danger" onclick="deleteRule('${rule.id}')">DELETE</button>
@@ -150,13 +187,13 @@ async function postRule(event) {
   event.preventDefault();
   const orderNum = parseInt(document.getElementById("rule-order").value);
   const title = document.getElementById("rule-title").value;
-  const content = document.getElementById("rule-content").value;
   const statusEl = document.getElementById("rules-status");
 
   statusEl.textContent = "Adding rule...";
   statusEl.className = "status-text";
 
   try {
+    const content = document.getElementById("rule-editor").innerHTML;
     const { error } = await supabase
       .from("rules")
       .insert([{ order_num: orderNum, title, content, created_by: currentUser.id }]);
@@ -166,6 +203,7 @@ async function postRule(event) {
     statusEl.textContent = "Rule added successfully!";
     statusEl.className = "status-text success";
     document.getElementById("rule-form").reset();
+    document.getElementById("rule-editor").innerHTML = "";
     loadRules();
   } catch (err) {
     statusEl.textContent = "Error adding rule: " + err.message;

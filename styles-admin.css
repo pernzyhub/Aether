@@ -133,6 +133,56 @@ body::before {
   white-space: nowrap;
 }
 
+.module-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.module-nav {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.module-card {
+  background: rgba(20, 8, 10, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  padding: 14px 12px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.module-card:hover,
+.module-card.is-active {
+  border-color: #ff4466;
+  color: #ffb3c0;
+  box-shadow: 0 0 16px rgba(255, 68, 102, 0.18);
+  transform: translateY(-2px);
+}
+
+.module-stage {
+  position: relative;
+}
+
+.module-panel {
+  display: none;
+  animation: fadeInPanel 0.25s ease;
+}
+
+.module-panel.is-active {
+  display: block;
+}
+
+@keyframes fadeInPanel {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
@@ -224,6 +274,39 @@ body::before {
 .form-group textarea {
   min-height: 120px;
   resize: vertical;
+}
+
+.rich-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.editor-btn,
+.editor-select,
+.editor-upload {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.rich-editor {
+  min-height: 140px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #ffffff;
+  line-height: 1.6;
+}
+
+.rich-editor:empty:before {
+  content: attr(data-placeholder);
+  color: #7f7f7f;
 }
 
 .btn {
