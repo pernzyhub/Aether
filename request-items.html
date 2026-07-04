@@ -59,6 +59,13 @@
     <section class="card request-summary-card">
       <div class="card-heading">
         <h2>ITEM SUMMARY</h2>
+        <div class="card-controls summary-controls">
+          <button type="button" id="summary-prev" class="summary-nav-btn" aria-label="Previous item">‹</button>
+          <select id="summary-select" class="sort-select summary-select" aria-label="Choose item summary">
+            <option value="">Loading...</option>
+          </select>
+          <button type="button" id="summary-next" class="summary-nav-btn" aria-label="Next item">›</button>
+        </div>
         <span class="card-badge">GROUPED</span>
       </div>
       <div id="request-summary" class="request-summary"></div>
