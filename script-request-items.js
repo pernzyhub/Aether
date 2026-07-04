@@ -421,10 +421,10 @@ async function loadMyRequests() {
             </div>
             ${req.proof_image ? `
               <div class="request-proof">
-                <a href="${escapeHtml(req.proof_image)}" target="_blank" class="proof-link">
+                <button class="proof-link" onclick="openImageModal('${escapeHtml(req.proof_image)}')">
                   <img src="${escapeHtml(req.proof_image)}" alt="Proof image" class="proof-thumbnail" />
                   <span class="proof-label">View Proof</span>
-                </a>
+                </button>
               </div>
             ` : ""}
           </div>
@@ -576,3 +576,24 @@ window.submitRequest = submitRequest;
 window.logout = logout;
 window.startEditRequest = startEditRequest;
 window.cancelRequest = cancelRequest;
+window.openImageModal = openImageModal;
+
+// Image Modal Functions
+function openImageModal(imageSrc) {
+  const modal = document.getElementById("image-modal");
+  const modalImage = document.getElementById("modal-image");
+  modalImage.src = imageSrc;
+  modal.classList.add("show");
+}
+
+// Close modal when clicking the X button
+document.querySelector(".modal-close").addEventListener("click", () => {
+  document.getElementById("image-modal").classList.remove("show");
+});
+
+// Close modal when clicking outside the image
+document.getElementById("image-modal").addEventListener("click", (e) => {
+  if (e.target.id === "image-modal") {
+    document.getElementById("image-modal").classList.remove("show");
+  }
+});
