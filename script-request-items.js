@@ -351,11 +351,16 @@ function animateCountUp(elements) {
 function attachRequestSortHandler() {
   const sortEl = document.getElementById("request-sort");
   const filterEl = document.getElementById("request-filter");
+  const summarySelect = document.getElementById("summary-select");
+  
   if (sortEl) {
     sortEl.addEventListener("change", () => loadMyRequests());
   }
   if (filterEl) {
     filterEl.addEventListener("change", () => loadMyRequests());
+  }
+  if (summarySelect) {
+    summarySelect.addEventListener("change", () => loadMyRequests());
   }
 }
 
@@ -461,8 +466,28 @@ async function loadMyRequests() {
     const topGroup = summaryGroups[0];
     const maxTotal = topGroup?.total || 1;
 
-    const summaryMarkup = summaryGroups.map((group, index) => {
-      const sortedMembers = [...group.members].sort((a, b) => b.quantity - a.quantity);
+    // Populate summary dropdown with item names
+    const summarySelect = document.getElementById("summary-select");
+    if (summarySelect) {
+      summarySelect.innerHTML = '<option value="all">All Items</option>';
+      summaryGroups.forEach(group => {
+        const option = document.createElement("option");
+        option.value = group.itemName;
+        option.textContent = group.itemName;
+        summarySelect.appendChild(option);
+      });
+    }
+
+    // Get selected item from dropdown
+    const selectedItem = summarySelect?.value || "all";
+    const filteredGroups = selectedItem === "all" ? summaryGroups : summaryGroups.filter(g => g.itemName === selectedItem);
+
+    const summaryMarkup = filteredGroups.map((group, index) => {
+      const sortedMembers = [...group.members].filter(m => m.quantity > 0).sort((a, b) => b.quantity - a.quantity);
+      
+      // Skip if no members with positive quantity
+      if (sortedMembers.length === 0) return "";
+      
       const meterWidth = Math.max(16, Math.round((group.total / maxTotal) * 100));
       const isFeatured = index === 0 && topGroup;
 
@@ -490,7 +515,7 @@ async function loadMyRequests() {
       `;
     }).join("");
 
-    summaryContainer.innerHTML = summaryMarkup;
+    summaryContainer.innerHTML = summaryMarkup || '<p class="empty-state">No active requests for this item.</p>';
     animateCountUp(summaryContainer.querySelectorAll(".count-up"));
   } catch (err) {
     container.innerHTML = `<p class="empty-state error">Error loading requests: ${err.message}</p>`;
