@@ -2,70 +2,114 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>AetherClan Portal</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #121212;
-      color: #f0f0f0;
-      text-align: center;
-      padding: 50px;
-    }
-    h1 {
-      color: #ffd700;
-    }
-    .box {
-      margin: 20px auto;
-      padding: 20px;
-      background: #2a2a3d;
-      border-radius: 8px;
-      width: 400px;
-    }
-    button {
-      padding: 10px 20px;
-      margin-top: 10px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      background: #444;
-      color: white;
-    }
-  </style>
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-    const supabaseUrl = "https://wpilukuwehxphmorjxzd.supabase.co";
-    const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwaWx1a3V3ZWh4cGhtb3JqeHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwODgxNDMsImV4cCI6MjA5ODY2NDE0M30.PjBUX8c8ZU8YVYUuwb2ypGyfMtHg-jOPlFDausGDKZY"; // replace with your real anon key
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-    async function loadUser() {
-      const { data } = await supabase.auth.getSession();
-      const user = data.session?.user;
-      if (user) {
-        const username = user.user_metadata?.full_name || user.user_metadata?.name || user.email;
-        document.getElementById("welcome").textContent = `Welcome back, ${username}!`;
-      } else {
-        document.getElementById("welcome").textContent = "Not logged in.";
-      }
-    }
-
-    async function logout() {
-      await supabase.auth.signOut();
-      window.location.href = "/";
-    }
-
-    window.addEventListener("load", loadUser);
-    window.logout = logout;
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AetherClan Portal - Cyberpunk 2026</title>
+  <link rel="stylesheet" href="styles-portal.css" />
 </head>
 <body>
-  <h1 id="welcome">Loading...</h1>
-  <div class="box">
-    <p>You are now inside the AetherClan portal.</p>
-    <p>Choose where to go:</p>
-    <button onclick="window.location.href='/community'">Community Area</button>
-    <button onclick="window.location.href='/admin-dashboard'">Admin Dashboard</button>
-    <button onclick="logout()">Logout</button>
-  </div>
+  <header class="header">
+    <div class="logo">AETHERCLAN</div>
+    <div class="user-info">
+      <span id="welcome-text" class="welcome-text">LOADING USER...</span>
+      <button class="logout-btn" onclick="logout()">LOGOUT</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2>ANNOUNCEMENTS</h2>
+      <div class="announcements-list">
+        <div class="announcement-item">
+          <div class="announcement-title">🚀 CLAN WARFARE SEASON 2 BEGINS!</div>
+          <div class="announcement-date">July 4, 2026</div>
+          <div class="announcement-content">
+            Get ready for the next season of competitive clan warfare! Sign-ups start now, and the first match kicks off next Friday at 8 PM UTC.
+          </div>
+        </div>
+        <div class="announcement-item">
+          <div class="announcement-title">🎮 NEW GAME NIGHT SCHEDULE</div>
+          <div class="announcement-date">June 28, 2026</div>
+          <div class="announcement-content">
+            Weekly game nights are now on Wednesdays and Saturdays! Join us for fun, casual gameplay and community bonding.
+          </div>
+        </div>
+        <div class="announcement-item">
+          <div class="announcement-title">⚠️ MEMBERSHIP RENEWAL REMINDER</div>
+          <div class="announcement-date">June 20, 2026</div>
+          <div class="announcement-content">
+            Make sure your membership is up to date to keep accessing all clan features and benefits.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>CLAN RULES</h2>
+      <div class="rules-list">
+        <div class="rule-item">
+          <div class="rule-number">1</div>
+          <div class="rule-text">Respect all members - harassment, discrimination, or toxicity will not be tolerated.</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-number">2</div>
+          <div class="rule-text">Be active - participate in clan events and contribute to the community.</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-number">3</div>
+          <div class="rule-text">Follow game rules - no cheating, hacking, or exploiting in any games.</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-number">4</div>
+          <div class="rule-text">Keep communication clean - use appropriate channels and avoid spam.</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-number">5</div>
+          <div class="rule-text">Represent the clan well - be a positive ambassador for AetherClan everywhere.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card main-menu">
+      <h2>MAIN MENU</h2>
+      <div class="menu-items">
+        <div class="menu-item" onclick="goToPage('/')">
+          <div class="menu-icon">🏠</div>
+          <div class="menu-title">HOME</div>
+          <div class="menu-desc">Return to landing page</div>
+        </div>
+        <div class="menu-item" onclick="alert('Community area coming soon!')">
+          <div class="menu-icon">👥</div>
+          <div class="menu-title">COMMUNITY</div>
+          <div class="menu-desc">Chat, forums, and member list</div>
+        </div>
+        <div class="menu-item" onclick="alert('Events calendar coming soon!')">
+          <div class="menu-icon">📅</div>
+          <div class="menu-title">EVENTS</div>
+          <div class="menu-desc">Upcoming matches and game nights</div>
+        </div>
+        <div class="menu-item" onclick="alert('Leaderboards coming soon!')">
+          <div class="menu-icon">🏆</div>
+          <div class="menu-title">LEADERBOARDS</div>
+          <div class="menu-desc">Clan rankings and stats</div>
+        </div>
+        <div class="menu-item" onclick="alert('Settings coming soon!')">
+          <div class="menu-icon">⚙️</div>
+          <div class="menu-title">SETTINGS</div>
+          <div class="menu-desc">Manage your profile</div>
+        </div>
+        <div class="menu-item" onclick="goToPage('/admin-dashboard.html')">
+          <div class="menu-icon">🔧</div>
+          <div class="menu-title">ADMIN DASHBOARD</div>
+          <div class="menu-desc">Clan management (admin only)</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    AETHERCLAN © 2026 | SYSTEM VERSION 2.0.4 | ALL RIGHTS RESERVED
+  </footer>
+
+  <script type="module" src="script-portal.js"></script>
 </body>
 </html>

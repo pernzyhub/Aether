@@ -2,104 +2,62 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>AetherClan Landing</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #1e1e2f;
-      color: #f0f0f0;
-      text-align: center;
-      padding: 50px;
-    }
-    h1 {
-      color: #ffd700;
-    }
-    .login-box {
-      margin: 20px auto;
-      padding: 20px;
-      background: #2a2a3d;
-      border-radius: 8px;
-      width: 320px;
-    }
-    button {
-      padding: 10px 20px;
-      margin: 5px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .discord-btn {
-      background: #5865f2;
-      color: white;
-    }
-    .admin-btn {
-      background: #ff4444;
-      color: white;
-    }
-    .logout-btn {
-      background: #444;
-      color: white;
-    }
-    pre {
-      text-align: left;
-      background: #111;
-      padding: 10px;
-      border-radius: 6px;
-      overflow-x: auto;
-    }
-  </style>
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-    const supabaseUrl = "https://wpilukuwehxphmorjxzd.supabase.co";
-    const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwaWx1a3V3ZWh4cGhtb3JqeHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwODgxNDMsImV4cCI6MjA5ODY2NDE0M30.PjBUX8c8ZU8YVYUuwb2ypGyfMtHg-jOPlFDausGDKZY"; // replace with your real anon key
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-    async function discordLogin() {
-      await supabase.auth.signInWithOAuth({ provider: "discord" });
-    }
-
-    async function logout() {
-      await supabase.auth.signOut();
-      document.getElementById("user").textContent = "Logged out.";
-    }
-
-    // Redirect to portal after login
-    supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        window.location.href = "/portal.html";
-      }
-    });
-
-    // Show session info on page load
-    window.addEventListener("load", async () => {
-      const { data } = await supabase.auth.getSession();
-      document.getElementById("user").textContent =
-        JSON.stringify(data.session?.user || "Not logged in", null, 2);
-    });
-
-    window.discordLogin = discordLogin;
-    window.logout = logout;
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AetherClan - Cyberpunk 2026</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <h1>Welcome to AetherClan</h1>
-  <p>Choose your login path below:</p>
+  <div class="container">
+    <div class="header">
+      <h1>AETHERCLAN</h1>
+      <p class="subtitle">CYBERPUNK 2026 - SYSTEM ACCESS</p>
+    </div>
 
-  <div class="login-box">
-    <h2>Member Login</h2>
-    <p>Log in with Discord to access community features.</p>
-    <button class="discord-btn" onclick="discordLogin()">Login with Discord</button>
-    <button class="logout-btn" onclick="logout()">Logout</button>
-    <pre id="user">Not logged in</pre>
+    <div class="login-container">
+      <div class="login-box">
+        <h2>MEMBER LOGIN</h2>
+        <p>Authenticate with Discord to access clan features and secure channels.</p>
+        <div class="button-group">
+          <button class="discord-btn" onclick="discordLogin()">
+            LOGIN WITH DISCORD
+          </button>
+          <button class="logout-btn" onclick="logout()">
+            LOGOUT
+          </button>
+        </div>
+        <div class="session-info">
+          <pre id="user">Not logged in</pre>
+        </div>
+      </div>
+
+      <div class="login-box">
+        <h2>ADMIN LOGIN</h2>
+        <p>Restricted access for clan administrators. Requires valid credentials.</p>
+        <div class="button-group">
+          <button class="admin-btn" onclick="toggleAdminDropdown()">
+            ADMIN PANEL
+          </button>
+        </div>
+        <div id="adminDropdown" class="admin-dropdown">
+          <form class="admin-form" onsubmit="event.preventDefault(); adminLogin();">
+            <div class="form-group">
+              <label for="adminEmail">Email</label>
+              <input type="email" id="adminEmail" required />
+            </div>
+            <div class="form-group">
+              <label for="adminPassword">Password</label>
+              <input type="password" id="adminPassword" required />
+            </div>
+            <button type="submit" class="form-submit-btn">
+              Authenticate
+            </button>
+          </form>
+          <p id="adminStatus" class="status-text"></p>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="login-box">
-    <h2>Admin Login</h2>
-    <p>Reserved for superusers. Use your admin credentials.</p>
-    <button class="admin-btn" onclick="window.location.href='/admin-login'">
-      Admin Login
-    </button>
-  </div>
+  <script type="module" src="script.js"></script>
 </body>
 </html>

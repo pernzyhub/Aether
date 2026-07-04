@@ -2,54 +2,72 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Admin Dashboard</title>
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-    const supabaseUrl = "https://wpilukuwehxphmorjxzd.supabase.co";
-    const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwaWx1a3V3ZWh4cGhtb3JqeHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwODgxNDMsImV4cCI6MjA5ODY2NDE0M30.PjBUX8c8ZU8YVYUuwb2ypGyfMtHg-jOPlFDausGDKZY";
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-    async function loadDashboard() {
-      const { data } = await supabase.auth.getSession();
-      const user = data.session?.user;
-
-      if (!user) {
-        document.getElementById("status").textContent = "Not logged in.";
-        return;
-      }
-
-      if (user.user_metadata?.role !== "admin") {
-        document.getElementById("status").textContent = "Access denied. You are not an admin.";
-        return;
-      }
-
-      // Show admin info
-      document.getElementById("status").textContent = "Welcome, Admin!";
-      document.getElementById("email").textContent = user.email;
-      document.getElementById("role").textContent = user.user_metadata.role;
-
-      // Example: fetch members table (if you have one)
-      const { data: members, error } = await supabase.from("members").select("*");
-      if (error) {
-        document.getElementById("members").textContent = "Error loading members: " + error.message;
-      } else {
-        document.getElementById("members").textContent = JSON.stringify(members, null, 2);
-      }
-    }
-
-    window.onload = loadDashboard;
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AetherClan Admin Dashboard - Cyberpunk 2026</title>
+  <link rel="stylesheet" href="styles-admin.css" />
 </head>
 <body>
-  <h1>Admin Dashboard</h1>
-  <p id="status">Loading...</p>
+  <header class="header">
+    <div class="logo">AETHERCLAN ADMIN</div>
+    <div class="nav-links">
+      <span id="admin-welcome" style="color: #ff6688; text-transform: uppercase;"></span>
+      <a href="/portal.html" class="nav-link">PORTAL</a>
+      <button class="nav-link" style="background: none; cursor: pointer;" onclick="logout()">LOGOUT</button>
+    </div>
+  </header>
 
-  <h2>Admin Info</h2>
-  <p>Email: <span id="email"></span></p>
-  <p>Role: <span id="role"></span></p>
+  <div class="container">
+    <section class="card">
+      <h2>POST NEW ANNOUNCEMENT</h2>
+      <form id="announcement-form" onsubmit="postAnnouncement(event)">
+        <div class="form-group">
+          <label for="announcement-title">Announcement Title</label>
+          <input type="text" id="announcement-title" required />
+        </div>
+        <div class="form-group">
+          <label for="announcement-content">Announcement Content</label>
+          <textarea id="announcement-content" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">POST ANNOUNCEMENT</button>
+      </form>
+      <p id="announcements-status" class="status-text"></p>
+    </section>
 
-  <h2>Members Data</h2>
-  <pre id="members"></pre>
+    <section class="card">
+      <h2>MANAGE ANNOUNCEMENTS</h2>
+      <div id="announcements-list"></div>
+    </section>
+
+    <section class="card">
+      <h2>ADD NEW RULE</h2>
+      <form id="rule-form" onsubmit="postRule(event)">
+        <div class="form-group">
+          <label for="rule-order">Rule Order Number</label>
+          <input type="number" id="rule-order" min="1" required />
+        </div>
+        <div class="form-group">
+          <label for="rule-title">Rule Title</label>
+          <input type="text" id="rule-title" required />
+        </div>
+        <div class="form-group">
+          <label for="rule-content">Rule Content</label>
+          <textarea id="rule-content" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">ADD RULE</button>
+      </form>
+      <p id="rules-status" class="status-text"></p>
+    </section>
+
+    <section class="card">
+      <h2>MANAGE RULES</h2>
+      <div id="rules-list"></div>
+    </section>
+  </div>
+
+  <footer class="footer">
+    AETHERCLAN ADMIN SYSTEM © 2026 | VERSION 2.0.4 | ALL ACTIONS LOGGED
+  </footer>
+
+  <script type="module" src="script-admin-dashboard.js"></script>
 </body>
 </html>
