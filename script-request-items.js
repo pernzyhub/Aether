@@ -175,16 +175,28 @@ async function submitRequest(event) {
         return;
       }
 
-      const { error } = await supabase.rpc("create_item_request", {
+      let { error } = await supabase.rpc("create_item_request", {
         target_user_id: requestUserId,
         target_item_id: itemId,
         target_quantity: quantity,
         target_notes: notes || null
       });
 
+      if (error && /Could not find the function|function public\.create_item_request/i.test(error.message)) {
+        ({ error } = await supabase
+          .from("item_requests")
+          .insert({
+            user_id: requestUserId,
+            item_id: itemId,
+            quantity,
+            notes: notes || null,
+            status: "pending"
+          }));
+      }
+
       if (error) {
-        if (/Could not find the function|function public\.create_item_request/i.test(error.message)) {
-          throw new Error("Supabase is missing the latest request migration. Run the newest migration and try again.");
+        if (/row-level security|permission denied/i.test(error.message)) {
+          throw new Error("Your session could not be authorized to create requests. Please log out and sign in again.");
         }
         throw error;
       }
