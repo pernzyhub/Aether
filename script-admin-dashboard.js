@@ -104,14 +104,17 @@ async function loadAnnouncements() {
 
     saveAnnouncementCache(data);
     container.innerHTML = data.map(ann => `
-      <div class="list-item" data-id="${ann.id}">
-        <div class="list-item-content">
-          <div class="list-item-title">${escapeHtml(ann.title)}</div>
+      <div class="list-item compact" data-id="${ann.id}">
+        <div class="list-item-content compact">
+          <div class="list-item-title compact">
+            ${escapeHtml(ann.title)}
+            <span class="toggle-badge ${ann.is_active ? 'active' : 'inactive'}">${ann.is_active ? 'ON' : 'OFF'}</span>
+          </div>
           <div class="list-item-meta">${new Date(ann.created_at).toLocaleString()}</div>
-          <div class="list-item-text">${ann.content || ""}</div>
         </div>
-        <div class="list-item-actions">
-          <button class="btn btn-danger" onclick="deleteAnnouncement('${ann.id}')">DELETE</button>
+        <div class="list-item-actions compact">
+          <button class="btn-xs btn-secondary" onclick="toggleAnnouncement('${ann.id}', ${!ann.is_active})">${ann.is_active ? 'HIDE' : 'SHOW'}</button>
+          <button class="btn-xs btn-danger" onclick="deleteAnnouncement('${ann.id}')">DEL</button>
         </div>
       </div>
     `).join("");
@@ -145,6 +148,23 @@ async function postAnnouncement(event) {
     loadAnnouncements();
   } catch (err) {
     statusEl.textContent = "Error posting announcement: " + err.message;
+    statusEl.className = "status-text error";
+  }
+}
+
+async function toggleAnnouncement(id, isActive) {
+  const statusEl = document.getElementById("announcements-status");
+  
+  try {
+    const { error } = await supabase
+      .from("announcements")
+      .update({ is_active: isActive })
+      .eq("id", id);
+
+    if (error) throw error;
+    loadAnnouncements();
+  } catch (err) {
+    statusEl.textContent = "Error toggling: " + err.message;
     statusEl.className = "status-text error";
   }
 }
@@ -190,13 +210,16 @@ async function loadRules() {
 
     saveRulesCache(data);
     container.innerHTML = data.map(rule => `
-      <div class="list-item" data-id="${rule.id}">
-        <div class="list-item-content">
-        <div class="list-item-title">Rule #${rule.order_num}: ${escapeHtml(rule.title)}</div>
-          <div class="list-item-text">${rule.content || ""}</div>
+      <div class="list-item compact" data-id="${rule.id}">
+        <div class="list-item-content compact">
+          <div class="list-item-title compact">
+            #${rule.order_num}: ${escapeHtml(rule.title)}
+            <span class="toggle-badge ${rule.is_active ? 'active' : 'inactive'}">${rule.is_active ? 'ON' : 'OFF'}</span>
+          </div>
         </div>
-        <div class="list-item-actions">
-          <button class="btn btn-danger" onclick="deleteRule('${rule.id}')">DELETE</button>
+        <div class="list-item-actions compact">
+          <button class="btn-xs btn-secondary" onclick="toggleRule('${rule.id}', ${!rule.is_active})">${rule.is_active ? 'HIDE' : 'SHOW'}</button>
+          <button class="btn-xs btn-danger" onclick="deleteRule('${rule.id}')">DEL</button>
         </div>
       </div>
     `).join("");
@@ -231,6 +254,23 @@ async function postRule(event) {
     loadRules();
   } catch (err) {
     statusEl.textContent = "Error adding rule: " + err.message;
+    statusEl.className = "status-text error";
+  }
+}
+
+async function toggleRule(id, isActive) {
+  const statusEl = document.getElementById("rules-status");
+  
+  try {
+    const { error } = await supabase
+      .from("rules")
+      .update({ is_active: isActive })
+      .eq("id", id);
+
+    if (error) throw error;
+    loadRules();
+  } catch (err) {
+    statusEl.textContent = "Error toggling: " + err.message;
     statusEl.className = "status-text error";
   }
 }
@@ -633,25 +673,18 @@ async function loadRequests() {
     container.innerHTML = requests.map(req => {
       const ign = userMap[req.user_id] || "Unknown User";
       return `
-      <div class="list-item" data-id="${req.id}">
-        <div class="list-item-content">
-          <div class="list-item-title">
-            ${escapeHtml(ign)} requested ${escapeHtml(req.items.name)} x${req.quantity}
-          </div>
-          <div class="list-item-meta">
-            Requested: ${new Date(req.created_at).toLocaleString()}<br>
-            Updated: ${new Date(req.updated_at || req.created_at).toLocaleString()}
-          </div>
-          <div class="list-item-text">
-            Remaining quantity: <strong>${req.quantity}</strong><br>
-            Status: <span class="request-status ${req.status}">${req.status.toUpperCase()}</span>
+      <div class="list-item compact" data-id="${req.id}">
+        <div class="list-item-content compact">
+          <div class="list-item-title compact">
+            ${escapeHtml(ign)} → ${escapeHtml(req.items.name)} <span class="qty-badge">x${req.quantity}</span>
+            <span class="status-badge ${req.status}">${req.status.toUpperCase()}</span>
           </div>
         </div>
-        <div class="list-item-actions">
-          ${req.status === 'pending' ? `
-            <button class="btn btn-success" onclick="approveRequest('${req.id}', ${req.quantity})">APPROVE 1</button>
-            <button class="btn btn-danger" onclick="updateRequestStatus('${req.id}', 'denied')">DENY</button>
-          ` : ''}
+        <div class="list-item-actions compact">
+          <button class="btn-xs btn-secondary" onclick="adjustQuantity('${req.id}', ${req.quantity}, -1)">-1</button>
+          <button class="btn-xs btn-secondary" onclick="adjustQuantity('${req.id}', ${req.quantity}, 1)">+1</button>
+          <button class="btn-xs btn-success" onclick="markRequestDone('${req.id}')">DONE</button>
+          <button class="btn-xs btn-danger" onclick="deleteRequest('${req.id}')">DEL</button>
         </div>
       </div>
     `}).join("");
@@ -660,17 +693,15 @@ async function loadRequests() {
   }
 }
 
-async function approveRequest(requestId, currentQuantity) {
-  if (!confirm("Approve 1 unit from this request?")) return;
-
-  const remainingQuantity = Math.max(0, currentQuantity - 1);
-  const nextStatus = remainingQuantity === 0 ? "done" : "pending";
+async function adjustQuantity(requestId, currentQuantity, delta) {
+  const newQuantity = Math.max(0, currentQuantity + delta);
+  const nextStatus = newQuantity === 0 ? "done" : "pending";
 
   try {
     const { error } = await supabase
       .from("item_requests")
       .update({
-        quantity: remainingQuantity,
+        quantity: newQuantity,
         status: nextStatus,
         updated_at: new Date().toISOString()
       })
@@ -680,6 +711,41 @@ async function approveRequest(requestId, currentQuantity) {
     loadRequests();
   } catch (err) {
     alert(`Error updating request: ${err.message}`);
+  }
+}
+
+async function markRequestDone(requestId) {
+  if (!confirm("Mark this request as done?")) return;
+
+  try {
+    const { error } = await supabase
+      .from("item_requests")
+      .update({
+        status: "done",
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", requestId);
+
+    if (error) throw error;
+    loadRequests();
+  } catch (err) {
+    alert(`Error updating request: ${err.message}`);
+  }
+}
+
+async function deleteRequest(requestId) {
+  if (!confirm("Delete this request?")) return;
+
+  try {
+    const { error } = await supabase
+      .from("item_requests")
+      .delete()
+      .eq("id", requestId);
+
+    if (error) throw error;
+    loadRequests();
+  } catch (err) {
+    alert(`Error deleting request: ${err.message}`);
   }
 }
 
@@ -778,8 +844,11 @@ window.toggleUserStatus = toggleUserStatus;
 window.changeUserIgn = changeUserIgn;
 window.changeUserPassword = changeUserPassword;
 window.deleteUser = deleteUser;
-window.approveRequest = approveRequest;
-window.updateRequestStatus = updateRequestStatus;
+window.adjustQuantity = adjustQuantity;
+window.markRequestDone = markRequestDone;
+window.deleteRequest = deleteRequest;
+window.toggleAnnouncement = toggleAnnouncement;
+window.toggleRule = toggleRule;
 window.updateAccessCode = updateAccessCode;
 window.loadAccessCode = loadAccessCode;
 window.postAnnouncement = postAnnouncement;
