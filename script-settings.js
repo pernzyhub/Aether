@@ -157,10 +157,20 @@ async function logout() {
   window.location.href = "/";
 }
 
+function setActiveNavLink() {
+  const currentPath = window.location.pathname.split("/").pop().toLowerCase();
+  document.querySelectorAll('.nav-link').forEach((link) => {
+    const href = link.getAttribute('href') || '';
+    const normalized = href.split('/').pop().toLowerCase();
+    link.classList.toggle('active', normalized === currentPath);
+  });
+}
+
 // Load user on page load
 window.addEventListener("load", () => {
   window.setTimeout(() => {
     loadUser();
+    setActiveNavLink();
   }, 80);
 });
 

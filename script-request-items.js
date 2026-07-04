@@ -400,7 +400,26 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+function setActiveNavLink() {
+  const currentPath = window.location.pathname.split("/").pop().toLowerCase();
+  document.querySelectorAll('.nav-link').forEach((link) => {
+    const href = link.getAttribute('href') || '';
+    const normalized = href.split('/').pop().toLowerCase();
+    link.classList.toggle('active', normalized === currentPath);
+  });
+}
+
 window.addEventListener("load", () => {
+  window.setTimeout(async () => {
+    const isAuth = await checkAuth();
+    if (isAuth) {
+      attachRequestSortHandler();
+      loadItems();
+      loadMyRequests();
+      setActiveNavLink();
+    }
+  }, 80);
+});
   window.setTimeout(async () => {
     const isAuth = await checkAuth();
     if (isAuth) {

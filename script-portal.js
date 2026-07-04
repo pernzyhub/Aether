@@ -112,6 +112,15 @@ function hideIgnModal() {
   }
 }
 
+function setActiveNavLink() {
+  const currentPath = window.location.pathname.split("/").pop().toLowerCase();
+  document.querySelectorAll('.header-menu .nav-link').forEach((link) => {
+    const href = link.getAttribute('href') || '';
+    const normalized = href.split('/').pop().toLowerCase();
+    link.classList.toggle('active', normalized === currentPath);
+  });
+}
+
 async function saveIgn(event) {
   event.preventDefault();
   const ignInput = document.getElementById("ign-input");
@@ -254,6 +263,7 @@ window.addEventListener("load", () => {
     await loadUser();
     loadAnnouncements();
     loadRules();
+    setActiveNavLink();
   }, 80);
 });
 
