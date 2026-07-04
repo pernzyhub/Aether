@@ -250,10 +250,12 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-window.addEventListener("load", async () => {
-  await loadUser();
-  loadAnnouncements();
-  loadRules();
+window.addEventListener("load", () => {
+  window.setTimeout(async () => {
+    await loadUser();
+    loadAnnouncements();
+    loadRules();
+  }, 80);
 });
 
 window.logout = logout;

@@ -39,8 +39,9 @@ async function adminLogin(e) {
   }
 }
 
-window.addEventListener("load", async () => {
-  const { data } = await supabase.auth.getSession();
+window.addEventListener("load", () => {
+  window.setTimeout(async () => {
+    const { data } = await supabase.auth.getSession();
   if (data.session?.user) {
     const role = data.session.user.app_metadata?.role;
     if (role === "admin" || role === "superuser") {

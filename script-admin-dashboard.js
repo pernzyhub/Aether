@@ -590,15 +590,17 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-window.addEventListener("load", async () => {
-  const isAuth = await checkAuth();
-  if (isAuth) {
-    loadAnnouncements();
-    loadRules();
-    loadItems();
-    loadUsers();
-    loadRequests();
-  }
+window.addEventListener("load", () => {
+  window.setTimeout(async () => {
+    const isAuth = await checkAuth();
+    if (isAuth) {
+      loadAnnouncements();
+      loadRules();
+      loadItems();
+      loadUsers();
+      loadRequests();
+    }
+  }, 80);
 });
 
 window.bulkRegisterMembers = bulkRegisterMembers;

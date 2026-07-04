@@ -35,16 +35,18 @@ async function submitAccessCode() {
   statusEl.className = "status-text error";
 }
 
-window.addEventListener("load", async () => {
-  const { data } = await supabase.auth.getSession();
-  if (hasAccessGate()) {
-    window.location.href = "/index.html";
-    return;
-  }
+window.addEventListener("load", () => {
+  window.setTimeout(async () => {
+    const { data } = await supabase.auth.getSession();
+    if (hasAccessGate()) {
+      window.location.href = "/index.html";
+      return;
+    }
 
-  if (data.session?.user) {
-    window.location.href = "/portal.html";
-  }
+    if (data.session?.user) {
+      window.location.href = "/portal.html";
+    }
+  }, 80);
 });
 
 window.submitAccessCode = submitAccessCode;

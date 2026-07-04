@@ -159,7 +159,9 @@ async function logout() {
 
 // Load user on page load
 window.addEventListener("load", () => {
-  loadUser();
+  window.setTimeout(() => {
+    loadUser();
+  }, 80);
 });
 
 window.logout = logout;
