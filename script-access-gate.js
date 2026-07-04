@@ -37,14 +37,8 @@ async function submitAccessCode() {
 
 window.addEventListener("load", () => {
   window.setTimeout(async () => {
-    const { data } = await supabase.auth.getSession();
     if (hasAccessGate()) {
       window.location.href = "/index.html";
-      return;
-    }
-
-    if (data.session?.user) {
-      window.location.href = "/portal.html";
     }
   }, 80);
 });

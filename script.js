@@ -197,12 +197,21 @@ supabase.auth.onAuthStateChange((_event, session) => {
   }
 });
 
+function hasAccessGate() {
+  return localStorage.getItem("aether_access_granted") === "true";
+}
+
 window.addEventListener("load", () => {
   window.setTimeout(async () => {
     const { data } = await supabase.auth.getSession();
     const userEl = document.getElementById("user");
     if (userEl) {
       userEl.textContent = JSON.stringify(data.session?.user || "Not logged in", null, 2);
+    }
+
+    if (!hasAccessGate()) {
+      window.location.replace("/access-gate.html");
+      return;
     }
 
     if (data.session?.user && isAdminUser(data.session.user)) {
