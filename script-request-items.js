@@ -446,7 +446,10 @@ async function loadMyRequests() {
 
     const groupedSummary = new Map();
 
-    sortedRequests.forEach(req => {
+    // Only include pending requests in summary (live counts)
+    const pendingRequests = sortedRequests.filter(req => (req.status || "pending") === "pending");
+
+    pendingRequests.forEach(req => {
       const itemName = req.items?.name || "Unknown Item";
       const memberName = memberNames.get(req.user_id) || "Unknown Member";
       const group = groupedSummary.get(itemName) || { itemName, total: 0, members: [] };
