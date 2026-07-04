@@ -263,26 +263,26 @@ body::before {
 }
 
 .member-name {
-  color: #00ffaa;
+  color: #ffffff;
   font-weight: bold;
-  text-shadow: 0 0 8px rgba(0, 255, 136, 0.2);
+  text-shadow: 0 0 8px rgba(0, 255, 136, 0.15);
 }
 
 .request-time {
-  color: #00cc66;
+  color: #f4fff8;
   font-size: 0.8rem;
   white-space: nowrap;
 }
 
 .request-copy {
-  color: #b8ffd0;
+  color: #ffffff;
   line-height: 1.5;
 }
 
 .request-note {
   display: block;
   margin-top: 4px;
-  color: #82ffb8;
+  color: #e8fff0;
   font-size: 0.9rem;
 }
 
@@ -302,11 +302,11 @@ body::before {
 .summary-item-name {
   font-size: 1.08rem;
   font-weight: bold;
-  color: #00ffaa;
+  color: #ffffff;
 }
 
 .summary-item-total {
-  color: #00cc66;
+  color: #f4fff8;
   font-size: 0.9rem;
   margin-top: 4px;
 }
@@ -351,7 +351,7 @@ body::before {
   padding: 8px 10px;
   border-radius: 10px;
   background: rgba(0, 255, 136, 0.08);
-  color: #dfffe7;
+  color: #ffffff;
 }
 
 .empty-state {

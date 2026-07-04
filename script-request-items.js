@@ -212,7 +212,7 @@ async function cancelRequest(requestId) {
       .eq("id", requestId);
 
     if (error) throw error;
-    loadMyRequests();
+    await loadMyRequests();
   } catch (err) {
     alert("Unable to cancel request: " + err.message);
   }
