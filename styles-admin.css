@@ -886,3 +886,8 @@ body::before {
   font-weight: 700;
 }
 
+
+.dashboard-grid.events-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
