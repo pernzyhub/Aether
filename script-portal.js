@@ -18,16 +18,38 @@ async function loadUser() {
   currentUser = user;
 
   // Load clan user data
-  const { data: clanUser, error } = await supabase
+  let { data: clanUser, error } = await supabase
     .from("clan_users")
     .select("*")
     .eq("id", user.id)
     .single();
 
-  if (error) {
+  // If clan user doesn't exist yet, create it!
+  if (error && (error.code === 'PGRST116' || error.message.includes('No rows found'))) {
+    // PGRST116 is Supabase's "row not found" error code
+    const { data: newClanUser, insertError } = await supabase
+      .from("clan_users")
+      .insert([{
+        id: user.id,
+        ign: user.user_metadata?.full_name || null,
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }])
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error("Error creating clan user:", insertError);
+    } else {
+      clanUser = newClanUser;
+      error = null;
+    }
+  } else if (error) {
     console.error("Error loading clan user:", error);
-    // Don't log out on error
-  } else {
+  }
+
+  if (!error && clanUser) {
     currentClanUser = clanUser;
   }
 

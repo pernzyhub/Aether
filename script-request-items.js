@@ -17,16 +17,37 @@ async function checkAuth() {
   }
 
   // Load clan user data to check active status and IGN
-  const { data: clanUser, error: clanUserError } = await supabase
+  let { data: clanUser, error: clanUserError } = await supabase
     .from("clan_users")
     .select("*")
     .eq("id", user.id)
     .single();
 
-  if (clanUserError) {
+  // If clan user doesn't exist yet, create it!
+  if (clanUserError && (clanUserError.code === 'PGRST116' || clanUserError.message.includes('No rows found'))) {
+    const { data: newClanUser, insertError } = await supabase
+      .from("clan_users")
+      .insert([{
+        id: user.id,
+        ign: user.user_metadata?.full_name || null,
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }])
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error("Error creating clan user:", insertError);
+      alert("Error loading your account information. Please try again later.");
+      return false;
+    } else {
+      clanUser = newClanUser;
+      clanUserError = null;
+    }
+  } else if (clanUserError) {
     console.error("Error loading clan user:", clanUserError);
     alert("Error loading your account information. Please try again later.");
-    // Don't log out on error
     return false;
   }
 
