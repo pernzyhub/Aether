@@ -6,7 +6,7 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 let currentUser = null;
 let currentClanUser = null;
-const DEFAULT_MEMBER_PASSWORD = "Aether2026!";
+const DEFAULT_MEMBER_PASSWORD = "123";
 
 function getMemberSession() {
   try {

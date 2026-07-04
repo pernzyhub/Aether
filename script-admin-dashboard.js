@@ -303,7 +303,7 @@ async function bulkRegisterMembers(event) {
   for (const line of lines) {
     const parts = line.split("|").map(part => part.trim());
     const ign = parts[0];
-    const password = parts[1] || "Aether2026!";
+    const password = parts[1] || "123";
 
     if (!ign) continue;
 

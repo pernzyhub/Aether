@@ -38,7 +38,7 @@ window.addEventListener('resize', () => {
 const supabaseUrl = "https://wpilukuwehxphmorjxzd.supabase.co";
 const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwaWx1a3V3ZWh4cGhtb3JqeHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwODgxNDMsImV4cCI6MjA5ODY2NDE0M30.PjBUX8c8ZU8YVYUuwb2ypGyfMtHg-jOPlFDausGDKZY";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
-const DEFAULT_MEMBER_PASSWORD = "Aether2026!";
+const DEFAULT_MEMBER_PASSWORD = "123";
 
 function getMemberSession() {
   try {
@@ -149,7 +149,7 @@ async function memberLogin() {
     }
 
     saveMemberSession(clanUser, needsPasswordChange);
-    statusEl.textContent = "Welcome!";
+    statusEl.textContent = needsPasswordChange ? "First login detected. Redirecting to change your password..." : "Welcome!";
     statusEl.className = "status-text success";
 
     setTimeout(() => {
