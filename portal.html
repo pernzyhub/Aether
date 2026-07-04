@@ -7,6 +7,22 @@
   <link rel="stylesheet" href="styles-portal.css" />
 </head>
 <body>
+  <!-- IGN Setup Modal -->
+  <div id="ign-modal" class="modal hidden">
+    <div class="modal-content">
+      <h2>SET YOUR IN-GAME NAME (IGN)</h2>
+      <p>Please set your clan IGN. This is required for clan features.</p>
+      <form id="ign-form" onsubmit="saveIgn(event)">
+        <div class="form-group">
+          <label for="ign-input">YOUR IGN</label>
+          <input type="text" id="ign-input" required placeholder="Enter your IGN" />
+        </div>
+        <button type="submit" class="btn btn-primary">SAVE IGN</button>
+      </form>
+      <p id="ign-status" class="status-text"></p>
+    </div>
+  </div>
+
   <header class="header">
     <div class="logo">AETHERCLAN</div>
     <div class="user-info">
@@ -57,6 +73,11 @@
           <div class="menu-icon">⚙️</div>
           <div class="menu-title">SETTINGS</div>
           <div class="menu-desc">Manage your profile</div>
+        </div>
+        <div class="menu-item" onclick="goToPage('/request-items.html')">
+          <div class="menu-icon">📦</div>
+          <div class="menu-title">REQUEST ITEMS</div>
+          <div class="menu-desc">Request clan items (requires active status)</div>
         </div>
         <div class="menu-item" onclick="goToPage('/admin-dashboard.html')">
           <div class="menu-icon">🔧</div>

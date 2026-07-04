@@ -4,18 +4,100 @@ const supabaseUrl = "https://wpilukuwehxphmorjxzd.supabase.co";
 const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwaWx1a3V3ZWh4cGhtb3JqeHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwODgxNDMsImV4cCI6MjA5ODY2NDE0M30.PjBUX8c8ZU8YVYUuwb2ypGyfMtHg-jOPlFDausGDKZY";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+let currentClanUser = null;
+
 async function loadUser() {
   const { data } = await supabase.auth.getSession();
   const user = data.session?.user;
-  if (user) {
-    const username = user.user_metadata?.full_name || user.user_metadata?.name || user.email;
-    const welcomeEl = document.getElementById("welcome-text");
-    if (welcomeEl) {
-      welcomeEl.textContent = `WELCOME, ${username.toUpperCase()}`;
-    }
-  } else {
+  if (!user) {
     window.location.href = "/";
+    return;
   }
+
+  // Load clan user data
+  const { data: clanUser, error } = await supabase
+    .from("clan_users")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+
+  if (error) {
+    console.error("Error loading clan user:", error);
+    return;
+  }
+
+  currentClanUser = clanUser;
+
+  // Check if IGN is set
+  if (!clanUser.ign) {
+    showIgnModal();
+  }
+
+  // Set welcome text using IGN if available
+  const username = clanUser.ign || user.user_metadata?.full_name || user.user_metadata?.name || user.email;
+  const welcomeEl = document.getElementById("welcome-text");
+  if (welcomeEl) {
+    welcomeEl.textContent = `WELCOME, ${username.toUpperCase()}`;
+  }
+}
+
+function showIgnModal() {
+  const modal = document.getElementById("ign-modal");
+  if (modal) {
+    modal.classList.remove("hidden");
+  }
+}
+
+function hideIgnModal() {
+  const modal = document.getElementById("ign-modal");
+  if (modal) {
+    modal.classList.add("hidden");
+  }
+}
+
+async function saveIgn(event) {
+  event.preventDefault();
+  const ignInput = document.getElementById("ign-input");
+  const statusEl = document.getElementById("ign-status");
+  const ign = ignInput.value.trim();
+
+  if (!ign) {
+    statusEl.textContent = "Please enter a valid IGN!";
+    statusEl.className = "status-text error";
+    return;
+  }
+
+  statusEl.textContent = "Saving...";
+  statusEl.className = "status-text";
+
+  const { data: sessionData } = await supabase.auth.getSession();
+  const userId = sessionData.session?.user.id;
+
+  const { error } = await supabase
+    .from("clan_users")
+    .update({ ign: ign, updated_at: new Date().toISOString() })
+    .eq("id", userId);
+
+  if (error) {
+    statusEl.textContent = "Error saving IGN: " + error.message;
+    statusEl.className = "status-text error";
+    return;
+  }
+
+  statusEl.textContent = "IGN saved successfully!";
+  statusEl.className = "status-text success";
+  currentClanUser.ign = ign;
+
+  // Update welcome text
+  const welcomeEl = document.getElementById("welcome-text");
+  if (welcomeEl) {
+    welcomeEl.textContent = `WELCOME, ${ign.toUpperCase()}`;
+  }
+
+  // Hide modal after a short delay
+  setTimeout(() => {
+    hideIgnModal();
+  }, 1000);
 }
 
 async function loadAnnouncements() {
@@ -108,3 +190,4 @@ window.addEventListener("load", async () => {
 
 window.logout = logout;
 window.goToPage = goToPage;
+window.saveIgn = saveIgn;

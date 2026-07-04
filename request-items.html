@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AetherClan - Request Items</title>
+  <link rel="stylesheet" href="styles-portal.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="logo">AETHERCLAN</div>
+    <div class="nav-links">
+      <span id="welcome-text" class="welcome-text" style="color: #00ff88;"></span>
+      <a href="/portal.html" class="nav-link">PORTAL</a>
+      <button class="nav-link" style="background: none; cursor: pointer;" onclick="logout()">LOGOUT</button>
+    </div>
+  </header>
+
+  <div class="container" style="grid-template-columns: 1fr;">
+    <!-- Request Form -->
+    <section class="card">
+      <h2>REQUEST AN ITEM</h2>
+      <form id="request-form" onsubmit="submitRequest(event)">
+        <div class="form-group">
+          <label for="item-select">Select Item</label>
+          <select id="item-select" required>
+            <option value="">Loading items...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="quantity">Quantity</label>
+          <input type="number" id="quantity" min="1" value="1" required />
+        </div>
+        <div class="form-group">
+          <label for="notes">Notes (Optional)</label>
+          <textarea id="notes"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">SUBMIT REQUEST</button>
+      </form>
+      <p id="request-status" class="status-text"></p>
+    </section>
+
+    <!-- My Requests -->
+    <section class="card">
+      <h2>MY REQUESTS</h2>
+      <div id="my-requests"></div>
+    </section>
+  </div>
+
+  <footer class="footer">
+    AETHERCLAN © 2026 | SYSTEM VERSION 2.0.4 | ALL RIGHTS RESERVED
+  </footer>
+
+  <script type="module" src="script-request-items.js"></script>
+</body>
+</html>
