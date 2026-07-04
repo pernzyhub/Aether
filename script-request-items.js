@@ -167,6 +167,8 @@ async function submitRequest(event) {
 
       statusEl.textContent = "Request updated successfully!";
       editingRequestId = null;
+      document.getElementById("request-form").reset();
+      document.getElementById("quantity").value = 1;
     } else {
       const requestUserId = currentUser?.id || currentClanUser?.id || null;
       if (!requestUserId) {
@@ -211,11 +213,13 @@ async function submitRequest(event) {
       }
 
       statusEl.textContent = "Request submitted successfully!";
+      document.getElementById("request-form").reset();
+      document.getElementById("quantity").value = 1;
     }
 
     statusEl.className = "status-text success";
     updateRequestButtonLabel();
-    loadMyRequests();
+    await loadMyRequests();
   } catch (err) {
     statusEl.textContent = editingRequestId ? "Error updating request: " + err.message : "Error submitting request: " + err.message;
     statusEl.className = "status-text error";
@@ -253,7 +257,7 @@ async function startEditRequest(requestId) {
     document.getElementById("quantity").value = data.quantity;
     document.getElementById("notes").value = data.notes || "";
     updateRequestButtonLabel();
-    document.getElementById("request-status").textContent = "Editing request...";
+    document.getElementById("request-status").textContent = "Editing request. Update the fields, then save your changes.";
     document.getElementById("request-status").className = "status-text";
   } catch (err) {
     alert("Unable to edit request: " + err.message);
@@ -262,6 +266,9 @@ async function startEditRequest(requestId) {
 
 async function cancelRequest(requestId) {
   if (!confirm("Cancel this request permanently?")) return;
+  const statusEl = document.getElementById("request-status");
+  statusEl.textContent = "Canceling request...";
+  statusEl.className = "status-text";
 
   try {
     const { error } = await supabase
@@ -270,9 +277,18 @@ async function cancelRequest(requestId) {
       .eq("id", requestId);
 
     if (error) throw error;
+    if (editingRequestId === requestId) {
+      editingRequestId = null;
+      document.getElementById("request-form").reset();
+      document.getElementById("quantity").value = 1;
+      updateRequestButtonLabel();
+    }
+    statusEl.textContent = "Request canceled successfully.";
+    statusEl.className = "status-text success";
     await loadMyRequests();
   } catch (err) {
-    alert("Unable to cancel request: " + err.message);
+    statusEl.textContent = "Unable to cancel request: " + err.message;
+    statusEl.className = "status-text error";
   }
 }
 
@@ -374,8 +390,8 @@ async function loadMyRequests() {
           <div class="request-entry-actions">
             <span class="request-status ${req.status || "pending"}">${(req.status || "pending").toUpperCase()}</span>
             ${isOwner && (req.status || "pending") === "pending" ? `
-              <button class="btn btn-secondary" onclick="startEditRequest('${req.id}')">EDIT</button>
-              <button class="btn btn-danger" onclick="cancelRequest('${req.id}')">CANCEL</button>
+              <button class="btn request-action request-action-edit" onclick="startEditRequest('${req.id}')">Edit</button>
+              <button class="btn request-action request-action-cancel" onclick="cancelRequest('${req.id}')">Cancel</button>
             ` : ""}
           </div>
         </div>
