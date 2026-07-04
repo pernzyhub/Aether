@@ -603,6 +603,7 @@ window.addEventListener("load", () => {
   }, 80);
 });
 
+window.setActiveModule = setActiveModule;
 window.bulkRegisterMembers = bulkRegisterMembers;
 window.toggleUserStatus = toggleUserStatus;
 window.changeUserPassword = changeUserPassword;
