@@ -316,6 +316,12 @@ async function deleteItem(id) {
 }
 
 /* Clan User Management */
+function createAuthEmailForIgn(ign) {
+  const normalized = ign.trim().toLowerCase().replace(/[^a-z0-9._-]+/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '');
+  const unique = crypto.randomUUID().slice(0, 8);
+  return `${normalized || 'member'}_${unique}@aether.local`;
+}
+
 async function bulkRegisterMembers(event) {
   event.preventDefault();
   const rawText = document.getElementById("bulk-accounts").value.trim();
@@ -357,18 +363,33 @@ async function bulkRegisterMembers(event) {
         continue;
       }
 
-      const newId = crypto.randomUUID();
-      const { error } = await supabase.from("clan_users").insert([{ 
-        id: newId,
-        ign,
+      const email = createAuthEmailForIgn(ign);
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email,
         password,
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }]);
+        options: {
+          data: { full_name: ign }
+        }
+      });
 
-      if (error) {
-        results.push(`${ign}: ${error.message}`);
+      if (signUpError) {
+        results.push(`${ign}: ${signUpError.message}`);
+        continue;
+      }
+
+      const userId = signUpData.user?.id;
+      if (!userId) {
+        results.push(`${ign}: failed to create auth user`);
+        continue;
+      }
+
+      const { error: updateError } = await supabase
+        .from("clan_users")
+        .update({ password, is_active: true, updated_at: new Date().toISOString() })
+        .eq("id", userId);
+
+      if (updateError) {
+        results.push(`${ign}: ${updateError.message}`);
       } else {
         results.push(`${ign}: created`);
       }
@@ -416,10 +437,12 @@ async function loadUsers() {
           </div>
         </div>
         <div class="list-item-actions">
-          <button class="btn btn-secondary" onclick="changeUserPassword('${user.id}')">RESET PASSWORD</button>
+          <button class="btn btn-secondary" onclick="changeUserPassword('${user.id}')">CHANGE PASSWORD</button>
+          <button class="btn btn-secondary" onclick="changeUserIgn('${user.id}', '${escapeHtml(user.ign || '')}')">CHANGE IGN</button>
           <button class="btn ${user.is_active ? 'btn-danger' : 'btn-success'}" onclick="toggleUserStatus('${user.id}', ${!user.is_active})">
             ${user.is_active ? 'DEACTIVATE' : 'ACTIVATE'}
           </button>
+          <button class="btn btn-danger" onclick="deleteUser('${user.id}')">DELETE</button>
         </div>
       </div>
     `).join("");
@@ -428,7 +451,56 @@ async function loadUsers() {
   }
 }
 
-async function toggleUserStatus(userId, isActive) {
+async function deleteUser(userId) {
+  if (!confirm("Are you sure you want to delete this user?")) return;
+  const statusEl = document.getElementById("users-status");
+  statusEl.textContent = "Deleting user...";
+  statusEl.className = "status-text";
+
+  try {
+    const { error } = await supabase
+      .from("clan_users")
+      .delete()
+      .eq("id", userId);
+
+    if (error) throw error;
+    statusEl.textContent = "User deleted successfully.";
+    statusEl.className = "status-text success";
+    loadUsers();
+  } catch (err) {
+    statusEl.textContent = `Error deleting user: ${err.message}`;
+    statusEl.className = "status-text error";
+  }
+}
+
+async function changeUserIgn(userId, currentIgn) {
+  const statusEl = document.getElementById("users-status");
+  const newIgn = prompt("Enter a new IGN for this user:", currentIgn || "");
+
+  if (!newIgn || newIgn.trim().length === 0) {
+    statusEl.textContent = "IGN cannot be empty.";
+    statusEl.className = "status-text error";
+    return;
+  }
+
+  statusEl.textContent = "Updating IGN...";
+  statusEl.className = "status-text";
+
+  try {
+    const { error } = await supabase
+      .from("clan_users")
+      .update({ ign: newIgn.trim(), updated_at: new Date().toISOString() })
+      .eq("id", userId);
+
+    if (error) throw error;
+    statusEl.textContent = "IGN updated successfully.";
+    statusEl.className = "status-text success";
+    loadUsers();
+  } catch (err) {
+    statusEl.textContent = `Error updating IGN: ${err.message}`;
+    statusEl.className = "status-text error";
+  }
+}
   const action = isActive ? "activate" : "deactivate";
   const statusEl = document.getElementById("users-status");
   if (!confirm(`Are you sure you want to ${action} this user?`)) return;
@@ -466,23 +538,12 @@ async function changeUserPassword(userId) {
   statusEl.className = "status-text";
 
   try {
-    let error = null;
+    const { error } = await supabase
+      .from("clan_users")
+      .update({ password: newPassword, updated_at: new Date().toISOString() })
+      .eq("id", userId);
 
-    if (supabase.auth.admin && typeof supabase.auth.admin.updateUserById === "function") {
-      const result = await supabase.auth.admin.updateUserById(userId, { password: newPassword });
-      error = result.error;
-    } else {
-      error = { message: "Admin password update is not available in the current client setup." };
-    }
-
-    if (error) {
-      const fallback = await supabase
-        .from("clan_users")
-        .update({ password: newPassword, updated_at: new Date().toISOString() })
-        .eq("id", userId);
-
-      if (fallback.error) throw fallback.error;
-    }
+    if (error) throw error;
 
     statusEl.textContent = "Password updated successfully.";
     statusEl.className = "status-text success";
@@ -579,6 +640,33 @@ async function updateRequestStatus(requestId, status) {
   }
 }
 
+function getAccessCode() {
+  return localStorage.getItem("aether_access_code") || "AETHER2026";
+}
+
+function loadAccessCode() {
+  const input = document.getElementById("current-access-code");
+  if (input) input.value = getAccessCode();
+}
+
+async function updateAccessCode(event) {
+  event.preventDefault();
+  const statusEl = document.getElementById("access-code-status");
+  const newCode = document.getElementById("new-access-code")?.value.trim();
+
+  if (!newCode) {
+    statusEl.textContent = "Please enter a valid access code.";
+    statusEl.className = "status-text error";
+    return;
+  }
+
+  localStorage.setItem("aether_access_code", newCode);
+  loadAccessCode();
+  document.getElementById("new-access-code").value = "";
+  statusEl.textContent = "Access code updated.";
+  statusEl.className = "status-text success";
+}
+
 async function logout() {
   await supabase.auth.signOut();
   window.location.href = "/";
@@ -599,6 +687,7 @@ window.addEventListener("load", () => {
       loadItems();
       loadUsers();
       loadRequests();
+      loadAccessCode();
     }
   }, 80);
 });

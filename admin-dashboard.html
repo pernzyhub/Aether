@@ -144,11 +144,27 @@
               <form id="bulk-register-form" onsubmit="bulkRegisterMembers(event)">
                 <div class="form-group">
                   <label for="bulk-accounts">Accounts (one per line)</label>
-                  <textarea id="bulk-accounts" placeholder="IGN&#10;IGN2" required></textarea>
+                  <textarea id="bulk-accounts" placeholder="IGN|password\nIGN2|password2" required></textarea>
                 </div>
                 <button type="submit" class="btn btn-primary">REGISTER ACCOUNTS</button>
               </form>
               <p id="bulk-register-status" class="status-text"></p>
+            </section>
+
+            <section class="card">
+              <h2>ACCESS CODE</h2>
+              <form id="access-code-form" onsubmit="updateAccessCode(event)">
+                <div class="form-group">
+                  <label for="current-access-code">Current Access Code</label>
+                  <input type="text" id="current-access-code" readonly />
+                </div>
+                <div class="form-group">
+                  <label for="new-access-code">New Access Code</label>
+                  <input type="text" id="new-access-code" required />
+                </div>
+                <button type="submit" class="btn btn-primary">UPDATE ACCESS CODE</button>
+              </form>
+              <p id="access-code-status" class="status-text"></p>
             </section>
 
             <section class="card">
