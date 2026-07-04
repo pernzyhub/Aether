@@ -175,23 +175,19 @@ async function submitRequest(event) {
         return;
       }
 
-      const { data, error } = await fetch(`${supabaseUrl}/functions/v1/create-request`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": supabaseAnonKey,
-          Authorization: `Bearer ${supabaseAnonKey}`
-        },
-        body: JSON.stringify({
-          user_id: requestUserId,
-          item_id: itemId,
-          quantity,
-          notes: notes || null,
-          status: "pending"
-        })
-      }).then(res => res.json());
+      const { error } = await supabase.rpc("create_item_request", {
+        target_user_id: requestUserId,
+        target_item_id: itemId,
+        target_quantity: quantity,
+        target_notes: notes || null
+      });
 
-      if (error) throw new Error(error.error || error.message || "Unknown request error");
+      if (error) {
+        if (/Could not find the function|function public\.create_item_request/i.test(error.message)) {
+          throw new Error("Supabase is missing the latest request migration. Run the newest migration and try again.");
+        }
+        throw error;
+      }
 
       statusEl.textContent = "Request submitted successfully!";
     }

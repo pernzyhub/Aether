@@ -494,20 +494,15 @@ async function deleteUser(userId) {
   statusEl.className = "status-text";
 
   try {
-    const { error: clanUserError } = await supabase
-      .from("clan_users")
-      .delete()
-      .eq("id", userId);
+    const { error } = await supabase.rpc("admin_delete_clan_user", {
+      target_user_id: userId
+    });
 
-    if (clanUserError) throw clanUserError;
-
-    try {
-      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
-      if (authError) {
-        console.warn("Auth user cleanup warning:", authError);
+    if (error) {
+      if (/Could not find the function|function public\.admin_delete_clan_user/i.test(error.message)) {
+        throw new Error("Supabase is missing the latest account-management migration. Run the newest migration and try again.");
       }
-    } catch (authErr) {
-      console.warn("Auth user cleanup warning:", authErr);
+      throw error;
     }
 
     statusEl.textContent = "User deleted successfully.";
