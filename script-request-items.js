@@ -68,12 +68,7 @@ async function checkAuth() {
     return false;
   }
 
-  if (!clanUser.ign) {
-    alert("Please set your IGN in the portal first!");
-    window.location.href = "/portal.html";
-    return false;
-  }
-
+  // IGN is optional now, fall back to available profile values.
   currentUser = user || { id: memberSession?.id };
   currentClanUser = clanUser;
   

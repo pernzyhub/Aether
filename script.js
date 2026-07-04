@@ -62,19 +62,23 @@ function toggleLoginMode() {
   const title = document.getElementById("loginModeTitle");
   const text = document.getElementById("loginModeText");
 
-  const isMember = !adminPanel.classList.contains("form-panel-hidden");
-  if (isMember) {
+  if (!memberPanel || !adminPanel || !toggleBtn || !title || !text) {
+    return;
+  }
+
+  const adminActive = !adminPanel.classList.contains("form-panel-hidden");
+  if (adminActive) {
+    adminPanel.classList.add("form-panel-hidden");
+    memberPanel.classList.remove("form-panel-hidden");
+    toggleBtn.textContent = "SWITCH TO ADMIN";
+    title.textContent = "MEMBER LOGIN";
+    text.textContent = "Enter your username and password to access the clan portal.";
+  } else {
     adminPanel.classList.remove("form-panel-hidden");
     memberPanel.classList.add("form-panel-hidden");
     toggleBtn.textContent = "SWITCH TO MEMBER";
     title.textContent = "ADMIN LOGIN";
     text.textContent = "Use your admin credentials to manage the clan dashboard.";
-  } else {
-    memberPanel.classList.remove("form-panel-hidden");
-    adminPanel.classList.add("form-panel-hidden");
-    toggleBtn.textContent = "SWITCH TO ADMIN";
-    title.textContent = "MEMBER LOGIN";
-    text.textContent = "Enter your IGN and password to access the clan portal.";
   }
 }
 
@@ -199,12 +203,6 @@ window.addEventListener("load", () => {
     const userEl = document.getElementById("user");
     if (userEl) {
       userEl.textContent = JSON.stringify(data.session?.user || "Not logged in", null, 2);
-    }
-
-    const accessGranted = localStorage.getItem("aether_access_granted") === "true";
-    if (!accessGranted) {
-      window.location.replace("/access-gate.html");
-      return;
     }
 
     if (data.session?.user && isAdminUser(data.session.user)) {
