@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="styles-portal.css" />
 </head>
 <body>
-  <!-- IGN Setup Modal -->
+  <!-- IGN Setup Modal (kept for when button is clicked) -->
   <div id="ign-modal" class="modal hidden">
     <div class="modal-content">
       <h2>SET YOUR IN-GAME NAME (IGN)</h2>
@@ -27,6 +27,7 @@
     <div class="logo">AETHERCLAN</div>
     <div class="user-info">
       <span id="welcome-text" class="welcome-text">LOADING USER...</span>
+      <button id="change-ign-btn" class="btn btn-primary" style="width: auto; padding: 5px 10px; font-size: 0.8rem; display: none;" onclick="showIgnModal()">CHANGE YOUR IGN</button>
       <button class="logout-btn" onclick="logout()">LOGOUT</button>
     </div>
   </header>
@@ -79,7 +80,7 @@
           <div class="menu-title">REQUEST ITEMS</div>
           <div class="menu-desc">Request clan items (requires active status)</div>
         </div>
-        <div class="menu-item" onclick="goToPage('/admin-dashboard.html')">
+        <div id="admin-menu-item" class="menu-item" onclick="goToPage('/admin-dashboard.html')" style="display: none;">
           <div class="menu-icon">🔧</div>
           <div class="menu-title">ADMIN DASHBOARD</div>
           <div class="menu-desc">Clan management (admin only)</div>

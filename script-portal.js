@@ -5,6 +5,7 @@ const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 let currentClanUser = null;
+let currentUser = null;
 
 async function loadUser() {
   const { data } = await supabase.auth.getSession();
@@ -13,6 +14,8 @@ async function loadUser() {
     window.location.href = "/";
     return;
   }
+
+  currentUser = user;
 
   // Load clan user data
   const { data: clanUser, error } = await supabase
@@ -23,18 +26,27 @@ async function loadUser() {
 
   if (error) {
     console.error("Error loading clan user:", error);
-    return;
+    // Don't log out on error
+  } else {
+    currentClanUser = clanUser;
   }
 
-  currentClanUser = clanUser;
+  // Check if IGN is set - show button if not
+  const changeIgnBtn = document.getElementById("change-ign-btn");
+  if (changeIgnBtn && (!currentClanUser || !currentClanUser.ign)) {
+    changeIgnBtn.style.display = "inline-block";
+  } else if (changeIgnBtn) {
+    changeIgnBtn.style.display = "none";
+  }
 
-  // Check if IGN is set
-  if (!clanUser.ign) {
-    showIgnModal();
+  // Check if user is admin to show admin menu
+  const adminMenuItem = document.getElementById("admin-menu-item");
+  if (adminMenuItem && user.app_metadata?.role && (user.app_metadata.role === "admin" || user.app_metadata.role === "superuser")) {
+    adminMenuItem.style.display = "block";
   }
 
   // Set welcome text using IGN if available
-  const username = clanUser.ign || user.user_metadata?.full_name || user.user_metadata?.name || user.email;
+  const username = (currentClanUser?.ign) || user.user_metadata?.full_name || user.user_metadata?.name || user.email;
   const welcomeEl = document.getElementById("welcome-text");
   if (welcomeEl) {
     welcomeEl.textContent = `WELCOME, ${username.toUpperCase()}`;
@@ -86,12 +98,21 @@ async function saveIgn(event) {
 
   statusEl.textContent = "IGN saved successfully!";
   statusEl.className = "status-text success";
-  currentClanUser.ign = ign;
+  
+  if (currentClanUser) {
+    currentClanUser.ign = ign;
+  }
 
   // Update welcome text
   const welcomeEl = document.getElementById("welcome-text");
   if (welcomeEl) {
     welcomeEl.textContent = `WELCOME, ${ign.toUpperCase()}`;
+  }
+
+  // Hide change IGN button since it can only be used once
+  const changeIgnBtn = document.getElementById("change-ign-btn");
+  if (changeIgnBtn) {
+    changeIgnBtn.style.display = "none";
   }
 
   // Hide modal after a short delay

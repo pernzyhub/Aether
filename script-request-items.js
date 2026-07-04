@@ -25,16 +25,13 @@ async function checkAuth() {
 
   if (clanUserError) {
     console.error("Error loading clan user:", clanUserError);
-    alert("Error loading your account information.");
-    await supabase.auth.signOut();
-    window.location.href = "/";
+    alert("Error loading your account information. Please try again later.");
+    // Don't log out on error
     return false;
   }
 
   if (!clanUser.is_active) {
     alert("Your account is inactive. Please contact an admin.");
-    await supabase.auth.signOut();
-    window.location.href = "/";
     return false;
   }
 
