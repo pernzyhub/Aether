@@ -7,6 +7,13 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 let currentUser = null;
 let currentClanUser = null;
 
+function showSettingsStatus(message, type) {
+  const statusEl = document.getElementById("settings-status");
+  if (!statusEl) return;
+  statusEl.textContent = message;
+  statusEl.className = `status-text ${type}`;
+}
+
 async function loadUser() {
   const { data: sessionData } = await supabase.auth.getSession();
   const user = sessionData?.session?.user;
@@ -66,48 +73,48 @@ async function saveSettings() {
   const newIgn = document.getElementById("newIgn").value.trim();
   const newPassword = document.getElementById("newPassword").value;
   const confirmPassword = document.getElementById("confirmPassword").value;
-  const statusEl = document.getElementById("settings-status");
   
   if (!newIgn || !newPassword || !confirmPassword) {
-    statusEl.textContent = "Please fill out all fields!";
-    statusEl.className = "status-text error";
+    showSettingsStatus("Please fill out all fields!", "error");
     return;
   }
   
   if (newPassword !== confirmPassword) {
-    statusEl.textContent = "Passwords do not match!";
-    statusEl.className = "status-text error";
+    showSettingsStatus("Passwords do not match!", "error");
     return;
   }
   
-  statusEl.textContent = "Saving settings...";
-  statusEl.className = "status-text";
+  showSettingsStatus("Saving settings...", "");
   
   try {
-    const { error } = await supabase
+    if (newPassword) {
+      const { error: passwordError } = await supabase.auth.updateUser({ password: newPassword });
+      if (passwordError) {
+        showSettingsStatus(`Error updating password: ${passwordError.message}`, "error");
+        return;
+      }
+    }
+
+    const { error: profileError } = await supabase
       .from("clan_users")
       .update({
         ign: newIgn,
-        password: newPassword, // In a real app, use bcrypt to hash!
+        password: newPassword,
         updated_at: new Date().toISOString()
       })
       .eq("id", currentUser.id);
     
-    if (error) {
-      statusEl.textContent = `Error saving settings: ${error.message}`;
-      statusEl.className = "status-text error";
+    if (profileError) {
+      showSettingsStatus(`Error saving settings: ${profileError.message}`, "error");
       return;
     }
     
-    statusEl.textContent = "✅ Settings saved successfully! Your IGN and password have been updated!";
-    statusEl.className = "status-text success";
-    
-    // Reload clan user
+    showSettingsStatus("Settings saved successfully! Your IGN and password have been updated.", "success");
+    document.getElementById("settings-form").reset();
     await loadUser();
     
   } catch (err) {
-    statusEl.textContent = `Error: ${err.message}`;
-    statusEl.className = "status-text error";
+    showSettingsStatus(`Error: ${err.message}`, "error");
   }
 }
 
@@ -117,6 +124,9 @@ async function logout() {
 }
 
 // Load user on page load
-window.addEventListener("load", loadUser);
+window.addEventListener("load", () => {
+  loadUser();
+});
 
 window.logout = logout;
+window.saveSettings = saveSettings;

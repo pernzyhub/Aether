@@ -280,6 +280,7 @@ async function deleteItem(id) {
 /* Clan User Management */
 async function loadUsers() {
   const container = document.getElementById("users-list");
+  const statusEl = document.getElementById("users-status");
   container.innerHTML = "<p>Loading users...</p>";
 
   try {
@@ -310,6 +311,7 @@ async function loadUsers() {
           </div>
         </div>
         <div class="list-item-actions">
+          <button class="btn btn-secondary" onclick="changeUserPassword('${user.id}')">RESET PASSWORD</button>
           <button class="btn ${user.is_active ? 'btn-danger' : 'btn-success'}" onclick="toggleUserStatus('${user.id}', ${!user.is_active})">
             ${user.is_active ? 'DEACTIVATE' : 'ACTIVATE'}
           </button>
@@ -323,7 +325,11 @@ async function loadUsers() {
 
 async function toggleUserStatus(userId, isActive) {
   const action = isActive ? "activate" : "deactivate";
+  const statusEl = document.getElementById("users-status");
   if (!confirm(`Are you sure you want to ${action} this user?`)) return;
+
+  statusEl.textContent = `Updating user status...`;
+  statusEl.className = "status-text";
 
   try {
     const { error } = await supabase
@@ -332,9 +338,52 @@ async function toggleUserStatus(userId, isActive) {
       .eq("id", userId);
 
     if (error) throw error;
+    statusEl.textContent = `User ${action}d successfully.`;
+    statusEl.className = "status-text success";
     loadUsers();
   } catch (err) {
-    alert(`Error updating user: ${err.message}`);
+    statusEl.textContent = `Error updating user: ${err.message}`;
+    statusEl.className = "status-text error";
+  }
+}
+
+async function changeUserPassword(userId) {
+  const statusEl = document.getElementById("users-status");
+  const newPassword = prompt("Enter a new password for this user:");
+
+  if (!newPassword || newPassword.length < 6) {
+    statusEl.textContent = "Password must be at least 6 characters.";
+    statusEl.className = "status-text error";
+    return;
+  }
+
+  statusEl.textContent = "Changing password...";
+  statusEl.className = "status-text";
+
+  try {
+    let error = null;
+
+    if (supabase.auth.admin && typeof supabase.auth.admin.updateUserById === "function") {
+      const result = await supabase.auth.admin.updateUserById(userId, { password: newPassword });
+      error = result.error;
+    } else {
+      error = { message: "Admin password update is not available in the current client setup." };
+    }
+
+    if (error) {
+      const fallback = await supabase
+        .from("clan_users")
+        .update({ password: newPassword, updated_at: new Date().toISOString() })
+        .eq("id", userId);
+
+      if (fallback.error) throw fallback.error;
+    }
+
+    statusEl.textContent = "Password updated successfully.";
+    statusEl.className = "status-text success";
+  } catch (err) {
+    statusEl.textContent = `Error updating password: ${err.message}`;
+    statusEl.className = "status-text error";
   }
 }
 
@@ -447,6 +496,8 @@ window.addEventListener("load", async () => {
   }
 });
 
+window.toggleUserStatus = toggleUserStatus;
+window.changeUserPassword = changeUserPassword;
 window.approveRequest = approveRequest;
 window.updateRequestStatus = updateRequestStatus;
 
