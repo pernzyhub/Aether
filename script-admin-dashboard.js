@@ -113,6 +113,7 @@ async function loadAnnouncements() {
           <div class="list-item-meta">${new Date(ann.created_at).toLocaleString()}</div>
         </div>
         <div class="list-item-actions compact">
+          <button class="btn-xs btn-secondary" onclick="editAnnouncement('${ann.id}')">EDIT</button>
           <button class="btn-xs btn-secondary" onclick="toggleAnnouncement('${ann.id}', ${!ann.is_active})">${ann.is_active ? 'HIDE' : 'SHOW'}</button>
           <button class="btn-xs btn-danger" onclick="deleteAnnouncement('${ann.id}')">DEL</button>
         </div>
@@ -125,30 +126,67 @@ async function loadAnnouncements() {
   }
 }
 
+let editingAnnouncementId = null;
+
 async function postAnnouncement(event) {
   event.preventDefault();
   const title = document.getElementById("announcement-title").value;
   const statusEl = document.getElementById("announcements-status");
 
-  statusEl.textContent = "Posting...";
+  statusEl.textContent = editingAnnouncementId ? "Updating announcement..." : "Posting announcement...";
   statusEl.className = "status-text";
 
   try {
     const content = document.getElementById("announcement-editor").innerHTML;
-    const { error } = await supabase
-      .from("announcements")
-      .insert([{ title, content, created_by: currentUser.id }]);
+    let error;
+    
+    if (editingAnnouncementId) {
+      const { error: updateError } = await supabase
+        .from("announcements")
+        .update({ title, content })
+        .eq("id", editingAnnouncementId);
+      error = updateError;
+    } else {
+      const { error: insertError } = await supabase
+        .from("announcements")
+        .insert([{ title, content, created_by: currentUser.id }]);
+      error = insertError;
+    }
 
     if (error) throw error;
 
-    statusEl.textContent = "Announcement posted successfully!";
+    statusEl.textContent = editingAnnouncementId ? "Announcement updated successfully!" : "Announcement posted successfully!";
     statusEl.className = "status-text success";
     document.getElementById("announcement-form").reset();
     document.getElementById("announcement-editor").innerHTML = "";
+    editingAnnouncementId = null;
+    document.querySelector("#announcement-form button[type='submit']").textContent = "POST ANNOUNCEMENT";
     loadAnnouncements();
   } catch (err) {
     statusEl.textContent = "Error posting announcement: " + err.message;
     statusEl.className = "status-text error";
+  }
+}
+
+async function editAnnouncement(id) {
+  try {
+    const { data, error } = await supabase
+      .from("announcements")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) throw error;
+
+    document.getElementById("announcement-title").value = data.title;
+    document.getElementById("announcement-editor").innerHTML = data.content || "";
+    editingAnnouncementId = id;
+    document.querySelector("#announcement-form button[type='submit']").textContent = "UPDATE ANNOUNCEMENT";
+    
+    // Scroll to form
+    document.getElementById("announcement-form").scrollIntoView({ behavior: 'smooth' });
+  } catch (err) {
+    alert(`Error loading announcement: ${err.message}`);
   }
 }
 
@@ -218,6 +256,7 @@ async function loadRules() {
           </div>
         </div>
         <div class="list-item-actions compact">
+          <button class="btn-xs btn-secondary" onclick="editRule('${rule.id}')">EDIT</button>
           <button class="btn-xs btn-secondary" onclick="toggleRule('${rule.id}', ${!rule.is_active})">${rule.is_active ? 'HIDE' : 'SHOW'}</button>
           <button class="btn-xs btn-danger" onclick="deleteRule('${rule.id}')">DEL</button>
         </div>
@@ -230,31 +269,69 @@ async function loadRules() {
   }
 }
 
+let editingRuleId = null;
+
 async function postRule(event) {
   event.preventDefault();
   const orderNum = parseInt(document.getElementById("rule-order").value);
   const title = document.getElementById("rule-title").value;
   const statusEl = document.getElementById("rules-status");
 
-  statusEl.textContent = "Adding rule...";
+  statusEl.textContent = editingRuleId ? "Updating rule..." : "Adding rule...";
   statusEl.className = "status-text";
 
   try {
     const content = document.getElementById("rule-editor").innerHTML;
-    const { error } = await supabase
-      .from("rules")
-      .insert([{ order_num: orderNum, title, content, created_by: currentUser.id }]);
+    let error;
+    
+    if (editingRuleId) {
+      const { error: updateError } = await supabase
+        .from("rules")
+        .update({ order_num: orderNum, title, content })
+        .eq("id", editingRuleId);
+      error = updateError;
+    } else {
+      const { error: insertError } = await supabase
+        .from("rules")
+        .insert([{ order_num: orderNum, title, content, created_by: currentUser.id }]);
+      error = insertError;
+    }
 
     if (error) throw error;
 
-    statusEl.textContent = "Rule added successfully!";
+    statusEl.textContent = editingRuleId ? "Rule updated successfully!" : "Rule added successfully!";
     statusEl.className = "status-text success";
     document.getElementById("rule-form").reset();
     document.getElementById("rule-editor").innerHTML = "";
+    editingRuleId = null;
+    document.querySelector("#rule-form button[type='submit']").textContent = "ADD RULE";
     loadRules();
   } catch (err) {
     statusEl.textContent = "Error adding rule: " + err.message;
     statusEl.className = "status-text error";
+  }
+}
+
+async function editRule(id) {
+  try {
+    const { data, error } = await supabase
+      .from("rules")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) throw error;
+
+    document.getElementById("rule-order").value = data.order_num;
+    document.getElementById("rule-title").value = data.title;
+    document.getElementById("rule-editor").innerHTML = data.content || "";
+    editingRuleId = id;
+    document.querySelector("#rule-form button[type='submit']").textContent = "UPDATE RULE";
+    
+    // Scroll to form
+    document.getElementById("rule-form").scrollIntoView({ behavior: 'smooth' });
+  } catch (err) {
+    alert(`Error loading rule: ${err.message}`);
   }
 }
 
@@ -296,25 +373,39 @@ async function deleteRule(id) {
 }
 
 /* Item Management */
+let editingItemId = null;
+
 async function addItem(event) {
   event.preventDefault();
   const name = document.getElementById("item-name").value;
   const description = document.getElementById("item-description").value;
   const statusEl = document.getElementById("items-status");
 
-  statusEl.textContent = "Adding item...";
+  statusEl.textContent = editingItemId ? "Updating item..." : "Adding item...";
   statusEl.className = "status-text";
 
   try {
-    const { error } = await supabase
-      .from("items")
-      .insert([{ name, description, created_by: currentUser.id }]);
+    let error;
+    if (editingItemId) {
+      const { error: updateError } = await supabase
+        .from("items")
+        .update({ name, description })
+        .eq("id", editingItemId);
+      error = updateError;
+    } else {
+      const { error: insertError } = await supabase
+        .from("items")
+        .insert([{ name, description, created_by: currentUser.id }]);
+      error = insertError;
+    }
 
     if (error) throw error;
 
-    statusEl.textContent = "Item added successfully!";
+    statusEl.textContent = editingItemId ? "Item updated successfully!" : "Item added successfully!";
     statusEl.className = "status-text success";
     document.getElementById("item-form").reset();
+    editingItemId = null;
+    document.querySelector("#item-form button[type='submit']").textContent = "ADD ITEM";
     loadItems();
   } catch (err) {
     statusEl.textContent = "Error adding item: " + err.message;
@@ -341,14 +432,14 @@ async function loadItems() {
     }
 
     container.innerHTML = data.map(item => `
-      <div class="list-item" data-id="${item.id}">
-        <div class="list-item-content">
-          <div class="list-item-title">${escapeHtml(item.name)}</div>
+      <div class="list-item compact" data-id="${item.id}">
+        <div class="list-item-content compact">
+          <div class="list-item-title compact">${escapeHtml(item.name)}</div>
           <div class="list-item-meta">${new Date(item.created_at).toLocaleString()}</div>
-          ${item.description ? `<div class="list-item-text">${escapeHtml(item.description)}</div>` : ''}
         </div>
-        <div class="list-item-actions">
-          <button class="btn btn-danger" onclick="deleteItem('${item.id}')">DELETE</button>
+        <div class="list-item-actions compact">
+          <button class="btn-xs btn-secondary" onclick="editItem('${item.id}')">EDIT</button>
+          <button class="btn-xs btn-danger" onclick="deleteItem('${item.id}')">DEL</button>
         </div>
       </div>
     `).join("");
@@ -356,6 +447,28 @@ async function loadItems() {
     container.innerHTML = "";
     statusEl.textContent = "Error loading items: " + err.message;
     statusEl.className = "status-text error";
+  }
+}
+
+async function editItem(id) {
+  try {
+    const { data, error } = await supabase
+      .from("items")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) throw error;
+
+    document.getElementById("item-name").value = data.name;
+    document.getElementById("item-description").value = data.description || "";
+    editingItemId = id;
+    document.querySelector("#item-form button[type='submit']").textContent = "UPDATE ITEM";
+    
+    // Scroll to form
+    document.getElementById("item-form").scrollIntoView({ behavior: 'smooth' });
+  } catch (err) {
+    alert(`Error loading item: ${err.message}`);
   }
 }
 
@@ -645,7 +758,7 @@ async function loadRequests() {
     const { data: requests, error } = await supabase
       .from("item_requests")
       .select("*, items!inner(name)")
-      .neq("status", "done")
+      .neq("status", "approved")
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -683,7 +796,7 @@ async function loadRequests() {
         <div class="list-item-actions compact">
           <button class="btn-xs btn-secondary" onclick="adjustQuantity('${req.id}', ${req.quantity}, -1)">-1</button>
           <button class="btn-xs btn-secondary" onclick="adjustQuantity('${req.id}', ${req.quantity}, 1)">+1</button>
-          <button class="btn-xs btn-success" onclick="markRequestDone('${req.id}')">DONE</button>
+          <button class="btn-xs btn-success" onclick="markRequestDone('${req.id}')">APPROVE</button>
           <button class="btn-xs btn-danger" onclick="deleteRequest('${req.id}')">DEL</button>
         </div>
       </div>
@@ -695,7 +808,7 @@ async function loadRequests() {
 
 async function adjustQuantity(requestId, currentQuantity, delta) {
   const newQuantity = Math.max(0, currentQuantity + delta);
-  const nextStatus = newQuantity === 0 ? "done" : "pending";
+  const nextStatus = newQuantity === 0 ? "approved" : "pending";
 
   try {
     const { error } = await supabase
@@ -715,13 +828,13 @@ async function adjustQuantity(requestId, currentQuantity, delta) {
 }
 
 async function markRequestDone(requestId) {
-  if (!confirm("Mark this request as done?")) return;
+  if (!confirm("Mark this request as approved?")) return;
 
   try {
     const { error } = await supabase
       .from("item_requests")
       .update({
-        status: "done",
+        status: "approved",
         updated_at: new Date().toISOString()
       })
       .eq("id", requestId);
@@ -847,6 +960,8 @@ window.deleteUser = deleteUser;
 window.adjustQuantity = adjustQuantity;
 window.markRequestDone = markRequestDone;
 window.deleteRequest = deleteRequest;
+window.editAnnouncement = editAnnouncement;
+window.editRule = editRule;
 window.toggleAnnouncement = toggleAnnouncement;
 window.toggleRule = toggleRule;
 window.updateAccessCode = updateAccessCode;
@@ -855,7 +970,7 @@ window.postAnnouncement = postAnnouncement;
 window.deleteAnnouncement = deleteAnnouncement;
 window.postRule = postRule;
 window.deleteRule = deleteRule;
-window.addItem = addItem;
+window.editItem = editItem;
 window.deleteItem = deleteItem;
 window.logout = logout;
 window.setAccountsTab = setAccountsTab;
