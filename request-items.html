@@ -35,6 +35,10 @@
             <label for="notes">Notes (Optional)</label>
             <textarea id="notes"></textarea>
           </div>
+          <div class="form-group">
+            <label for="proof-image">Proof Image (Optional)</label>
+            <input type="file" id="proof-image" accept="image/*" />
+          </div>
           <button type="submit" class="btn btn-primary">SUBMIT REQUEST</button>
         </form>
         <p id="request-status" class="status-text"></p>
@@ -44,6 +48,13 @@
         <div class="card-heading">
           <h2>REQUEST FEED</h2>
           <div class="card-controls">
+            <label class="control-label" for="request-filter">Filter</label>
+            <select id="request-filter" class="sort-select">
+              <option value="all">All</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="denied">Denied</option>
+            </select>
             <label class="control-label" for="request-sort">Sort</label>
             <select id="request-sort" class="sort-select">
               <option value="newest">Newest</option>

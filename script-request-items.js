@@ -141,12 +141,28 @@ async function submitRequest(event) {
   const itemId = document.getElementById("item-select").value;
   const quantity = parseInt(document.getElementById("quantity").value);
   const notes = document.getElementById("notes").value;
+  const proofImageInput = document.getElementById("proof-image");
   const statusEl = document.getElementById("request-status");
 
   if (!itemId) {
     statusEl.textContent = "Please select an item!";
     statusEl.className = "status-text error";
     return;
+  }
+
+  let proofImageUrl = null;
+  if (proofImageInput.files && proofImageInput.files[0]) {
+    const file = proofImageInput.files[0];
+    const reader = new FileReader();
+    
+    await new Promise((resolve, reject) => {
+      reader.onload = () => {
+        proofImageUrl = reader.result;
+        resolve();
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   }
 
   statusEl.textContent = editingRequestId ? "Updating request..." : "Submitting request...";
@@ -334,8 +350,12 @@ function animateCountUp(elements) {
 
 function attachRequestSortHandler() {
   const sortEl = document.getElementById("request-sort");
+  const filterEl = document.getElementById("request-filter");
   if (sortEl) {
     sortEl.addEventListener("change", () => loadMyRequests());
+  }
+  if (filterEl) {
+    filterEl.addEventListener("change", () => loadMyRequests());
   }
 }
 
@@ -345,13 +365,21 @@ async function loadMyRequests() {
   container.innerHTML = '<p class="empty-state">Loading request feed...</p>';
   summaryContainer.innerHTML = '<p class="empty-state">Building summary...</p>';
 
+  const filterEl = document.getElementById("request-filter");
+  const selectedFilter = filterEl?.value || "all";
+
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from("item_requests")
       .select("id, quantity, notes, status, created_at, user_id, items!inner(name)")
-      .neq("status", "done")
       .order("created_at", { ascending: false })
       .limit(12);
+
+    if (selectedFilter !== "all") {
+      query = query.eq("status", selectedFilter);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
 
