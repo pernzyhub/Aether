@@ -52,7 +52,7 @@ async function logout() {
   localStorage.removeItem("aether_access_granted");
   const userEl = document.getElementById("user");
   if (userEl) userEl.textContent = "Logged out.";
-  window.location.replace("/");
+  window.location.replace("/access-gate.html");
 }
 
 function toggleLoginMode() {

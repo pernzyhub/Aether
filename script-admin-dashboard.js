@@ -712,7 +712,8 @@ async function logout() {
     console.warn("Logout warning:", err);
   }
   localStorage.removeItem("aether_member_session");
-  window.location.replace("/");
+  localStorage.removeItem("aether_access_granted");
+  window.location.replace("/access-gate.html");
 }
 
 function escapeHtml(text) {

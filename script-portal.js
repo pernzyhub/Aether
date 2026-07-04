@@ -19,13 +19,37 @@ function clearMemberSession() {
   localStorage.removeItem("aether_member_session");
 }
 
+async function ensureSupabaseSession() {
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (sessionData?.session) {
+    return sessionData.session;
+  }
+
+  const memberSession = getMemberSession();
+  if (!memberSession) {
+    return null;
+  }
+
+  try {
+    const { data, error } = await supabase.auth.signInAnonymously();
+    if (!error && data?.session) {
+      return data.session;
+    }
+  } catch (err) {
+    console.warn("Unable to start a temporary member session:", err);
+  }
+
+  return null;
+}
+
 async function loadUser() {
+  const session = await ensureSupabaseSession();
   const { data } = await supabase.auth.getSession();
   const user = data.session?.user;
   const memberSession = getMemberSession();
 
   if (!user && !memberSession) {
-    window.location.href = "/";
+    window.location.replace("/access-gate.html");
     return;
   }
 
@@ -179,6 +203,8 @@ async function loadAnnouncements() {
   const container = document.getElementById("announcements-list");
   if (!container) return;
 
+  await ensureSupabaseSession();
+
   try {
     const { data, error } = await supabase
       .from("announcements")
@@ -211,6 +237,8 @@ async function loadRules() {
   const container = document.getElementById("rules-list");
   if (!container) return;
 
+  await ensureSupabaseSession();
+
   try {
     const { data, error } = await supabase
       .from("rules")
@@ -241,9 +269,15 @@ async function loadRules() {
 }
 
 async function logout() {
-  await supabase.auth.signOut();
+  try {
+    await supabase.auth.signOut();
+  } catch (err) {
+    console.warn("Logout warning:", err);
+  }
+
   clearMemberSession();
-  window.location.href = "/";
+  localStorage.removeItem("aether_access_granted");
+  window.location.replace("/access-gate.html");
 }
 
 function goToPage(page) {

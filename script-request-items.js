@@ -16,7 +16,31 @@ function getMemberSession() {
   }
 }
 
+async function ensureSupabaseSession() {
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (sessionData?.session) {
+    return sessionData.session;
+  }
+
+  const memberSession = getMemberSession();
+  if (!memberSession) {
+    return null;
+  }
+
+  try {
+    const { data, error } = await supabase.auth.signInAnonymously();
+    if (!error && data?.session) {
+      return data.session;
+    }
+  } catch (err) {
+    console.warn("Unable to start a temporary member session:", err);
+  }
+
+  return null;
+}
+
 async function checkAuth() {
+  await ensureSupabaseSession();
   const { data } = await supabase.auth.getSession();
   const user = data.session?.user;
   const memberSession = getMemberSession();
@@ -160,8 +184,6 @@ async function submitRequest(event) {
     }
 
     statusEl.className = "status-text success";
-    document.getElementById("request-form").reset();
-    document.getElementById("quantity").value = 1;
     updateRequestButtonLabel();
     loadMyRequests();
   } catch (err) {
@@ -390,8 +412,15 @@ async function loadMyRequests() {
 }
 
 async function logout() {
-  await supabase.auth.signOut();
-  window.location.href = "/";
+  try {
+    await supabase.auth.signOut();
+  } catch (err) {
+    console.warn("Logout warning:", err);
+  }
+
+  localStorage.removeItem("aether_member_session");
+  localStorage.removeItem("aether_access_granted");
+  window.location.replace("/access-gate.html");
 }
 
 function escapeHtml(text) {
@@ -417,15 +446,6 @@ window.addEventListener("load", () => {
       loadItems();
       loadMyRequests();
       setActiveNavLink();
-    }
-  }, 80);
-});
-  window.setTimeout(async () => {
-    const isAuth = await checkAuth();
-    if (isAuth) {
-      attachRequestSortHandler();
-      loadItems();
-      loadMyRequests();
     }
   }, 80);
 });

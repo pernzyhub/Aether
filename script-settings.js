@@ -20,6 +20,29 @@ function clearMemberSession() {
   localStorage.removeItem("aether_member_session");
 }
 
+async function ensureSupabaseSession() {
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (sessionData?.session) {
+    return sessionData.session;
+  }
+
+  const memberSession = getMemberSession();
+  if (!memberSession) {
+    return null;
+  }
+
+  try {
+    const { data, error } = await supabase.auth.signInAnonymously();
+    if (!error && data?.session) {
+      return data.session;
+    }
+  } catch (err) {
+    console.warn("Unable to start a temporary member session:", err);
+  }
+
+  return null;
+}
+
 function showSettingsStatus(message, type) {
   const statusEl = document.getElementById("settings-status");
   if (!statusEl) return;
@@ -28,12 +51,13 @@ function showSettingsStatus(message, type) {
 }
 
 async function loadUser() {
+  await ensureSupabaseSession();
   const { data: sessionData } = await supabase.auth.getSession();
   const user = sessionData?.session?.user;
   const memberSession = getMemberSession();
   
   if (!user && !memberSession) {
-    window.location.href = "/";
+    window.location.replace("/access-gate.html");
     return;
   }
   
@@ -152,9 +176,15 @@ async function saveSettings() {
 }
 
 async function logout() {
-  await supabase.auth.signOut();
+  try {
+    await supabase.auth.signOut();
+  } catch (err) {
+    console.warn("Logout warning:", err);
+  }
+
   clearMemberSession();
-  window.location.href = "/";
+  localStorage.removeItem("aether_access_granted");
+  window.location.replace("/access-gate.html");
 }
 
 function setActiveNavLink() {
