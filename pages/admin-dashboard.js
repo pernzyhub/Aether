@@ -7,32 +7,72 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadUser() {
       const { data } = await supabase.auth.getSession();
       const u = data.session?.user;
+
       if (!u) {
-        window.location.href = "/admin-login"; // redirect if not logged in
+        // Not logged in → back to admin login
+        window.location.href = "/admin-login";
       } else if (u.user_metadata?.role !== "admin" && u.user_metadata?.role !== "superuser") {
-        window.location.href = "/"; // redirect non-admins to landing
+        // Logged in but not admin → back to landing
+        window.location.href = "/";
       } else {
         setUser(u);
       }
+      setLoading(false);
     }
     loadUser();
   }, []);
 
-  if (!user) return <p>Loading...</p>;
+  async function logout() {
+    await supabase.auth.signOut();
+    window.location.href = "/";
+  }
+
+  if (loading) return <p style={{ textAlign: "center" }}>Loading...</p>;
+
+  if (!user) return null;
 
   return (
-    <div style={{ padding: "40px", textAlign: "center" }}>
+    <div style={{ fontFamily: "Arial, sans-serif", padding: "40px", textAlign: "center" }}>
       <h1>Admin Dashboard</h1>
       <p>Welcome back, {user.user_metadata?.full_name || user.email}!</p>
-      <p>Here you can manage community settings, rewards, and more.</p>
-      <button onClick={async () => { await supabase.auth.signOut(); window.location.href = "/"; }}>
-        Logout
-      </button>
+
+      <div style={{ marginTop: "30px" }}>
+        <h2>Portal Options</h2>
+        <button
+          style={{
+            padding: "10px 20px",
+            margin: "10px",
+            background: "#5865f2",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+          }}
+          onClick={() => window.location.href = "/community"}
+        >
+          Community Area
+        </button>
+        <button
+          style={{
+            padding: "10px 20px",
+            margin: "10px",
+            background: "#ff4444",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+          }}
+          onClick={logout}
+        >
+          Logout
+        </button>
+      </div>
     </div>
   );
 }
