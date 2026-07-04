@@ -602,24 +602,41 @@ async function loadRequests() {
   container.innerHTML = "<p>Loading requests...</p>";
 
   try {
-    const { data, error } = await supabase
+    const { data: requests, error } = await supabase
       .from("item_requests")
-      .select("*, items!inner(name), user_id:clan_users!inner(ign)")
+      .select("*, items!inner(name)")
       .neq("status", "done")
       .order("created_at", { ascending: false });
 
     if (error) throw error;
 
-    if (!data || data.length === 0) {
+    if (!requests || requests.length === 0) {
       container.innerHTML = "<p>No requests yet.</p>";
       return;
     }
 
-    container.innerHTML = data.map(req => `
+    // Fetch clan_users for all user_ids in the requests
+    const userIds = [...new Set(requests.map(r => r.user_id))];
+    const { data: users, error: usersError } = await supabase
+      .from("clan_users")
+      .select("id, ign")
+      .in("id", userIds);
+
+    if (usersError) throw usersError;
+
+    // Create a map of user_id -> ign
+    const userMap = {};
+    users.forEach(u => {
+      userMap[u.id] = u.ign;
+    });
+
+    container.innerHTML = requests.map(req => {
+      const ign = userMap[req.user_id] || "Unknown User";
+      return `
       <div class="list-item" data-id="${req.id}">
         <div class="list-item-content">
           <div class="list-item-title">
-            ${escapeHtml(req.user_id.ign)} requested ${escapeHtml(req.items.name)} x${req.quantity}
+            ${escapeHtml(ign)} requested ${escapeHtml(req.items.name)} x${req.quantity}
           </div>
           <div class="list-item-meta">
             Requested: ${new Date(req.created_at).toLocaleString()}<br>
@@ -637,7 +654,7 @@ async function loadRequests() {
           ` : ''}
         </div>
       </div>
-    `).join("");
+    `}).join("");
   } catch (err) {
     container.innerHTML = `<p class="status-text error">Error loading requests: ${err.message}</p>`;
   }
