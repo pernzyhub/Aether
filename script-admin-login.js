@@ -4,6 +4,19 @@ const supabaseUrl = "https://wpilukuwehxphmorjxzd.supabase.co";
 const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwaWx1a3V3ZWh4cGhtb3JqeHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwODgxNDMsImV4cCI6MjA5ODY2NDE0M30.PjBUX8c8ZU8YVYUuwb2ypGyfMtHg-jOPlFDausGDKZY";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+function isAdminUser(user) {
+  const appMeta = user?.app_metadata || {};
+  const userMeta = user?.user_metadata || {};
+  const roleValue = appMeta.role || userMeta.role || appMeta.roles || userMeta.roles;
+  const roleText = typeof roleValue === "string"
+    ? roleValue
+    : Array.isArray(roleValue)
+      ? roleValue.join(",")
+      : "";
+  const superFlag = appMeta.is_superuser ?? userMeta.is_superuser ?? false;
+  return superFlag || /superuser|admin/i.test(roleText);
+}
+
 async function adminLogin(e) {
   e.preventDefault();
   const email = document.getElementById("admin-email").value;
@@ -25,8 +38,7 @@ async function adminLogin(e) {
   }
 
   const user = data.user;
-  const role = user?.app_metadata?.role;
-  if (role === "admin" || role === "superuser") {
+  if (isAdminUser(user)) {
     statusEl.textContent = "Welcome, Admin! Redirecting...";
     statusEl.className = "status-text success";
     setTimeout(() => {
@@ -43,8 +55,7 @@ window.addEventListener("load", () => {
   window.setTimeout(async () => {
     const { data } = await supabase.auth.getSession();
     if (data.session?.user) {
-      const role = data.session.user.app_metadata?.role;
-      if (role === "admin" || role === "superuser") {
+      if (isAdminUser(data.session.user)) {
         window.location.href = "/admin-dashboard.html";
       }
     }

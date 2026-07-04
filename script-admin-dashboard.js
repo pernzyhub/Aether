@@ -6,6 +6,19 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 let currentUser = null;
 
+function isAdminUser(user) {
+  const appMeta = user?.app_metadata || {};
+  const userMeta = user?.user_metadata || {};
+  const roleValue = appMeta.role || userMeta.role || appMeta.roles || userMeta.roles;
+  const roleText = typeof roleValue === "string"
+    ? roleValue
+    : Array.isArray(roleValue)
+      ? roleValue.join(",")
+      : "";
+  const superFlag = appMeta.is_superuser ?? userMeta.is_superuser ?? false;
+  return superFlag || /superuser|admin/i.test(roleText);
+}
+
 function setActiveModule(moduleName) {
   document.querySelectorAll('.module-card').forEach(btn => {
     btn.classList.toggle('is-active', btn.dataset.module === moduleName);
@@ -51,8 +64,7 @@ async function checkAuth() {
     return false;
   }
 
-  const role = user.app_metadata?.role;
-  if (role !== "admin" && role !== "superuser") {
+  if (!isAdminUser(user)) {
     await supabase.auth.signOut();
     window.location.href = "/admin-login.html";
     return false;
@@ -501,6 +513,8 @@ async function changeUserIgn(userId, currentIgn) {
     statusEl.className = "status-text error";
   }
 }
+
+async function toggleUserStatus(userId, isActive) {
   const action = isActive ? "activate" : "deactivate";
   const statusEl = document.getElementById("users-status");
   if (!confirm(`Are you sure you want to ${action} this user?`)) return;
@@ -511,7 +525,7 @@ async function changeUserIgn(userId, currentIgn) {
   try {
     const { error } = await supabase
       .from("clan_users")
-      .update({ is_active, updated_at: new Date().toISOString() })
+      .update({ is_active: isActive, updated_at: new Date().toISOString() })
       .eq("id", userId);
 
     if (error) throw error;
@@ -679,6 +693,7 @@ function escapeHtml(text) {
 }
 
 window.addEventListener("load", () => {
+  setActiveModule("announcements");
   window.setTimeout(async () => {
     const isAuth = await checkAuth();
     if (isAuth) {
@@ -695,16 +710,17 @@ window.addEventListener("load", () => {
 window.setActiveModule = setActiveModule;
 window.bulkRegisterMembers = bulkRegisterMembers;
 window.toggleUserStatus = toggleUserStatus;
+window.changeUserIgn = changeUserIgn;
 window.changeUserPassword = changeUserPassword;
+window.deleteUser = deleteUser;
 window.approveRequest = approveRequest;
 window.updateRequestStatus = updateRequestStatus;
-
+window.updateAccessCode = updateAccessCode;
+window.loadAccessCode = loadAccessCode;
 window.postAnnouncement = postAnnouncement;
 window.deleteAnnouncement = deleteAnnouncement;
 window.postRule = postRule;
 window.deleteRule = deleteRule;
 window.addItem = addItem;
 window.deleteItem = deleteItem;
-window.toggleUserStatus = toggleUserStatus;
-window.updateRequestStatus = updateRequestStatus;
 window.logout = logout;
