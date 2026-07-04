@@ -472,6 +472,9 @@ async function loadMyRequests() {
     // Populate summary dropdown with item names
     const summarySelect = document.getElementById("summary-select");
     if (summarySelect) {
+      // Save current selection
+      const currentSelection = summarySelect.value || "all";
+      
       summarySelect.innerHTML = '<option value="all">All Items</option>';
       summaryGroups.forEach(group => {
         const option = document.createElement("option");
@@ -479,6 +482,13 @@ async function loadMyRequests() {
         option.textContent = group.itemName;
         summarySelect.appendChild(option);
       });
+      
+      // Restore selection if it still exists, otherwise default to "all"
+      if (summaryGroups.some(g => g.itemName === currentSelection)) {
+        summarySelect.value = currentSelection;
+      } else {
+        summarySelect.value = "all";
+      }
     }
 
     // Get selected item from dropdown
