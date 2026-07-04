@@ -64,7 +64,7 @@ async function loadUser() {
   // Check if user is admin to show admin menu
   const adminMenuItem = document.getElementById("admin-menu-item");
   if (adminMenuItem && user.app_metadata?.role && (user.app_metadata.role === "admin" || user.app_metadata.role === "superuser")) {
-    adminMenuItem.style.display = "block";
+    adminMenuItem.style.display = "inline-flex";
   }
 
   // Set welcome text using IGN if available

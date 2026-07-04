@@ -25,11 +25,18 @@
 
   <header class="header">
     <div class="logo">AETHERCLAN</div>
-    <div class="nav-links" style="display: flex; align-items: center; gap: 20px;">
-      <span id="welcome-text" class="welcome-text">LOADING USER...</span>
-      <button id="change-ign-btn" class="btn btn-primary" style="width: auto; padding: 5px 10px; font-size: 0.8rem; display: none;" onclick="showIgnModal()">CHANGE YOUR IGN</button>
-      <a href="/settings.html" class="nav-link" style="color: #00ff88; text-decoration: none; padding: 8px 12px; border: 1px solid #00ff88;">SETTINGS</a>
-      <button class="logout-btn" onclick="logout()" style="margin: 0;">LOGOUT</button>
+    <div class="nav-links">
+      <div class="header-menu">
+        <a href="/portal.html" class="nav-link nav-link-pill active">HOME</a>
+        <a href="/request-items.html" class="nav-link nav-link-pill">REQUESTS</a>
+        <a href="/settings.html" class="nav-link nav-link-pill">SETTINGS</a>
+        <a id="admin-menu-item" href="/admin-dashboard.html" class="nav-link nav-link-pill" style="display: none;">ADMIN</a>
+      </div>
+      <div class="nav-actions">
+        <span id="welcome-text" class="welcome-text">LOADING USER...</span>
+        <button id="change-ign-btn" class="btn btn-primary" style="width: auto; padding: 5px 10px; font-size: 0.8rem; display: none;" onclick="showIgnModal()">CHANGE YOUR IGN</button>
+        <button class="logout-btn" onclick="logout()" style="margin: 0;">LOGOUT</button>
+      </div>
     </div>
   </header>
 
@@ -48,46 +55,6 @@
       </div>
     </section>
 
-    <section class="card main-menu">
-      <h2>MAIN MENU</h2>
-      <div class="menu-items">
-        <div class="menu-item" onclick="goToPage('/')">
-          <div class="menu-icon">🏠</div>
-          <div class="menu-title">HOME</div>
-          <div class="menu-desc">Return to landing page</div>
-        </div>
-        <div class="menu-item" onclick="alert('Community area coming soon!')">
-          <div class="menu-icon">👥</div>
-          <div class="menu-title">COMMUNITY</div>
-          <div class="menu-desc">Chat, forums, and member list</div>
-        </div>
-        <div class="menu-item" onclick="alert('Events calendar coming soon!')">
-          <div class="menu-icon">📅</div>
-          <div class="menu-title">EVENTS</div>
-          <div class="menu-desc">Upcoming matches and game nights</div>
-        </div>
-        <div class="menu-item" onclick="alert('Leaderboards coming soon!')">
-          <div class="menu-icon">🏆</div>
-          <div class="menu-title">LEADERBOARDS</div>
-          <div class="menu-desc">Clan rankings and stats</div>
-        </div>
-        <div class="menu-item" onclick="goToPage('/settings.html')">
-          <div class="menu-icon">⚙️</div>
-          <div class="menu-title">SETTINGS</div>
-          <div class="menu-desc">Manage your profile</div>
-        </div>
-        <div class="menu-item" onclick="goToPage('/request-items.html')">
-          <div class="menu-icon">📦</div>
-          <div class="menu-title">REQUEST ITEMS</div>
-          <div class="menu-desc">Request clan items (requires active status)</div>
-        </div>
-        <div id="admin-menu-item" class="menu-item" onclick="goToPage('/admin-dashboard.html')" style="display: none;">
-          <div class="menu-icon">🔧</div>
-          <div class="menu-title">ADMIN DASHBOARD</div>
-          <div class="menu-desc">Clan management (admin only)</div>
-        </div>
-      </div>
-    </section>
   </main>
 
   <footer class="footer">

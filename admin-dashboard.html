@@ -17,86 +17,93 @@
     </div>
   </header>
 
-  <div class="container" style="grid-template-columns: 1fr;">
-    <section class="card">
-      <h2>POST NEW ANNOUNCEMENT</h2>
-      <form id="announcement-form" onsubmit="postAnnouncement(event)">
-        <div class="form-group">
-          <label for="announcement-title">Announcement Title</label>
-          <input type="text" id="announcement-title" required />
-        </div>
-        <div class="form-group">
-          <label for="announcement-content">Announcement Content</label>
-          <textarea id="announcement-content" required></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">POST ANNOUNCEMENT</button>
-      </form>
-      <p id="announcements-status" class="status-text"></p>
+  <div class="container">
+    <section class="hero-card">
+      <div>
+        <p class="eyebrow">ADMIN CONTROL CENTER</p>
+        <h2>Manage announcements, rules, members and requests with clarity.</h2>
+      </div>
+      <div class="hero-pill">Formal • Secure • Clean</div>
     </section>
 
-    <section class="card">
-      <h2>MANAGE ANNOUNCEMENTS</h2>
-      <div id="announcements-list"></div>
-    </section>
+    <div class="dashboard-grid">
+      <section class="card">
+        <h2>POST NEW ANNOUNCEMENT</h2>
+        <form id="announcement-form" onsubmit="postAnnouncement(event)">
+          <div class="form-group">
+            <label for="announcement-title">Announcement Title</label>
+            <input type="text" id="announcement-title" required />
+          </div>
+          <div class="form-group">
+            <label for="announcement-content">Announcement Content</label>
+            <textarea id="announcement-content" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">POST ANNOUNCEMENT</button>
+        </form>
+        <p id="announcements-status" class="status-text"></p>
+      </section>
 
-    <section class="card">
-      <h2>ADD NEW RULE</h2>
-      <form id="rule-form" onsubmit="postRule(event)">
-        <div class="form-group">
-          <label for="rule-order">Rule Order Number</label>
-          <input type="number" id="rule-order" min="1" required />
-        </div>
-        <div class="form-group">
-          <label for="rule-title">Rule Title</label>
-          <input type="text" id="rule-title" required />
-        </div>
-        <div class="form-group">
-          <label for="rule-content">Rule Content</label>
-          <textarea id="rule-content" required></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">ADD RULE</button>
-      </form>
-      <p id="rules-status" class="status-text"></p>
-    </section>
+      <section class="card">
+        <h2>MANAGE ANNOUNCEMENTS</h2>
+        <div id="announcements-list"></div>
+      </section>
 
-    <section class="card">
-      <h2>MANAGE RULES</h2>
-      <div id="rules-list"></div>
-    </section>
+      <section class="card">
+        <h2>ADD NEW RULE</h2>
+        <form id="rule-form" onsubmit="postRule(event)">
+          <div class="form-group">
+            <label for="rule-order">Rule Order Number</label>
+            <input type="number" id="rule-order" min="1" required />
+          </div>
+          <div class="form-group">
+            <label for="rule-title">Rule Title</label>
+            <input type="text" id="rule-title" required />
+          </div>
+          <div class="form-group">
+            <label for="rule-content">Rule Content</label>
+            <textarea id="rule-content" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">ADD RULE</button>
+        </form>
+        <p id="rules-status" class="status-text"></p>
+      </section>
 
-    <!-- Item Management -->
-    <section class="card">
-      <h2>ADD NEW ITEM</h2>
-      <form id="item-form" onsubmit="addItem(event)">
-        <div class="form-group">
-          <label for="item-name">Item Name</label>
-          <input type="text" id="item-name" required />
-        </div>
-        <div class="form-group">
-          <label for="item-description">Item Description (Optional)</label>
-          <textarea id="item-description"></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">ADD ITEM</button>
-      </form>
-      <p id="items-status" class="status-text"></p>
-    </section>
+      <section class="card">
+        <h2>MANAGE RULES</h2>
+        <div id="rules-list"></div>
+      </section>
 
-    <section class="card">
-      <h2>MANAGE ITEMS</h2>
-      <div id="items-list"></div>
-    </section>
+      <section class="card">
+        <h2>ADD NEW ITEM</h2>
+        <form id="item-form" onsubmit="addItem(event)">
+          <div class="form-group">
+            <label for="item-name">Item Name</label>
+            <input type="text" id="item-name" required />
+          </div>
+          <div class="form-group">
+            <label for="item-description">Item Description (Optional)</label>
+            <textarea id="item-description"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">ADD ITEM</button>
+        </form>
+        <p id="items-status" class="status-text"></p>
+      </section>
 
-    <!-- Clan User Management -->
-    <section class="card">
-      <h2>MANAGE CLAN MEMBERS</h2>
-      <div id="users-list"></div>
-    </section>
+      <section class="card">
+        <h2>MANAGE ITEMS</h2>
+        <div id="items-list"></div>
+      </section>
 
-    <!-- Request Management -->
-    <section class="card">
-      <h2>MANAGE ITEM REQUESTS</h2>
-      <div id="requests-list"></div>
-    </section>
+      <section class="card">
+        <h2>MANAGE CLAN MEMBERS</h2>
+        <div id="users-list"></div>
+      </section>
+
+      <section class="card">
+        <h2>MANAGE ITEM REQUESTS</h2>
+        <div id="requests-list"></div>
+      </section>
+    </div>
   </div>
 
   <footer class="footer">

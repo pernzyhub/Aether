@@ -347,6 +347,7 @@ async function loadRequests() {
     const { data, error } = await supabase
       .from("item_requests")
       .select("*, items!inner(name), clan_users!inner(ign)")
+      .neq("status", "done")
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -362,14 +363,18 @@ async function loadRequests() {
           <div class="list-item-title">
             ${escapeHtml(req.clan_users.ign)} requested ${escapeHtml(req.items.name)} x${req.quantity}
           </div>
-          <div class="list-item-meta">${new Date(req.created_at).toLocaleString()}</div>
+          <div class="list-item-meta">
+            Requested: ${new Date(req.created_at).toLocaleString()}<br>
+            Updated: ${new Date(req.updated_at || req.created_at).toLocaleString()}
+          </div>
           <div class="list-item-text">
+            Remaining quantity: <strong>${req.quantity}</strong><br>
             Status: <span class="request-status ${req.status}">${req.status.toUpperCase()}</span>
           </div>
         </div>
         <div class="list-item-actions">
           ${req.status === 'pending' ? `
-            <button class="btn btn-success" onclick="updateRequestStatus('${req.id}', 'approved')">APPROVE</button>
+            <button class="btn btn-success" onclick="approveRequest('${req.id}', ${req.quantity})">APPROVE 1</button>
             <button class="btn btn-danger" onclick="updateRequestStatus('${req.id}', 'denied')">DENY</button>
           ` : ''}
         </div>
@@ -377,6 +382,29 @@ async function loadRequests() {
     `).join("");
   } catch (err) {
     container.innerHTML = `<p class="status-text error">Error loading requests: ${err.message}</p>`;
+  }
+}
+
+async function approveRequest(requestId, currentQuantity) {
+  if (!confirm("Approve 1 unit from this request?")) return;
+
+  const remainingQuantity = Math.max(0, currentQuantity - 1);
+  const nextStatus = remainingQuantity === 0 ? "done" : "pending";
+
+  try {
+    const { error } = await supabase
+      .from("item_requests")
+      .update({
+        quantity: remainingQuantity,
+        status: nextStatus,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", requestId);
+
+    if (error) throw error;
+    loadRequests();
+  } catch (err) {
+    alert(`Error updating request: ${err.message}`);
   }
 }
 
@@ -418,6 +446,9 @@ window.addEventListener("load", async () => {
     loadRequests();
   }
 });
+
+window.approveRequest = approveRequest;
+window.updateRequestStatus = updateRequestStatus;
 
 window.postAnnouncement = postAnnouncement;
 window.deleteAnnouncement = deleteAnnouncement;

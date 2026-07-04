@@ -16,34 +16,52 @@
     </div>
   </header>
 
-  <div class="container" style="grid-template-columns: 1fr;">
-    <!-- Request Form -->
-    <section class="card">
-      <h2>REQUEST AN ITEM</h2>
-      <form id="request-form" onsubmit="submitRequest(event)">
-        <div class="form-group">
-          <label for="item-select">Select Item</label>
-          <select id="item-select" required>
-            <option value="">Loading items...</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="quantity">Quantity</label>
-          <input type="number" id="quantity" min="1" value="1" required />
-        </div>
-        <div class="form-group">
-          <label for="notes">Notes (Optional)</label>
-          <textarea id="notes"></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">SUBMIT REQUEST</button>
-      </form>
-      <p id="request-status" class="status-text"></p>
-    </section>
+  <div class="container request-page">
+    <div class="request-left-column">
+      <section class="card request-form-card">
+        <h2>REQUEST AN ITEM</h2>
+        <form id="request-form" onsubmit="submitRequest(event)">
+          <div class="form-group">
+            <label for="item-select">Select Item</label>
+            <select id="item-select" required>
+              <option value="">Loading items...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="quantity">Quantity</label>
+            <input type="number" id="quantity" min="1" value="1" required />
+          </div>
+          <div class="form-group">
+            <label for="notes">Notes (Optional)</label>
+            <textarea id="notes"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">SUBMIT REQUEST</button>
+        </form>
+        <p id="request-status" class="status-text"></p>
+      </section>
 
-    <!-- My Requests -->
-    <section class="card">
-      <h2>MY REQUESTS</h2>
-      <div id="my-requests"></div>
+      <section class="card request-feed-card">
+        <div class="card-heading">
+          <h2>REQUEST FEED</h2>
+          <div class="card-controls">
+            <label class="control-label" for="request-sort">Sort</label>
+            <select id="request-sort" class="sort-select">
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+            </select>
+          </div>
+          <span class="card-badge">LIVE</span>
+        </div>
+        <div id="my-requests" class="request-feed"></div>
+      </section>
+    </div>
+
+    <section class="card request-summary-card">
+      <div class="card-heading">
+        <h2>ITEM SUMMARY</h2>
+        <span class="card-badge">GROUPED</span>
+      </div>
+      <div id="request-summary" class="request-summary"></div>
     </section>
   </div>
 
