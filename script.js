@@ -5,6 +5,19 @@ const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const DEFAULT_MEMBER_PASSWORD = "123";
 
+function isAdminUser(user) {
+  const appMeta = user?.app_metadata || {};
+  const userMeta = user?.user_metadata || {};
+  const roleValue = appMeta.role || userMeta.role || appMeta.roles || userMeta.roles;
+  const roleText = typeof roleValue === "string"
+    ? roleValue
+    : Array.isArray(roleValue)
+      ? roleValue.join(",")
+      : "";
+  const superFlag = appMeta.is_superuser ?? userMeta.is_superuser ?? false;
+  return superFlag || /superuser|admin/i.test(roleText);
+}
+
 function getMemberSession() {
   try {
     return JSON.parse(localStorage.getItem("aether_member_session"));
@@ -30,10 +43,16 @@ async function discordLogin() {
 }
 
 async function logout() {
-  await supabase.auth.signOut();
+  try {
+    await supabase.auth.signOut();
+  } catch (err) {
+    console.warn("Logout warning:", err);
+  }
   clearMemberSession();
+  localStorage.removeItem("aether_access_granted");
   const userEl = document.getElementById("user");
   if (userEl) userEl.textContent = "Logged out.";
+  window.location.replace("/");
 }
 
 function toggleAdminDropdown() {
@@ -63,12 +82,11 @@ async function adminLogin() {
     statusEl.className = "status-text error";
   } else {
     const user = data.user;
-    const role = user?.app_metadata?.role;
-    if (role === "admin" || role === "superuser") {
+    if (isAdminUser(user)) {
       statusEl.textContent = "Welcome, Admin!";
       statusEl.className = "status-text success";
       setTimeout(() => {
-        window.location.href = "/admin-dashboard.html";
+        window.location.replace("/admin-dashboard.html");
       }, 1000);
     } else {
       statusEl.textContent = "Access denied. Not an admin.";
@@ -131,8 +149,11 @@ async function memberLogin() {
 }
 
 supabase.auth.onAuthStateChange((_event, session) => {
-  if (session?.user) {
-    window.location.href = "/portal.html";
+  if (!session?.user) return;
+  if (isAdminUser(session.user)) {
+    window.location.replace("/admin-dashboard.html");
+  } else {
+    window.location.replace("/portal.html");
   }
 });
 
@@ -146,7 +167,12 @@ window.addEventListener("load", () => {
 
     const accessGranted = localStorage.getItem("aether_access_granted") === "true";
     if (!accessGranted) {
-      window.location.href = "/access-gate.html";
+      window.location.replace("/access-gate.html");
+      return;
+    }
+
+    if (data.session?.user && isAdminUser(data.session.user)) {
+      window.location.replace("/admin-dashboard.html");
       return;
     }
 

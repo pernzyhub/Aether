@@ -334,6 +334,10 @@ function createAuthEmailForIgn(ign) {
   return `${normalized || 'member'}_${unique}@aether.local`;
 }
 
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 async function bulkRegisterMembers(event) {
   event.preventDefault();
   const rawText = document.getElementById("bulk-accounts").value.trim();
@@ -356,7 +360,7 @@ async function bulkRegisterMembers(event) {
   statusEl.className = "status-text";
 
   const results = [];
-  for (const line of lines) {
+  for (const [index, line] of lines.entries()) {
     const parts = line.split("|").map(part => part.trim());
     const ign = parts[0];
     const password = parts[1] || "123";
@@ -385,6 +389,10 @@ async function bulkRegisterMembers(event) {
       });
 
       if (signUpError) {
+        if (/rate limit|too many requests/i.test(signUpError.message)) {
+          results.push(`${ign}: auth rate limit reached — slowing down and retrying later is recommended.`);
+          break;
+        }
         results.push(`${ign}: ${signUpError.message}`);
         continue;
       }
@@ -407,6 +415,10 @@ async function bulkRegisterMembers(event) {
       }
     } catch (err) {
       results.push(`${ign}: ${err.message}`);
+    }
+
+    if (index < lines.length - 1) {
+      await delay(900);
     }
   }
 
@@ -682,8 +694,13 @@ async function updateAccessCode(event) {
 }
 
 async function logout() {
-  await supabase.auth.signOut();
-  window.location.href = "/";
+  try {
+    await supabase.auth.signOut();
+  } catch (err) {
+    console.warn("Logout warning:", err);
+  }
+  localStorage.removeItem("aether_member_session");
+  window.location.replace("/");
 }
 
 function escapeHtml(text) {

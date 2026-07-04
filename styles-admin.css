@@ -11,6 +11,8 @@ body {
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 body::before {
@@ -91,9 +93,10 @@ body::before {
 .container {
   position: relative;
   z-index: 1;
-  max-width: 1400px;
+  width: min(100%, 1600px);
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: 30px 24px 48px;
+  flex: 1;
 }
 
 .hero-card {
@@ -136,12 +139,21 @@ body::before {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  background: rgba(10, 4, 6, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.28);
 }
 
 .module-nav {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 12px;
+  position: sticky;
+  top: 78px;
+  z-index: 10;
+  padding: 4px 2px;
 }
 
 .module-card {
@@ -153,17 +165,20 @@ body::before {
   text-transform: uppercase;
   letter-spacing: 1.5px;
   cursor: pointer;
-  transition: border-color 0.2s ease, color 0.2s ease;
+  transition: all 0.25s ease;
 }
 
 .module-card:hover,
 .module-card.is-active {
   border-color: #ff4466;
   color: #ffb3c0;
+  background: rgba(255, 68, 102, 0.12);
+  box-shadow: 0 0 16px rgba(255, 68, 102, 0.16);
 }
 
 .module-stage {
   position: relative;
+  min-height: 60vh;
 }
 
 .module-panel {
@@ -194,6 +209,7 @@ body::before {
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.24);
   position: relative;
   overflow: hidden;
+  backdrop-filter: blur(6px);
 }
 
 .card::before {
