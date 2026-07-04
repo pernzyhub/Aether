@@ -95,6 +95,18 @@
       </section>
 
       <section class="card">
+        <h2>BULK REGISTER MEMBERS</h2>
+        <form id="bulk-register-form" onsubmit="bulkRegisterMembers(event)">
+          <div class="form-group">
+            <label for="bulk-accounts">Accounts (one per line)</label>
+            <textarea id="bulk-accounts" placeholder="IGN|password&#10;IGN2|password2" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">REGISTER ACCOUNTS</button>
+        </form>
+        <p id="bulk-register-status" class="status-text"></p>
+      </section>
+
+      <section class="card">
         <h2>MANAGE CLAN MEMBERS</h2>
         <p id="users-status" class="status-text"></p>
         <div id="users-list"></div>

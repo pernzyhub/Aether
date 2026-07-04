@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aether Access Gate</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <canvas id="matrix-canvas"></canvas>
+  <div class="container">
+    <div class="header">
+      <h1>AETHERCLAN</h1>
+    </div>
+
+    <div class="login-container">
+      <div class="login-box">
+        <h2>ACCESS GATE</h2>
+        <p>Enter the Aether access code to continue to the clan login.</p>
+
+        <form id="access-gate-form" onsubmit="event.preventDefault(); submitAccessCode();">
+          <div class="form-group">
+            <label for="access-code">Access Code</label>
+            <input type="text" id="access-code" placeholder="Enter access code" required />
+          </div>
+          <button type="submit" class="form-submit-btn">CONTINUE</button>
+        </form>
+
+        <p id="access-gate-status" class="status-text"></p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="script-access-gate.js"></script>
+</body>
+</html>

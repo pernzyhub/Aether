@@ -38,12 +38,7 @@ window.addEventListener('resize', () => {
 const supabaseUrl = "https://wpilukuwehxphmorjxzd.supabase.co";
 const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwaWx1a3V3ZWh4cGhtb3JqeHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwODgxNDMsImV4cCI6MjA5ODY2NDE0M30.PjBUX8c8ZU8YVYUuwb2ypGyfMtHg-jOPlFDausGDKZY";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
-const ACCESS_CODE = "AETHER2026";
 const DEFAULT_MEMBER_PASSWORD = "Aether2026!";
-
-function validateAccessCode(inputValue) {
-  return inputValue.trim().toUpperCase() === ACCESS_CODE;
-}
 
 function getMemberSession() {
   try {
@@ -84,17 +79,10 @@ function toggleAdminDropdown() {
 async function adminLogin() {
   const email = document.getElementById("adminEmail").value;
   const password = document.getElementById("adminPassword").value;
-  const accessCode = document.getElementById("adminAccessCode").value;
   const statusEl = document.getElementById("adminStatus");
 
   statusEl.textContent = "";
   statusEl.className = "status-text";
-
-  if (!validateAccessCode(accessCode)) {
-    statusEl.textContent = "Invalid access code.";
-    statusEl.className = "status-text error";
-    return;
-  }
 
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
@@ -123,17 +111,10 @@ async function adminLogin() {
 async function memberLogin() {
   const ign = document.getElementById("memberIgn").value.trim();
   const password = document.getElementById("memberPassword").value;
-  const accessCode = document.getElementById("accessCode").value;
   const statusEl = document.getElementById("memberStatus");
 
   statusEl.textContent = "";
   statusEl.className = "status-text";
-
-  if (!validateAccessCode(accessCode)) {
-    statusEl.textContent = "Invalid access code.";
-    statusEl.className = "status-text error";
-    return;
-  }
 
   try {
     const { data: clanUsers, error } = await supabase
@@ -191,6 +172,11 @@ window.addEventListener("load", async () => {
   const userEl = document.getElementById("user");
   if (userEl) {
     userEl.textContent = JSON.stringify(data.session?.user || "Not logged in", null, 2);
+  }
+
+  const accessGranted = localStorage.getItem("aether_access_granted") === "true";
+  if (!accessGranted) {
+    window.location.href = "/access-gate.html";
   }
 });
 

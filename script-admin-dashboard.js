@@ -278,6 +278,73 @@ async function deleteItem(id) {
 }
 
 /* Clan User Management */
+async function bulkRegisterMembers(event) {
+  event.preventDefault();
+  const rawText = document.getElementById("bulk-accounts").value.trim();
+  const statusEl = document.getElementById("bulk-register-status");
+
+  if (!rawText) {
+    statusEl.textContent = "Please enter at least one account.";
+    statusEl.className = "status-text error";
+    return;
+  }
+
+  const lines = rawText.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+  if (!lines.length) {
+    statusEl.textContent = "Please enter at least one account.";
+    statusEl.className = "status-text error";
+    return;
+  }
+
+  statusEl.textContent = "Registering accounts...";
+  statusEl.className = "status-text";
+
+  const results = [];
+  for (const line of lines) {
+    const parts = line.split("|").map(part => part.trim());
+    const ign = parts[0];
+    const password = parts[1] || "Aether2026!";
+
+    if (!ign) continue;
+
+    try {
+      const { data: existingUsers } = await supabase
+        .from("clan_users")
+        .select("id")
+        .eq("ign", ign)
+        .limit(1);
+
+      if (existingUsers && existingUsers.length > 0) {
+        results.push(`${ign}: already exists`);
+        continue;
+      }
+
+      const newId = crypto.randomUUID();
+      const { error } = await supabase.from("clan_users").insert([{ 
+        id: newId,
+        ign,
+        password,
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }]);
+
+      if (error) {
+        results.push(`${ign}: ${error.message}`);
+      } else {
+        results.push(`${ign}: created`);
+      }
+    } catch (err) {
+      results.push(`${ign}: ${err.message}`);
+    }
+  }
+
+  statusEl.textContent = results.join(" | ");
+  statusEl.className = "status-text success";
+  document.getElementById("bulk-register-form").reset();
+  loadUsers();
+}
+
 async function loadUsers() {
   const container = document.getElementById("users-list");
   const statusEl = document.getElementById("users-status");
@@ -496,6 +563,7 @@ window.addEventListener("load", async () => {
   }
 });
 
+window.bulkRegisterMembers = bulkRegisterMembers;
 window.toggleUserStatus = toggleUserStatus;
 window.changeUserPassword = changeUserPassword;
 window.approveRequest = approveRequest;
