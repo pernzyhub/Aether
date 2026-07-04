@@ -183,20 +183,29 @@ async function submitRequest(event) {
       });
 
       if (error && /Could not find the function|function public\.create_item_request/i.test(error.message)) {
-        ({ error } = await supabase
-          .from("item_requests")
-          .insert({
+        const fallback = await supabase.functions.invoke("create-request", {
+          body: {
             user_id: requestUserId,
             item_id: itemId,
             quantity,
             notes: notes || null,
             status: "pending"
-          }));
+          }
+        });
+
+        error = fallback.error;
+
+        if (!error && fallback.data?.error) {
+          error = new Error(fallback.data.error);
+        }
       }
 
       if (error) {
         if (/row-level security|permission denied/i.test(error.message)) {
           throw new Error("Your session could not be authorized to create requests. Please log out and sign in again.");
+        }
+        if (/Failed to send a request to the Edge Function|non-2xx status code/i.test(error.message)) {
+          throw new Error("The request service is unavailable right now. Deploy the Supabase create-request function or restore the latest request RPC.");
         }
         throw error;
       }
