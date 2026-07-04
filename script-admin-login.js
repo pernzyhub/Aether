@@ -25,7 +25,8 @@ async function adminLogin(e) {
   }
 
   const user = data.user;
-  if (user?.user_metadata?.role === "admin" || user?.user_metadata?.role === "superuser") {
+  const role = user?.app_metadata?.role;
+  if (role === "admin" || role === "superuser") {
     statusEl.textContent = "Welcome, Admin! Redirecting...";
     statusEl.className = "status-text success";
     setTimeout(() => {
@@ -41,7 +42,7 @@ async function adminLogin(e) {
 window.addEventListener("load", async () => {
   const { data } = await supabase.auth.getSession();
   if (data.session?.user) {
-    const role = data.session.user.user_metadata?.role;
+    const role = data.session.user.app_metadata?.role;
     if (role === "admin" || role === "superuser") {
       window.location.href = "/admin-dashboard.html";
     }

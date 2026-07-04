@@ -16,7 +16,7 @@ export default function AdminDashboard() {
 
       if (!u) {
         window.location.href = "/admin-login"; // not logged in
-      } else if (u.user_metadata?.role !== "admin" && u.user_metadata?.role !== "superuser") {
+      } else if (u.app_metadata?.role !== "admin" && u.app_metadata?.role !== "superuser") {
         window.location.href = "/"; // not admin
       } else {
         setUser(u);

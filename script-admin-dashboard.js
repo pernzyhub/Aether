@@ -15,7 +15,7 @@ async function checkAuth() {
     return false;
   }
 
-  const role = user.user_metadata?.role;
+  const role = user.app_metadata?.role;
   if (role !== "admin" && role !== "superuser") {
     await supabase.auth.signOut();
     window.location.href = "/admin-login.html";

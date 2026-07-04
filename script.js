@@ -72,7 +72,8 @@ async function adminLogin() {
     statusEl.className = "status-text error";
   } else {
     const user = data.user;
-    if (user?.user_metadata?.role === "admin" || user?.user_metadata?.role === "superuser") {
+    const role = user?.app_metadata?.role;
+    if (role === "admin" || role === "superuser") {
       statusEl.textContent = "Welcome, Admin!";
       statusEl.className = "status-text success";
       setTimeout(() => {

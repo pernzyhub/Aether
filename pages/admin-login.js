@@ -22,7 +22,8 @@ export default function AdminLogin() {
       setStatus("Login failed: " + error.message);
     } else {
       const user = data.user;
-      if (user?.user_metadata?.role === "admin" || user?.user_metadata?.role === "superuser") {
+      const role = user?.app_metadata?.role;
+      if (role === "admin" || role === "superuser") {
         setStatus("Welcome, Admin!");
         window.location.href = "/admin-dashboard"; // ✅ Next.js route
       } else {
