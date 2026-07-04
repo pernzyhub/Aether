@@ -7,22 +7,6 @@
   <link rel="stylesheet" href="styles-portal.css" />
 </head>
 <body>
-  <!-- IGN Setup Modal (kept for when button is clicked) -->
-  <div id="ign-modal" class="modal hidden">
-    <div class="modal-content">
-      <h2>SET YOUR IN-GAME NAME (IGN)</h2>
-      <p>Please set your clan IGN. This is required for clan features.</p>
-      <form id="ign-form" onsubmit="saveIgn(event)">
-        <div class="form-group">
-          <label for="ign-input">YOUR IGN</label>
-          <input type="text" id="ign-input" required placeholder="Enter your IGN" />
-        </div>
-        <button type="submit" class="btn btn-primary">SAVE IGN</button>
-      </form>
-      <p id="ign-status" class="status-text"></p>
-    </div>
-  </div>
-
   <header class="header">
     <div class="logo">AETHER CLAN</div>
     <div class="nav-links">
@@ -34,7 +18,7 @@
       </div>
       <div class="nav-actions">
         <span id="welcome-text" class="welcome-text">LOADING USER...</span>
-        <button id="change-ign-btn" class="btn btn-primary" style="width: auto; padding: 5px 10px; font-size: 0.8rem; display: none;" onclick="showIgnModal()">CHANGE YOUR IGN</button>
+        <a href="/settings.html" class="nav-link nav-link-pill">PASSWORD</a>
         <button class="logout-btn" onclick="logout()" style="margin: 0;">LOGOUT</button>
       </div>
     </div>

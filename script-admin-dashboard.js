@@ -75,6 +75,14 @@ async function checkAuth() {
   return true;
 }
 
+function saveAnnouncementCache(items) {
+  localStorage.setItem("aether_announcements_cache", JSON.stringify(items));
+}
+
+function saveRulesCache(items) {
+  localStorage.setItem("aether_rules_cache", JSON.stringify(items));
+}
+
 async function loadAnnouncements() {
   const container = document.getElementById("announcements-list");
   const statusEl = document.getElementById("announcements-status");
@@ -89,10 +97,12 @@ async function loadAnnouncements() {
     if (error) throw error;
 
     if (!data || data.length === 0) {
+      saveAnnouncementCache([]);
       container.innerHTML = "<p>No announcements yet.</p>";
       return;
     }
 
+    saveAnnouncementCache(data);
     container.innerHTML = data.map(ann => `
       <div class="list-item" data-id="${ann.id}">
         <div class="list-item-content">
@@ -173,10 +183,12 @@ async function loadRules() {
     if (error) throw error;
 
     if (!data || data.length === 0) {
+      saveRulesCache([]);
       container.innerHTML = "<p>No rules yet.</p>";
       return;
     }
 
+    saveRulesCache(data);
     container.innerHTML = data.map(rule => `
       <div class="list-item" data-id="${rule.id}">
         <div class="list-item-content">

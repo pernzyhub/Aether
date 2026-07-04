@@ -102,12 +102,6 @@ async function loadUser() {
 
   const isAdmin = user?.app_metadata?.role && (user.app_metadata.role === "admin" || user.app_metadata.role === "superuser");
 
-  // Check if IGN is set - show button if not
-  const changeIgnBtn = document.getElementById("change-ign-btn");
-  if (changeIgnBtn) {
-    changeIgnBtn.style.display = isAdmin || (currentClanUser && currentClanUser.ign) ? "none" : "inline-block";
-  }
-
   // Check if user is admin to show admin menu
   const adminMenuItem = document.getElementById("admin-menu-item");
   if (adminMenuItem && isAdmin) {
@@ -122,20 +116,6 @@ async function loadUser() {
   }
 }
 
-function showIgnModal() {
-  const modal = document.getElementById("ign-modal");
-  if (modal) {
-    modal.classList.remove("hidden");
-  }
-}
-
-function hideIgnModal() {
-  const modal = document.getElementById("ign-modal");
-  if (modal) {
-    modal.classList.add("hidden");
-  }
-}
-
 function setActiveNavLink() {
   const currentPath = window.location.pathname.split("/").pop().toLowerCase();
   document.querySelectorAll('.header-menu .nav-link').forEach((link) => {
@@ -145,63 +125,60 @@ function setActiveNavLink() {
   });
 }
 
-async function saveIgn(event) {
-  event.preventDefault();
-  const ignInput = document.getElementById("ign-input");
-  const statusEl = document.getElementById("ign-status");
-  const ign = ignInput.value.trim();
+function getCachedItems(cacheKey) {
+  try {
+    const cachedValue = localStorage.getItem(cacheKey);
+    return cachedValue ? JSON.parse(cachedValue) : null;
+  } catch {
+    return null;
+  }
+}
 
-  if (!ign) {
-    statusEl.textContent = "Please enter a valid IGN!";
-    statusEl.className = "status-text error";
+function saveCachedItems(cacheKey, value) {
+  localStorage.setItem(cacheKey, JSON.stringify(value));
+}
+
+function renderAnnouncements(items, container) {
+  if (!items || items.length === 0) {
+    container.innerHTML = "<p>No announcements yet.</p>";
     return;
   }
 
-  statusEl.textContent = "Saving...";
-  statusEl.className = "status-text";
+  container.innerHTML = items.map(ann => `
+    <div class="announcement-item">
+      <div class="announcement-title">${escapeHtml(ann.title)}</div>
+      <div class="announcement-date">${new Date(ann.created_at).toLocaleDateString()}</div>
+      <div class="announcement-content">${escapeHtml(ann.content)}</div>
+    </div>
+  `).join("");
+}
 
-  const { data: sessionData } = await supabase.auth.getSession();
-  const userId = currentUser?.id || sessionData.session?.user?.id;
-
-  const { error } = await supabase
-    .from("clan_users")
-    .update({ ign: ign, updated_at: new Date().toISOString() })
-    .eq("id", userId);
-
-  if (error) {
-    statusEl.textContent = "Error saving IGN: " + error.message;
-    statusEl.className = "status-text error";
+function renderRules(items, container) {
+  if (!items || items.length === 0) {
+    container.innerHTML = "<p>No rules yet.</p>";
     return;
   }
 
-  statusEl.textContent = "IGN saved successfully!";
-  statusEl.className = "status-text success";
-  
-  if (currentClanUser) {
-    currentClanUser.ign = ign;
-  }
-
-  // Update welcome text
-  const welcomeEl = document.getElementById("welcome-text");
-  if (welcomeEl) {
-    welcomeEl.textContent = `WELCOME, ${ign.toUpperCase()}`;
-  }
-
-  // Hide change IGN button since it can only be used once
-  const changeIgnBtn = document.getElementById("change-ign-btn");
-  if (changeIgnBtn) {
-    changeIgnBtn.style.display = "none";
-  }
-
-  // Hide modal after a short delay
-  setTimeout(() => {
-    hideIgnModal();
-  }, 1000);
+  container.innerHTML = items.map(rule => `
+    <div class="rule-item">
+      <div class="rule-number">${rule.order_num}</div>
+      <div class="rule-text">
+        <strong>${escapeHtml(rule.title)}:</strong> ${escapeHtml(rule.content)}
+      </div>
+    </div>
+  `).join("");
 }
 
 async function loadAnnouncements() {
   const container = document.getElementById("announcements-list");
   if (!container) return;
+
+  const cachedAnnouncements = getCachedItems("aether_announcements_cache") || [];
+  if (cachedAnnouncements.length > 0) {
+    renderAnnouncements(cachedAnnouncements, container);
+  } else {
+    container.innerHTML = "<p>Loading announcements...</p>";
+  }
 
   await ensureSupabaseSession();
 
@@ -212,30 +189,41 @@ async function loadAnnouncements() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      container.innerHTML = `<p>Error loading announcements: ${error.message}</p>`;
+      if (cachedAnnouncements.length > 0) {
+        renderAnnouncements(cachedAnnouncements, container);
+      } else {
+        container.innerHTML = `<p>Error loading announcements: ${error.message}</p>`;
+      }
       return;
     }
 
-    if (!data || data.length === 0) {
+    if (data && data.length > 0) {
+      saveCachedItems("aether_announcements_cache", data);
+      renderAnnouncements(data, container);
+    } else if (cachedAnnouncements.length > 0) {
+      renderAnnouncements(cachedAnnouncements, container);
+    } else {
       container.innerHTML = "<p>No announcements yet.</p>";
-      return;
     }
-
-    container.innerHTML = data.map(ann => `
-      <div class="announcement-item">
-        <div class="announcement-title">${escapeHtml(ann.title)}</div>
-        <div class="announcement-date">${new Date(ann.created_at).toLocaleDateString()}</div>
-        <div class="announcement-content">${escapeHtml(ann.content)}</div>
-      </div>
-    `).join("");
   } catch (err) {
-    container.innerHTML = `<p>Error loading announcements: ${err.message}</p>`;
+    if (cachedAnnouncements.length > 0) {
+      renderAnnouncements(cachedAnnouncements, container);
+    } else {
+      container.innerHTML = `<p>Error loading announcements: ${err.message}</p>`;
+    }
   }
 }
 
 async function loadRules() {
   const container = document.getElementById("rules-list");
   if (!container) return;
+
+  const cachedRules = getCachedItems("aether_rules_cache") || [];
+  if (cachedRules.length > 0) {
+    renderRules(cachedRules, container);
+  } else {
+    container.innerHTML = "<p>Loading rules...</p>";
+  }
 
   await ensureSupabaseSession();
 
@@ -246,25 +234,28 @@ async function loadRules() {
       .order("order_num", { ascending: true });
 
     if (error) {
-      container.innerHTML = `<p>Error loading rules: ${error.message}</p>`;
+      if (cachedRules.length > 0) {
+        renderRules(cachedRules, container);
+      } else {
+        container.innerHTML = `<p>Error loading rules: ${error.message}</p>`;
+      }
       return;
     }
 
-    if (!data || data.length === 0) {
+    if (data && data.length > 0) {
+      saveCachedItems("aether_rules_cache", data);
+      renderRules(data, container);
+    } else if (cachedRules.length > 0) {
+      renderRules(cachedRules, container);
+    } else {
       container.innerHTML = "<p>No rules yet.</p>";
-      return;
     }
-
-    container.innerHTML = data.map(rule => `
-      <div class="rule-item">
-        <div class="rule-number">${rule.order_num}</div>
-        <div class="rule-text">
-          <strong>${escapeHtml(rule.title)}:</strong> ${escapeHtml(rule.content)}
-        </div>
-      </div>
-    `).join("");
   } catch (err) {
-    container.innerHTML = `<p>Error loading rules: ${err.message}</p>`;
+    if (cachedRules.length > 0) {
+      renderRules(cachedRules, container);
+    } else {
+      container.innerHTML = `<p>Error loading rules: ${err.message}</p>`;
+    }
   }
 }
 
@@ -301,6 +292,14 @@ window.addEventListener("load", () => {
   }, 80);
 });
 
+window.addEventListener("storage", (event) => {
+  if (event.key === "aether_announcements_cache") {
+    loadAnnouncements();
+  }
+  if (event.key === "aether_rules_cache") {
+    loadRules();
+  }
+});
+
 window.logout = logout;
 window.goToPage = goToPage;
-window.saveIgn = saveIgn;

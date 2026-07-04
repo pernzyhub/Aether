@@ -105,12 +105,6 @@ async function loadUser() {
       welcomeEl.textContent = `WELCOME, ${username.toUpperCase()}`;
     }
     
-    // Pre-fill the IGN input
-    const ignInput = document.getElementById("newIgn");
-    if (ignInput && clanUser.ign) {
-      ignInput.value = clanUser.ign;
-    }
-
     const needsPasswordChange = Boolean(memberSession?.needsPasswordChange) || !clanUser.password || clanUser.password === DEFAULT_MEMBER_PASSWORD;
     if (needsPasswordChange) {
       showSettingsStatus("This is your first login. Please choose a new password before continuing.", "error");
@@ -119,11 +113,10 @@ async function loadUser() {
 }
 
 async function saveSettings() {
-  const newIgn = document.getElementById("newIgn").value.trim();
   const newPassword = document.getElementById("newPassword").value;
   const confirmPassword = document.getElementById("confirmPassword").value;
   
-  if (!newIgn || !newPassword || !confirmPassword) {
+  if (!newPassword || !confirmPassword) {
     showSettingsStatus("Please fill out all fields!", "error");
     return;
   }
@@ -147,7 +140,6 @@ async function saveSettings() {
     const { error: profileError } = await supabase
       .from("clan_users")
       .update({
-        ign: newIgn,
         password: newPassword,
         updated_at: new Date().toISOString()
       })
@@ -166,7 +158,7 @@ async function saveSettings() {
       }));
     }
 
-    showSettingsStatus("Settings saved successfully! Your IGN and password have been updated.", "success");
+    showSettingsStatus("Password updated successfully!", "success");
     document.getElementById("settings-form").reset();
     await loadUser();
     
