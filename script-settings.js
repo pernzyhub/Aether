@@ -99,7 +99,7 @@ async function saveSettings() {
       return;
     }
     
-    statusEl.textContent = "Settings saved successfully!";
+    statusEl.textContent = "✅ Settings saved successfully! Your IGN and password have been updated!";
     statusEl.className = "status-text success";
     
     // Reload clan user
