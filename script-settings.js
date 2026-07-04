@@ -126,38 +126,56 @@ async function saveSettings() {
     return;
   }
   
-  if (!currentUser?.id) {
-    showSettingsStatus("Your session could not be verified. Please log in again.", "error");
-    return;
-  }
-  
   showSettingsStatus("Saving settings...", "");
   
   try {
-    const { error: profileError } = await supabase
-      .from("clan_users")
-      .update({
-        password: newPassword,
-        updated_at: new Date().toISOString()
-      })
-      .eq("id", currentUser.id);
-    
-    if (profileError) {
-      showSettingsStatus(`Error saving settings: ${profileError.message}`, "error");
-      return;
-    }
-    
     const memberSession = getMemberSession();
+    
+    // For member session users (non-Supabase auth), update database
     if (memberSession) {
+      const { error: updateError } = await supabase
+        .from("clan_users")
+        .update({
+          password: newPassword,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", memberSession.id);
+      
+      if (updateError) {
+        showSettingsStatus(`Error updating password: ${updateError.message}`, "error");
+        return;
+      }
+      
+      // Update localStorage to remove needsPasswordChange flag
       localStorage.setItem("aether_member_session", JSON.stringify({
         ...memberSession,
         needsPasswordChange: false
       }));
+      
+      showSettingsStatus("Password updated successfully!", "success");
+      document.getElementById("settings-form").reset();
+      await loadUser();
+      return;
     }
-
-    showSettingsStatus("Password updated successfully!", "success");
-    document.getElementById("settings-form").reset();
-    await loadUser();
+    
+    // For Supabase auth users, use auth API
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData?.session?.user) {
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+      
+      if (updateError) {
+        showSettingsStatus(`Error updating password: ${updateError.message}`, "error");
+        return;
+      }
+      
+      showSettingsStatus("Password updated successfully!", "success");
+      document.getElementById("settings-form").reset();
+      return;
+    }
+    
+    showSettingsStatus("Your session could not be verified. Please log in again.", "error");
     
   } catch (err) {
     showSettingsStatus(`Error: ${err.message}`, "error");
