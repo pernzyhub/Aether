@@ -664,12 +664,18 @@ async function changeUserIgn(userId, currentIgn) {
   statusEl.className = "status-text";
 
   try {
-    const { error } = await supabase
-      .from("clan_users")
-      .update({ ign: newIgn.trim(), updated_at: new Date().toISOString() })
-      .eq("id", userId);
+    const { error } = await supabase.rpc("admin_update_clan_user_ign", {
+      target_user_id: userId,
+      new_ign: newIgn.trim()
+    });
 
-    if (error) throw error;
+    if (error) {
+      if (/Could not find the function|function public\.admin_update_clan_user_ign/i.test(error.message)) {
+        throw new Error("Supabase is missing the latest account-management migration. Run the newest migration and try again.");
+      }
+      throw error;
+    }
+
     showStatus("users-status", "IGN updated successfully.", "success");
     loadUsers();
   } catch (err) {
@@ -686,12 +692,18 @@ async function toggleUserStatus(userId, isActive) {
   statusEl.className = "status-text";
 
   try {
-    const { error } = await supabase
-      .from("clan_users")
-      .update({ is_active: isActive, updated_at: new Date().toISOString() })
-      .eq("id", userId);
+    const { error } = await supabase.rpc("admin_toggle_clan_user_status", {
+      target_user_id: userId,
+      new_status: isActive
+    });
 
-    if (error) throw error;
+    if (error) {
+      if (/Could not find the function|function public\.admin_toggle_clan_user_status/i.test(error.message)) {
+        throw new Error("Supabase is missing the latest account-management migration. Run the newest migration and try again.");
+      }
+      throw error;
+    }
+
     showStatus("users-status", `User ${action}d successfully.`, "success");
     loadUsers();
   } catch (err) {
@@ -712,12 +724,17 @@ async function changeUserPassword(userId) {
   statusEl.className = "status-text";
 
   try {
-    const { error } = await supabase
-      .from("clan_users")
-      .update({ password: newPassword, updated_at: new Date().toISOString() })
-      .eq("id", userId);
+    const { error } = await supabase.rpc("admin_update_clan_user_password", {
+      target_user_id: userId,
+      new_password: newPassword
+    });
 
-    if (error) throw error;
+    if (error) {
+      if (/Could not find the function|function public\.admin_update_clan_user_password/i.test(error.message)) {
+        throw new Error("Supabase is missing the latest account-management migration. Run the newest migration and try again.");
+      }
+      throw error;
+    }
 
     showStatus("users-status", "Password updated successfully.", "success");
   } catch (err) {
