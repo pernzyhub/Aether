@@ -26,6 +26,17 @@ CREATE TABLE IF NOT EXISTS public.attendance (
 ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.attendance ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Admins can view all events" ON public.events;
+DROP POLICY IF EXISTS "Admins can insert events" ON public.events;
+DROP POLICY IF EXISTS "Admins can update events" ON public.events;
+DROP POLICY IF EXISTS "Admins can delete events" ON public.events;
+DROP POLICY IF EXISTS "Admins can view all attendance" ON public.attendance;
+DROP POLICY IF EXISTS "Members can view their own attendance" ON public.attendance;
+DROP POLICY IF EXISTS "Admins can insert attendance" ON public.attendance;
+DROP POLICY IF EXISTS "Admins can update attendance" ON public.attendance;
+DROP POLICY IF EXISTS "Admins can delete attendance" ON public.attendance;
+
 -- Policies for events (admin only)
 CREATE POLICY "Admins can view all events" ON public.events
   FOR SELECT USING (public.is_admin());
