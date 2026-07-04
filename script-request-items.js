@@ -168,17 +168,30 @@ async function submitRequest(event) {
       statusEl.textContent = "Request updated successfully!";
       editingRequestId = null;
     } else {
-      const { error } = await supabase
-        .from("item_requests")
-        .insert([{ 
-          user_id: currentUser.id, 
-          item_id: itemId, 
-          quantity: quantity,
+      const requestUserId = currentUser?.id || currentClanUser?.id || null;
+      if (!requestUserId) {
+        statusEl.textContent = "Your account session could not be verified. Please log in again.";
+        statusEl.className = "status-text error";
+        return;
+      }
+
+      const { data, error } = await fetch(`${supabaseUrl}/functions/v1/create-request`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": supabaseAnonKey,
+          Authorization: `Bearer ${supabaseAnonKey}`
+        },
+        body: JSON.stringify({
+          user_id: requestUserId,
+          item_id: itemId,
+          quantity,
           notes: notes || null,
           status: "pending"
-        }]);
+        })
+      }).then(res => res.json());
 
-      if (error) throw error;
+      if (error) throw new Error(error.error || error.message || "Unknown request error");
 
       statusEl.textContent = "Request submitted successfully!";
     }

@@ -1,0 +1,2 @@
+[functions.create-request]
+verify_jwt = false

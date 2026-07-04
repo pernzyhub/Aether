@@ -494,12 +494,22 @@ async function deleteUser(userId) {
   statusEl.className = "status-text";
 
   try {
-    const { error } = await supabase
+    const { error: clanUserError } = await supabase
       .from("clan_users")
       .delete()
       .eq("id", userId);
 
-    if (error) throw error;
+    if (clanUserError) throw clanUserError;
+
+    try {
+      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+      if (authError) {
+        console.warn("Auth user cleanup warning:", authError);
+      }
+    } catch (authErr) {
+      console.warn("Auth user cleanup warning:", authErr);
+    }
+
     statusEl.textContent = "User deleted successfully.";
     statusEl.className = "status-text success";
     loadUsers();
