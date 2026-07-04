@@ -177,13 +177,18 @@ async function submitRequest(event) {
         return;
       }
 
-      const { error } = await supabase.rpc("update_item_request", {
-        target_request_id: editingRequestId,
-        target_user_id: requestUserId,
-        target_item_id: itemId,
-        target_quantity: quantity,
-        target_notes: notes || null
-      });
+      // Direct update to include proof_image
+      const { error } = await supabase
+        .from("item_requests")
+        .update({
+          item_id: itemId,
+          quantity,
+          notes: notes || null,
+          proof_image: proofImageUrl || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", editingRequestId)
+        .eq("user_id", requestUserId);
 
       if (error) throw error;
 
@@ -199,37 +204,21 @@ async function submitRequest(event) {
         return;
       }
 
-      let { error } = await supabase.rpc("create_item_request", {
-        target_user_id: requestUserId,
-        target_item_id: itemId,
-        target_quantity: quantity,
-        target_notes: notes || null
-      });
-
-      if (error && /Could not find the function|function public\.create_item_request/i.test(error.message)) {
-        const fallback = await supabase.functions.invoke("create-request", {
-          body: {
-            user_id: requestUserId,
-            item_id: itemId,
-            quantity,
-            notes: notes || null,
-            status: "pending"
-          }
-        });
-
-        error = fallback.error;
-
-        if (!error && fallback.data?.error) {
-          error = new Error(fallback.data.error);
-        }
-      }
+      // Direct insert to include proof_image
+      const { error } = await supabase
+        .from("item_requests")
+        .insert([{
+          user_id: requestUserId,
+          item_id: itemId,
+          quantity,
+          notes: notes || null,
+          proof_image: proofImageUrl || null,
+          status: "pending"
+        }]);
 
       if (error) {
         if (/row-level security|permission denied/i.test(error.message)) {
           throw new Error("Your session could not be authorized to create requests. Please log out and sign in again.");
-        }
-        if (/Failed to send a request to the Edge Function|non-2xx status code/i.test(error.message)) {
-          throw new Error("The request service is unavailable right now. Deploy the Supabase create-request function or restore the latest request RPC.");
         }
         throw error;
       }
@@ -376,7 +365,7 @@ async function loadMyRequests() {
   try {
     let query = supabase
       .from("item_requests")
-      .select("id, quantity, notes, status, created_at, user_id, items!inner(name)")
+      .select("id, quantity, notes, status, created_at, user_id, proof_image, items!inner(name)")
       .order("created_at", { ascending: false })
       .limit(12);
 
@@ -430,6 +419,14 @@ async function loadMyRequests() {
               Requested ${formatQuantity(req.quantity)} of ${escapeHtml(req.items.name)}
               ${req.notes ? `<span class="request-note">${escapeHtml(req.notes)}</span>` : ""}
             </div>
+            ${req.proof_image ? `
+              <div class="request-proof">
+                <a href="${escapeHtml(req.proof_image)}" target="_blank" class="proof-link">
+                  <img src="${escapeHtml(req.proof_image)}" alt="Proof image" class="proof-thumbnail" />
+                  <span class="proof-label">View Proof</span>
+                </a>
+              </div>
+            ` : ""}
           </div>
           <div class="request-entry-actions">
             <span class="request-status ${req.status || "pending"}">${(req.status || "pending").toUpperCase()}</span>
