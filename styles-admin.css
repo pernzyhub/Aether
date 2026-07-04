@@ -15,6 +15,10 @@ body {
   flex-direction: column;
 }
 
+html {
+  min-height: 100%;
+}
+
 body::before {
   content: '';
   position: fixed;
@@ -93,9 +97,10 @@ body::before {
 .container {
   position: relative;
   z-index: 1;
-  width: min(100%, 1600px);
+  width: 100%;
+  max-width: 2200px;
   margin: 0 auto;
-  padding: 30px 24px 48px;
+  padding: 30px 32px 48px;
   flex: 1;
 }
 
@@ -136,36 +141,47 @@ body::before {
 }
 
 .module-shell {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  background: rgba(10, 4, 6, 0.7);
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) 1fr;
+  gap: 24px;
+  background: rgba(10, 4, 6, 0.75);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
-  padding: 18px;
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.28);
+  border-radius: 22px;
+  padding: 20px;
+  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.28);
 }
 
 .module-nav {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   position: sticky;
-  top: 78px;
-  z-index: 10;
-  padding: 4px 2px;
+  top: 28px;
+  align-self: flex-start;
+  padding: 12px;
+  background: rgba(15, 7, 12, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
 }
 
 .module-card {
-  background: rgba(20, 8, 10, 0.92);
+  background: rgba(18, 8, 12, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: #ffffff;
-  padding: 14px 12px;
-  border-radius: 12px;
+  padding: 16px 14px;
+  border-radius: 14px;
   text-transform: uppercase;
   letter-spacing: 1.5px;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.module-card:hover,
+.module-card.is-active {
+  border-color: #ff4466;
+  color: #ffb3c0;
+  background: rgba(255, 68, 102, 0.12);
+  transform: translateX(2px);
 }
 
 .module-card:hover,
@@ -179,6 +195,7 @@ body::before {
 .module-stage {
   position: relative;
   min-height: 60vh;
+  width: 100%;
 }
 
 .module-panel {
@@ -197,7 +214,7 @@ body::before {
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
   gap: 24px;
 }
 
