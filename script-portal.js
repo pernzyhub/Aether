@@ -71,7 +71,6 @@ async function loadUser() {
     currentClanUser = clanUser;
   }
 
-  const memberSession = getMemberSession();
   if (memberSession?.needsPasswordChange) {
     window.location.href = "/settings.html";
     return;
