@@ -742,6 +742,49 @@ async function changeUserPassword(userId) {
   }
 }
 
+async function createUser() {
+  const statusEl = document.getElementById("create-user-status");
+  const userId = document.getElementById("new-user-id").value.trim();
+  const ign = document.getElementById("new-user-ign").value.trim();
+  const role = document.getElementById("new-user-role").value;
+
+  if (!userId || !ign) {
+    showStatus("create-user-status", "User ID and IGN are required.", "error");
+    return;
+  }
+
+  // Validate UUID format
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(userId)) {
+    showStatus("create-user-status", "Invalid User ID format. Must be a valid UUID.", "error");
+    return;
+  }
+
+  statusEl.textContent = "Creating user...";
+  statusEl.className = "status-text";
+
+  try {
+    const { error } = await supabase.rpc("admin_create_clan_user", {
+      user_id: userId,
+      ign: ign,
+      role: role
+    });
+
+    if (error) {
+      if (/Could not find the function|function public\.admin_create_clan_user/i.test(error.message)) {
+        throw new Error("Supabase is missing the latest account-management migration. Run the newest migration and try again.");
+      }
+      throw error;
+    }
+
+    showStatus("create-user-status", "User created successfully.", "success");
+    document.getElementById("create-user-form").reset();
+    loadUsers();
+  } catch (err) {
+    showStatus("create-user-status", `Error creating user: ${err.message}`, "error");
+  }
+}
+
 /* Request Management */
 async function loadRequests() {
   const container = document.getElementById("requests-list");
@@ -1044,6 +1087,13 @@ window.deleteItem = deleteItem;
 window.logout = logout;
 window.setAccountsTab = setAccountsTab;
 window.openImageModal = openImageModal;
+window.createUser = createUser;
+
+// Create user form handler
+document.getElementById("create-user-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  createUser();
+});
 
 // Image Modal Functions
 function openImageModal(imageSrc) {

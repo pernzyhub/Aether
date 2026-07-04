@@ -175,8 +175,34 @@
               </div>
 
               <div class="account-panel" id="accountMembersPanel">
-                <p id="users-status" class="status-text"></p>
-                <div id="users-list"></div>
+                <section class="card">
+                  <h2>CREATE USER</h2>
+                  <form id="create-user-form" class="form">
+                    <div class="form-group">
+                      <label>User ID (Auth UUID)</label>
+                      <input type="text" id="new-user-id" class="input" placeholder="Enter auth user UUID" required />
+                    </div>
+                    <div class="form-group">
+                      <label>IGN (In-Game Name)</label>
+                      <input type="text" id="new-user-ign" class="input" placeholder="Enter IGN" required />
+                    </div>
+                    <div class="form-group">
+                      <label>Role</label>
+                      <select id="new-user-role" class="input">
+                        <option value="member">Member</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">CREATE USER</button>
+                  </form>
+                  <p id="create-user-status" class="status-text"></p>
+                </section>
+
+                <section class="card">
+                  <h2>MANAGE USERS</h2>
+                  <p id="users-status" class="status-text"></p>
+                  <div id="users-list"></div>
+                </section>
               </div>
             </section>
           </div>
