@@ -59,24 +59,19 @@
       await supabase.auth.signInWithOAuth({ provider: "discord" });
     }
 
-    async function checkUser() {
-      const { data } = await supabase.auth.getSession();
-      document.getElementById("user").textContent =
-        JSON.stringify(data.session?.user || "Not logged in", null, 2);
-    }
-
     async function logout() {
       await supabase.auth.signOut();
       document.getElementById("user").textContent = "Logged out.";
     }
 
-    // Automatically update when auth state changes
+    // Redirect to portal after login
     supabase.auth.onAuthStateChange((_event, session) => {
-      document.getElementById("user").textContent =
-        JSON.stringify(session?.user || "Not logged in", null, 2);
+      if (session?.user) {
+        window.location.href = "/portal.html";
+      }
     });
 
-    // Check session on page load
+    // Show session info on page load
     window.addEventListener("load", async () => {
       const { data } = await supabase.auth.getSession();
       document.getElementById("user").textContent =
@@ -84,7 +79,6 @@
     });
 
     window.discordLogin = discordLogin;
-    window.checkUser = checkUser;
     window.logout = logout;
   </script>
 </head>
@@ -96,7 +90,6 @@
     <h2>Member Login</h2>
     <p>Log in with Discord to access community features.</p>
     <button class="discord-btn" onclick="discordLogin()">Login with Discord</button>
-    <button onclick="checkUser()">Check User</button>
     <button class="logout-btn" onclick="logout()">Logout</button>
     <pre id="user">Not logged in</pre>
   </div>
