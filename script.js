@@ -42,19 +42,7 @@ function toggleAdminDropdown() {
 }
 
 function setLoginSide(side) {
-  const memberPanel = document.querySelector('.left-panel');
-  const adminPanel = document.querySelector('.right-panel');
-  const buttons = document.querySelectorAll('.switch-btn');
-
-  buttons.forEach(btn => btn.classList.toggle('active', btn.dataset.side === side));
-
-  if (side === 'admin') {
-    memberPanel.classList.remove('active-panel');
-    adminPanel.classList.add('active-panel');
-  } else {
-    adminPanel.classList.remove('active-panel');
-    memberPanel.classList.add('active-panel');
-  }
+  return;
 }
 
 async function adminLogin() {
