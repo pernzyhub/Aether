@@ -169,6 +169,28 @@ function renderRules(items, container) {
   `).join("");
 }
 
+function renderEvents(items, container) {
+  if (!items || items.length === 0) {
+    container.innerHTML = "<p>No events yet.</p>";
+    return;
+  }
+
+  container.innerHTML = items.map(event => `
+    <div class="event-item ${!event.is_active ? 'event-inactive' : ''}">
+      <div class="event-title">${escapeHtml(event.name)} <span class="event-points">${event.points} pts</span></div>
+      <div class="event-meta">
+        ${event.description ? escapeHtml(event.description) : 'No description'}
+        ${event.event_date ? `| ${new Date(event.event_date).toLocaleString()}` : ''}
+      </div>
+      <div class="event-status">
+        Status: <strong style="color: ${event.is_active ? '#00ff88' : '#ff4444'};">
+          ${event.is_active ? 'Active' : 'Inactive'}
+        </strong>
+      </div>
+    </div>
+  `).join("");
+}
+
 async function loadAnnouncements() {
   const container = document.getElementById("announcements-list");
   if (!container) return;
@@ -259,6 +281,52 @@ async function loadRules() {
   }
 }
 
+async function loadEvents() {
+  const container = document.getElementById("events-list");
+  if (!container) return;
+
+  const cachedEvents = getCachedItems("aether_events_cache") || [];
+  if (cachedEvents.length > 0) {
+    renderEvents(cachedEvents, container);
+  } else {
+    container.innerHTML = "<p>Loading events...</p>";
+  }
+
+  await ensureSupabaseSession();
+
+  try {
+    const { data, error } = await supabase
+      .from("events")
+      .select("*")
+      .eq("is_active", true)
+      .order("event_date", { ascending: false });
+
+    if (error) {
+      if (cachedEvents.length > 0) {
+        renderEvents(cachedEvents, container);
+      } else {
+        container.innerHTML = `<p>Error loading events: ${error.message}</p>`;
+      }
+      return;
+    }
+
+    if (data && data.length > 0) {
+      saveCachedItems("aether_events_cache", data);
+      renderEvents(data, container);
+    } else if (cachedEvents.length > 0) {
+      renderEvents(cachedEvents, container);
+    } else {
+      container.innerHTML = "<p>No active events yet.</p>";
+    }
+  } catch (err) {
+    if (cachedEvents.length > 0) {
+      renderEvents(cachedEvents, container);
+    } else {
+      container.innerHTML = `<p>Error loading events: ${err.message}</p>`;
+    }
+  }
+}
+
 async function logout() {
   try {
     await supabase.auth.signOut();
@@ -288,6 +356,7 @@ window.addEventListener("load", () => {
     await loadUser();
     loadAnnouncements();
     loadRules();
+    loadEvents();
     setActiveNavLink();
   }, 80);
 });
@@ -298,6 +367,9 @@ window.addEventListener("storage", (event) => {
   }
   if (event.key === "aether_rules_cache") {
     loadRules();
+  }
+  if (event.key === "aether_events_cache") {
+    loadEvents();
   }
 });
 

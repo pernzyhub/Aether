@@ -24,6 +24,7 @@
         <button class="module-card" data-module="warehouse" onclick="setActiveModule('warehouse')">WAREHOUSE</button>
         <button class="module-card" data-module="accounts" onclick="setActiveModule('accounts')">ACCOUNTS</button>
         <button class="module-card" data-module="requests" onclick="setActiveModule('requests')">REQUESTS</button>
+        <button class="module-card" data-module="events" onclick="setActiveModule('events')">EVENTS</button>
       </div>
 
       <div class="module-stage">
@@ -221,6 +222,47 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Events Module -->
+  <div class="module-panel" data-module="events">
+    <div class="dashboard-grid">
+      <section class="card">
+        <h2>CREATE EVENT</h2>
+        <form id="event-form" class="form">
+          <div class="form-group">
+            <label>Event Name</label>
+            <input type="text" id="event-name" class="input" placeholder="Enter event name" required />
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea id="event-description" class="input" placeholder="Enter event description" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Points</label>
+            <input type="number" id="event-points" class="input" placeholder="Enter points" required min="0" />
+          </div>
+          <div class="form-group">
+            <label>Event Date</label>
+            <input type="datetime-local" id="event-date" class="input" />
+          </div>
+          <button type="submit" class="btn btn-primary">CREATE EVENT</button>
+        </form>
+        <p id="event-status" class="status-text"></p>
+      </section>
+
+      <section class="card">
+        <h2>MANAGE EVENTS</h2>
+        <p id="events-status" class="status-text"></p>
+        <div id="events-list"></div>
+      </section>
+
+      <section class="card">
+        <h2>MANAGE ATTENDANCE</h2>
+        <p id="attendance-status" class="status-text"></p>
+        <div id="attendance-list"></div>
+      </section>
     </div>
   </div>
 
