@@ -15,11 +15,9 @@ export default function AdminDashboard() {
       const u = data.session?.user;
 
       if (!u) {
-        // Not logged in → back to admin login
-        window.location.href = "/admin-login";
+        window.location.href = "/admin-login"; // not logged in
       } else if (u.user_metadata?.role !== "admin" && u.user_metadata?.role !== "superuser") {
-        // Logged in but not admin → back to landing
-        window.location.href = "/";
+        window.location.href = "/"; // not admin
       } else {
         setUser(u);
       }
@@ -34,7 +32,6 @@ export default function AdminDashboard() {
   }
 
   if (loading) return <p style={{ textAlign: "center" }}>Loading...</p>;
-
   if (!user) return null;
 
   return (
