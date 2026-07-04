@@ -228,7 +228,7 @@ body::before {
 .request-summary {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .request-entry,
@@ -236,7 +236,7 @@ body::before {
   background: rgba(4, 16, 10, 0.95);
   border: 1px solid rgba(0, 255, 136, 0.25);
   border-radius: 14px;
-  padding: 14px;
+  padding: 12px 13px;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
   position: relative;
   overflow: hidden;
@@ -256,7 +256,7 @@ body::before {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 14px;
+  gap: 12px;
 }
 
 .request-entry::after {
@@ -311,21 +311,28 @@ body::before {
 
 .request-entry-actions {
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 6px;
   flex-shrink: 0;
+}
+
+.request-action-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
 }
 
 .request-action {
   width: auto;
-  min-width: 92px;
-  padding: 8px 12px;
+  min-width: 74px;
+  padding: 7px 10px;
   border-width: 1px;
   border-radius: 999px;
-  font-size: 0.8rem;
-  letter-spacing: 0.8px;
+  font-size: 0.74rem;
+  letter-spacing: 0.5px;
   line-height: 1.1;
 }
 
@@ -368,14 +375,14 @@ body::before {
 }
 
 .summary-item-name {
-  font-size: 1rem;
+  font-size: 0.96rem;
   font-weight: bold;
   color: #ffffff;
 }
 
 .summary-item-total {
   color: #f4fff8;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   margin-top: 4px;
 }
 
@@ -420,7 +427,7 @@ body::before {
   border-radius: 10px;
   background: rgba(0, 255, 136, 0.08);
   color: #ffffff;
-  font-size: 0.9rem;
+  font-size: 0.86rem;
 }
 
 .empty-state {
@@ -453,6 +460,10 @@ body::before {
 
   .request-entry-actions {
     width: 100%;
+    align-items: flex-start;
+  }
+
+  .request-action-row {
     justify-content: flex-start;
   }
 }

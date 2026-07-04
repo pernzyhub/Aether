@@ -153,15 +153,20 @@ async function submitRequest(event) {
 
   try {
     if (editingRequestId) {
-      const { error } = await supabase
-        .from("item_requests")
-        .update({
-          item_id: itemId,
-          quantity,
-          notes: notes || null,
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", editingRequestId);
+      const requestUserId = currentUser?.id || currentClanUser?.id || null;
+      if (!requestUserId) {
+        statusEl.textContent = "Your account session could not be verified. Please log in again.";
+        statusEl.className = "status-text error";
+        return;
+      }
+
+      const { error } = await supabase.rpc("update_item_request", {
+        target_request_id: editingRequestId,
+        target_user_id: requestUserId,
+        target_item_id: itemId,
+        target_quantity: quantity,
+        target_notes: notes || null
+      });
 
       if (error) throw error;
 
@@ -271,10 +276,15 @@ async function cancelRequest(requestId) {
   statusEl.className = "status-text";
 
   try {
-    const { error } = await supabase
-      .from("item_requests")
-      .delete()
-      .eq("id", requestId);
+    const requestUserId = currentUser?.id || currentClanUser?.id || null;
+    if (!requestUserId) {
+      throw new Error("Your account session could not be verified. Please log in again.");
+    }
+
+    const { error } = await supabase.rpc("cancel_item_request", {
+      target_request_id: requestId,
+      target_user_id: requestUserId
+    });
 
     if (error) throw error;
     if (editingRequestId === requestId) {
@@ -390,8 +400,10 @@ async function loadMyRequests() {
           <div class="request-entry-actions">
             <span class="request-status ${req.status || "pending"}">${(req.status || "pending").toUpperCase()}</span>
             ${isOwner && (req.status || "pending") === "pending" ? `
-              <button class="btn request-action request-action-edit" onclick="startEditRequest('${req.id}')">Edit</button>
-              <button class="btn request-action request-action-cancel" onclick="cancelRequest('${req.id}')">Cancel</button>
+              <div class="request-action-row">
+                <button class="btn request-action request-action-edit" onclick="startEditRequest('${req.id}')">Edit</button>
+                <button class="btn request-action request-action-cancel" onclick="cancelRequest('${req.id}')">Cancel</button>
+              </div>
             ` : ""}
           </div>
         </div>
