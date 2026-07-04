@@ -79,49 +79,94 @@ body::before {
 
 .login-container {
   display: flex;
-  flex-wrap: wrap;
-  gap: 30px;
   justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 20px;
 }
 
 .login-shell {
-  position: relative;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  width: min(1100px, 100%);
-  border: 2px solid rgba(0, 255, 65, 0.55);
-  box-shadow: 0 0 30px rgba(0, 255, 65, 0.25);
+  width: min(520px, 100%);
+  border: 2px solid rgba(0, 255, 65, 0.45);
+  box-shadow: 0 0 40px rgba(0, 255, 65, 0.18);
   overflow: hidden;
-  border-radius: 18px;
-  background: rgba(5, 15, 8, 0.95);
+  border-radius: 22px;
+  background: rgba(5, 15, 8, 0.92);
+}
+
+.login-card {
+  padding: 32px;
+  display: grid;
+  gap: 18px;
+}
+
+.login-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.panel-label {
+  display: inline-block;
+  padding: 6px 12px;
+  border: 1px solid rgba(0, 255, 65, 0.35);
+  color: #7dff9f;
+  font-size: 0.75rem;
+  letter-spacing: 3px;
+  border-radius: 999px;
+}
+
+.toggle-btn {
+  background: rgba(255, 68, 102, 0.12);
+  border: 1px solid rgba(255, 68, 102, 0.35);
+  color: #ffb3c0;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.toggle-btn:hover {
+  background: rgba(255, 68, 102, 0.24);
+  transform: translateY(-1px);
+}
+
+.form-panel {
+  display: grid;
+  gap: 18px;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.form-panel-hidden {
+  display: none;
+  opacity: 0;
+  transform: translateY(-10px);
 }
 
 .login-panel {
-  padding: 40px 36px;
-  position: relative;
-  min-height: 460px;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  padding: 0;
+  min-height: auto;
 }
 
-.left-panel {
-  background: linear-gradient(135deg, rgba(0, 20, 10, 0.96), rgba(0, 40, 18, 0.92));
-  border-right: 1px solid rgba(0, 255, 65, 0.2);
+.login-card h2 {
+  font-size: 1.8rem;
+  margin-bottom: 8px;
 }
 
-.right-panel {
-  background: linear-gradient(135deg, rgba(20, 7, 10, 0.95), rgba(40, 10, 16, 0.92));
+.login-card p {
+  margin-bottom: 0;
+  color: #a8ffb6;
+  line-height: 1.5;
 }
 
-.login-panel:not(.active-panel) {
-  transform: scale(0.98);
-  opacity: 0.78;
-  filter: none;
-}
-
-.slider-glow {
+.admin-dropdown {
   display: none;
 }
-
+.toggle-btn {
+  white-space: nowrap;
+}
 @keyframes glowSlide {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
@@ -199,9 +244,7 @@ body::before {
 }
 
 .button-group {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
+  display: none;
 }
 
 button {
@@ -265,16 +308,7 @@ button {
 }
 
 .admin-dropdown {
-  margin-top: 20px;
-  overflow: hidden;
-  max-height: 0;
-  opacity: 0;
-  transition: all 0.4s ease;
-}
-
-.admin-dropdown.open {
-  max-height: 500px;
-  opacity: 1;
+  display: none;
 }
 
 .admin-form {

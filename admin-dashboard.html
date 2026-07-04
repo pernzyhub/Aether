@@ -138,38 +138,46 @@
 
         <div class="module-panel" data-module="accounts">
           <div class="dashboard-grid">
-            <section class="card">
-              <h2>BULK REGISTER MEMBERS</h2>
-              <form id="bulk-register-form" onsubmit="bulkRegisterMembers(event)">
-                <div class="form-group">
-                  <label for="bulk-accounts">Accounts (one per line)</label>
-                  <textarea id="bulk-accounts" placeholder="IGN|password\nIGN2|password2" required></textarea>
+            <section class="card account-card">
+              <div class="account-header">
+                <h2>ACCOUNTS</h2>
+                <div class="account-tabs">
+                  <button type="button" class="account-tab is-active" data-account-tab="register" onclick="setAccountsTab('register')">Bulk Register</button>
+                  <button type="button" class="account-tab" data-account-tab="access" onclick="setAccountsTab('access')">Access Code</button>
+                  <button type="button" class="account-tab" data-account-tab="members" onclick="setAccountsTab('members')">Registered Members</button>
                 </div>
-                <button type="submit" class="btn btn-primary">REGISTER ACCOUNTS</button>
-              </form>
-              <p id="bulk-register-status" class="status-text"></p>
-            </section>
+              </div>
 
-            <section class="card">
-              <h2>ACCESS CODE</h2>
-              <form id="access-code-form" onsubmit="updateAccessCode(event)">
-                <div class="form-group">
-                  <label for="current-access-code">Current Access Code</label>
-                  <input type="text" id="current-access-code" readonly />
-                </div>
-                <div class="form-group">
-                  <label for="new-access-code">New Access Code</label>
-                  <input type="text" id="new-access-code" required />
-                </div>
-                <button type="submit" class="btn btn-primary">UPDATE ACCESS CODE</button>
-              </form>
-              <p id="access-code-status" class="status-text"></p>
-            </section>
+              <div class="account-panel account-panel-active" id="accountRegisterPanel">
+                <form id="bulk-register-form" onsubmit="bulkRegisterMembers(event)">
+                  <div class="form-group">
+                    <label for="bulk-accounts">Accounts (one per line)</label>
+                    <textarea id="bulk-accounts" placeholder="IGN|password\nIGN2|password2" required></textarea>
+                  </div>
+                  <button type="submit" class="btn btn-primary">REGISTER ACCOUNTS</button>
+                </form>
+                <p id="bulk-register-status" class="status-text"></p>
+              </div>
 
-            <section class="card">
-              <h2>MANAGE CLAN MEMBERS</h2>
-              <p id="users-status" class="status-text"></p>
-              <div id="users-list"></div>
+              <div class="account-panel" id="accountAccessPanel">
+                <form id="access-code-form" onsubmit="updateAccessCode(event)">
+                  <div class="form-group">
+                    <label for="current-access-code">Current Access Code</label>
+                    <input type="text" id="current-access-code" readonly />
+                  </div>
+                  <div class="form-group">
+                    <label for="new-access-code">New Access Code</label>
+                    <input type="text" id="new-access-code" required />
+                  </div>
+                  <button type="submit" class="btn btn-primary">UPDATE ACCESS CODE</button>
+                </form>
+                <p id="access-code-status" class="status-text"></p>
+              </div>
+
+              <div class="account-panel" id="accountMembersPanel">
+                <p id="users-status" class="status-text"></p>
+                <div id="users-list"></div>
+              </div>
             </section>
           </div>
         </div>

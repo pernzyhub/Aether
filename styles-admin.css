@@ -298,6 +298,82 @@ body::before {
   resize: vertical;
 }
 
+.account-card {
+  padding: 20px;
+}
+
+.account-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.account-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.account-tab {
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.25s ease;
+}
+
+.account-tab:hover,
+.account-tab.is-active {
+  background: rgba(255, 68, 102, 0.18);
+  border-color: #ff4466;
+  color: #ffb3c0;
+}
+
+.account-panel {
+  display: none;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.account-panel-active {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.account-panel #users-list {
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.account-panel #users-list .list-item {
+  margin-bottom: 12px;
+}
+
+.btn {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 1rem;
+  padding: 12px 28px;
+  border: 2px solid;
+  background: transparent;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
 .rich-toolbar {
   display: flex;
   flex-wrap: wrap;

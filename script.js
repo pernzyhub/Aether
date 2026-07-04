@@ -55,13 +55,49 @@ async function logout() {
   window.location.replace("/");
 }
 
-function toggleAdminDropdown() {
-  const dropdown = document.getElementById("adminDropdown");
-  dropdown.classList.toggle("open");
+function toggleLoginMode() {
+  const memberPanel = document.getElementById("memberFormPanel");
+  const adminPanel = document.getElementById("adminFormPanel");
+  const toggleBtn = document.getElementById("loginToggleBtn");
+  const title = document.getElementById("loginModeTitle");
+  const text = document.getElementById("loginModeText");
+
+  const isMember = !adminPanel.classList.contains("form-panel-hidden");
+  if (isMember) {
+    adminPanel.classList.remove("form-panel-hidden");
+    memberPanel.classList.add("form-panel-hidden");
+    toggleBtn.textContent = "SWITCH TO MEMBER";
+    title.textContent = "ADMIN LOGIN";
+    text.textContent = "Use your admin credentials to manage the clan dashboard.";
+  } else {
+    memberPanel.classList.remove("form-panel-hidden");
+    adminPanel.classList.add("form-panel-hidden");
+    toggleBtn.textContent = "SWITCH TO ADMIN";
+    title.textContent = "MEMBER LOGIN";
+    text.textContent = "Enter your IGN and password to access the clan portal.";
+  }
 }
 
 function setLoginSide(side) {
-  return;
+  const memberPanel = document.getElementById("memberFormPanel");
+  const adminPanel = document.getElementById("adminFormPanel");
+  const toggleBtn = document.getElementById("loginToggleBtn");
+  const title = document.getElementById("loginModeTitle");
+  const text = document.getElementById("loginModeText");
+
+  if (side === 'admin') {
+    memberPanel.classList.add("form-panel-hidden");
+    adminPanel.classList.remove("form-panel-hidden");
+    toggleBtn.textContent = "SWITCH TO MEMBER";
+    title.textContent = "ADMIN LOGIN";
+    text.textContent = "Use your admin credentials to manage the clan dashboard.";
+  } else {
+    memberPanel.classList.remove("form-panel-hidden");
+    adminPanel.classList.add("form-panel-hidden");
+    toggleBtn.textContent = "SWITCH TO ADMIN";
+    title.textContent = "MEMBER LOGIN";
+    text.textContent = "Enter your IGN and password to access the clan portal.";
+  }
 }
 
 async function adminLogin() {
@@ -182,7 +218,7 @@ window.addEventListener("load", () => {
 
 window.discordLogin = discordLogin;
 window.logout = logout;
-window.toggleAdminDropdown = toggleAdminDropdown;
+window.toggleLoginMode = toggleLoginMode;
 window.setLoginSide = setLoginSide;
 window.adminLogin = adminLogin;
 window.memberLogin = memberLogin;

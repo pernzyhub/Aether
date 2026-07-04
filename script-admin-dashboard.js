@@ -693,6 +693,18 @@ async function updateAccessCode(event) {
   statusEl.className = "status-text success";
 }
 
+function setAccountsTab(tabName) {
+  const tabs = document.querySelectorAll('.account-tab');
+  tabs.forEach(tab => {
+    tab.classList.toggle('is-active', tab.dataset.accountTab === tabName);
+  });
+
+  const panels = document.querySelectorAll('.account-panel');
+  panels.forEach(panel => {
+    panel.classList.toggle('account-panel-active', panel.id === `account${tabName.charAt(0).toUpperCase() + tabName.slice(1)}Panel`);
+  });
+}
+
 async function logout() {
   try {
     await supabase.auth.signOut();
@@ -720,6 +732,7 @@ window.addEventListener("load", () => {
       loadUsers();
       loadRequests();
       loadAccessCode();
+      setAccountsTab('register');
     }
   }, 80);
 });
@@ -741,3 +754,4 @@ window.deleteRule = deleteRule;
 window.addItem = addItem;
 window.deleteItem = deleteItem;
 window.logout = logout;
+window.setAccountsTab = setAccountsTab;
