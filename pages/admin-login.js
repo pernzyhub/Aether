@@ -24,8 +24,7 @@ export default function AdminLogin() {
       const user = data.user;
       if (user?.user_metadata?.role === "admin" || user?.user_metadata?.role === "superuser") {
         setStatus("Welcome, Admin!");
-        // ✅ Redirect to Next.js route (not .html)
-        window.location.href = "/admin-dashboard";
+        window.location.href = "/admin-dashboard"; // ✅ Next.js route
       } else {
         setStatus("Access denied. Not an admin.");
       }
