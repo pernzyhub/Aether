@@ -131,18 +131,15 @@ async function saveSettings() {
   try {
     const memberSession = getMemberSession();
     
-    // For member session users (non-Supabase auth), update database
+    // For member session users (non-Supabase auth), use RPC to update database
     if (memberSession) {
-      const { error: updateError } = await supabase
-        .from("clan_users")
-        .update({
-          password: newPassword,
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", memberSession.id);
+      const { error: rpcError } = await supabase.rpc('update_member_password', {
+        user_id: memberSession.id,
+        new_password: newPassword
+      });
       
-      if (updateError) {
-        showSettingsStatus(`Error updating password: ${updateError.message}`, "error");
+      if (rpcError) {
+        showSettingsStatus(`Error updating password: ${rpcError.message}`, "error");
         return;
       }
       
