@@ -126,17 +126,14 @@ async function saveSettings() {
     return;
   }
   
+  if (!currentUser?.id) {
+    showSettingsStatus("Your session could not be verified. Please log in again.", "error");
+    return;
+  }
+  
   showSettingsStatus("Saving settings...", "");
   
   try {
-    if (newPassword && currentUser?.id && currentUser?.email) {
-      const { error: passwordError } = await supabase.auth.updateUser({ password: newPassword });
-      if (passwordError) {
-        showSettingsStatus(`Error updating password: ${passwordError.message}`, "error");
-        return;
-      }
-    }
-
     const { error: profileError } = await supabase
       .from("clan_users")
       .update({
