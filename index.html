@@ -14,7 +14,8 @@
     </div>
 
     <div class="login-shell">
-      <div class="login-panel left-panel">
+      <div class="slider-glow"></div>
+      <div class="login-panel left-panel active-panel">
         <div class="panel-label">MEMBER ACCESS</div>
         <h2>ENTER YOUR CREDENTIALS</h2>
         <p>Sign in with your username and password to enter the portal.</p>
@@ -53,6 +54,11 @@
           </form>
           <p id="adminStatus" class="status-text"></p>
         </div>
+      </div>
+
+      <div class="switcher">
+        <button class="switch-btn active" data-side="member" onclick="setLoginSide('member')">MEMBER</button>
+        <button class="switch-btn" data-side="admin" onclick="setLoginSide('admin')">ADMIN</button>
       </div>
     </div>
   </div>

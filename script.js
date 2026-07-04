@@ -76,6 +76,22 @@ function toggleAdminDropdown() {
   dropdown.classList.toggle("open");
 }
 
+function setLoginSide(side) {
+  const memberPanel = document.querySelector('.left-panel');
+  const adminPanel = document.querySelector('.right-panel');
+  const buttons = document.querySelectorAll('.switch-btn');
+
+  buttons.forEach(btn => btn.classList.toggle('active', btn.dataset.side === side));
+
+  if (side === 'admin') {
+    memberPanel.classList.remove('active-panel');
+    adminPanel.classList.add('active-panel');
+  } else {
+    adminPanel.classList.remove('active-panel');
+    memberPanel.classList.add('active-panel');
+  }
+}
+
 async function adminLogin() {
   const email = document.getElementById("adminEmail").value;
   const password = document.getElementById("adminPassword").value;
@@ -178,10 +194,13 @@ window.addEventListener("load", async () => {
   if (!accessGranted) {
     window.location.href = "/access-gate.html";
   }
+
+  setLoginSide('member');
 });
 
 window.discordLogin = discordLogin;
 window.logout = logout;
 window.toggleAdminDropdown = toggleAdminDropdown;
+window.setLoginSide = setLoginSide;
 window.adminLogin = adminLogin;
 window.memberLogin = memberLogin;
