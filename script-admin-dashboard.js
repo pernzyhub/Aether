@@ -733,7 +733,7 @@ async function loadRequests() {
   try {
     const { data: requests, error } = await supabase
       .from("item_requests")
-      .select("*, items!inner(name)")
+      .select("*, items!inner(name), proof_image")
       .in("status", ["pending"])
       .order("created_at", { ascending: false });
 
@@ -758,7 +758,7 @@ async function loadRequestsHistory() {
   try {
     const { data: requests, error } = await supabase
       .from("item_requests")
-      .select("*, items!inner(name)")
+      .select("*, items!inner(name), proof_image")
       .in("status", ["approved", "denied"])
       .order("updated_at", { ascending: false });
 
@@ -800,6 +800,14 @@ async function renderRequests(requests, container, isHistory = false) {
             ${escapeHtml(ign)} → ${escapeHtml(req.items.name)} <span class="qty-badge">x${req.quantity}</span>
             <span class="status-badge ${req.status}">${req.status.toUpperCase()}</span>
           </div>
+          ${req.proof_image ? `
+            <div class="request-proof">
+              <a href="${escapeHtml(req.proof_image)}" target="_blank" class="proof-link">
+                <img src="${escapeHtml(req.proof_image)}" alt="Proof image" class="proof-thumbnail" />
+                <span class="proof-label">View Proof</span>
+              </a>
+            </div>
+          ` : ''}
         </div>
         ${!isHistory ? `
         <div class="list-item-actions compact">
