@@ -1099,6 +1099,26 @@ window.loadAttendance = loadAttendance;
 window.toggleAttendance = toggleAttendance;
 window.editAttendancePoints = editAttendancePoints;
 window.deleteAttendance = deleteAttendance;
+window.setEventsTab = setEventsTab;
+
+// Events tab switching
+function setEventsTab(tabName) {
+  // Remove is-active from all tabs
+  document.querySelectorAll('.events-tab').forEach(tab => {
+    tab.classList.remove('is-active');
+  });
+  
+  // Remove is-active from all tab contents
+  document.querySelectorAll('.events-tab-content').forEach(content => {
+    content.classList.remove('is-active');
+  });
+  
+  // Add is-active to selected tab
+  document.querySelector(`.events-tab[data-tab="${tabName}"]`).classList.add('is-active');
+  
+  // Add is-active to selected tab content
+  document.getElementById(`events-tab-${tabName}`).classList.add('is-active');
+}
 
 // Create user form handler
 document.getElementById("create-user-form").addEventListener("submit", (e) => {
