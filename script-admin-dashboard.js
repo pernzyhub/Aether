@@ -604,7 +604,7 @@ async function loadRequests() {
   try {
     const { data, error } = await supabase
       .from("item_requests")
-      .select("*, items!inner(name), clan_users!inner(ign)")
+      .select("*, items!inner(name), user_id:clan_users!inner(ign)")
       .neq("status", "done")
       .order("created_at", { ascending: false });
 
@@ -619,7 +619,7 @@ async function loadRequests() {
       <div class="list-item" data-id="${req.id}">
         <div class="list-item-content">
           <div class="list-item-title">
-            ${escapeHtml(req.clan_users.ign)} requested ${escapeHtml(req.items.name)} x${req.quantity}
+            ${escapeHtml(req.user_id.ign)} requested ${escapeHtml(req.items.name)} x${req.quantity}
           </div>
           <div class="list-item-meta">
             Requested: ${new Date(req.created_at).toLocaleString()}<br>
