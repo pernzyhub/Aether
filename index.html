@@ -29,6 +29,10 @@
         <h3>Login with IGN</h3>
         <form id="member-login-form" onsubmit="event.preventDefault(); memberLogin();">
           <div class="form-group">
+            <label for="accessCode">AETHER CODE</label>
+            <input type="text" id="accessCode" placeholder="Enter access code" required />
+          </div>
+          <div class="form-group">
             <label for="memberIgn">IGN</label>
             <input type="text" id="memberIgn" required />
           </div>
@@ -53,6 +57,10 @@
         </div>
         <div id="adminDropdown" class="admin-dropdown">
           <form class="admin-form" onsubmit="event.preventDefault(); adminLogin();">
+            <div class="form-group">
+              <label for="adminAccessCode">AETHER CODE</label>
+              <input type="text" id="adminAccessCode" placeholder="Enter access code" required />
+            </div>
             <div class="form-group">
               <label for="adminEmail">Email</label>
               <input type="email" id="adminEmail" required />

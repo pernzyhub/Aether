@@ -38,6 +38,32 @@ window.addEventListener('resize', () => {
 const supabaseUrl = "https://wpilukuwehxphmorjxzd.supabase.co";
 const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwaWx1a3V3ZWh4cGhtb3JqeHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwODgxNDMsImV4cCI6MjA5ODY2NDE0M30.PjBUX8c8ZU8YVYUuwb2ypGyfMtHg-jOPlFDausGDKZY";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const ACCESS_CODE = "AETHER2026";
+const DEFAULT_MEMBER_PASSWORD = "Aether2026!";
+
+function validateAccessCode(inputValue) {
+  return inputValue.trim().toUpperCase() === ACCESS_CODE;
+}
+
+function getMemberSession() {
+  try {
+    return JSON.parse(localStorage.getItem("aether_member_session"));
+  } catch {
+    return null;
+  }
+}
+
+function saveMemberSession(clanUser, needsPasswordChange) {
+  localStorage.setItem("aether_member_session", JSON.stringify({
+    id: clanUser.id,
+    ign: clanUser.ign,
+    needsPasswordChange
+  }));
+}
+
+function clearMemberSession() {
+  localStorage.removeItem("aether_member_session");
+}
 
 async function discordLogin() {
   await supabase.auth.signInWithOAuth({ provider: "discord" });
@@ -45,6 +71,7 @@ async function discordLogin() {
 
 async function logout() {
   await supabase.auth.signOut();
+  clearMemberSession();
   const userEl = document.getElementById("user");
   if (userEl) userEl.textContent = "Logged out.";
 }
@@ -57,10 +84,17 @@ function toggleAdminDropdown() {
 async function adminLogin() {
   const email = document.getElementById("adminEmail").value;
   const password = document.getElementById("adminPassword").value;
+  const accessCode = document.getElementById("adminAccessCode").value;
   const statusEl = document.getElementById("adminStatus");
 
   statusEl.textContent = "";
   statusEl.className = "status-text";
+
+  if (!validateAccessCode(accessCode)) {
+    statusEl.textContent = "Invalid access code.";
+    statusEl.className = "status-text error";
+    return;
+  }
 
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
@@ -83,6 +117,66 @@ async function adminLogin() {
       statusEl.textContent = "Access denied. Not an admin.";
       statusEl.className = "status-text error";
     }
+  }
+}
+
+async function memberLogin() {
+  const ign = document.getElementById("memberIgn").value.trim();
+  const password = document.getElementById("memberPassword").value;
+  const accessCode = document.getElementById("accessCode").value;
+  const statusEl = document.getElementById("memberStatus");
+
+  statusEl.textContent = "";
+  statusEl.className = "status-text";
+
+  if (!validateAccessCode(accessCode)) {
+    statusEl.textContent = "Invalid access code.";
+    statusEl.className = "status-text error";
+    return;
+  }
+
+  try {
+    const { data: clanUsers, error } = await supabase
+      .from("clan_users")
+      .select("*")
+      .eq("ign", ign)
+      .limit(1);
+
+    if (error) throw error;
+
+    const clanUser = clanUsers?.[0];
+    if (!clanUser) {
+      statusEl.textContent = "No account found for that IGN.";
+      statusEl.className = "status-text error";
+      return;
+    }
+
+    if (!clanUser.is_active) {
+      statusEl.textContent = "This account is inactive.";
+      statusEl.className = "status-text error";
+      return;
+    }
+
+    const storedPassword = clanUser.password || DEFAULT_MEMBER_PASSWORD;
+    const passwordMatches = password === storedPassword;
+    const needsPasswordChange = !clanUser.password || clanUser.password === DEFAULT_MEMBER_PASSWORD || password === DEFAULT_MEMBER_PASSWORD;
+
+    if (!passwordMatches) {
+      statusEl.textContent = "Incorrect password.";
+      statusEl.className = "status-text error";
+      return;
+    }
+
+    saveMemberSession(clanUser, needsPasswordChange);
+    statusEl.textContent = "Welcome!";
+    statusEl.className = "status-text success";
+
+    setTimeout(() => {
+      window.location.href = needsPasswordChange ? "/settings.html" : "/portal.html";
+    }, 700);
+  } catch (err) {
+    statusEl.textContent = "Login failed: " + err.message;
+    statusEl.className = "status-text error";
   }
 }
 

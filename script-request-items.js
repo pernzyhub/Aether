@@ -8,20 +8,31 @@ let currentUser = null;
 let currentClanUser = null;
 let editingRequestId = null;
 
+function getMemberSession() {
+  try {
+    return JSON.parse(localStorage.getItem("aether_member_session"));
+  } catch {
+    return null;
+  }
+}
+
 async function checkAuth() {
   const { data } = await supabase.auth.getSession();
   const user = data.session?.user;
+  const memberSession = getMemberSession();
   
-  if (!user) {
+  if (!user && !memberSession) {
     window.location.href = "/";
     return false;
   }
+
+  const userId = user?.id || memberSession?.id;
 
   // Load clan user data to check active status and IGN
   let { data: clanUser, error: clanUserError } = await supabase
     .from("clan_users")
     .select("*")
-    .eq("id", user.id)
+    .eq("id", userId)
     .single();
 
   // If clan user doesn't exist yet, create it!
@@ -29,8 +40,8 @@ async function checkAuth() {
     const { data: newClanUser, insertError } = await supabase
       .from("clan_users")
       .insert([{
-        id: user.id,
-        ign: user.user_metadata?.full_name || null,
+        id: userId,
+        ign: user?.user_metadata?.full_name || null,
         is_active: true,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -63,10 +74,10 @@ async function checkAuth() {
     return false;
   }
 
-  currentUser = user;
+  currentUser = user || { id: memberSession?.id };
   currentClanUser = clanUser;
   
-  const username = clanUser.ign || user.user_metadata?.full_name || user.email;
+  const username = clanUser.ign || user?.user_metadata?.full_name || user?.email || memberSession?.ign || "MEMBER";
   const welcomeEl = document.getElementById("welcome-text");
   if (welcomeEl) {
     welcomeEl.textContent = `WELCOME, ${username.toUpperCase()}`;

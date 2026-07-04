@@ -7,31 +7,49 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 let currentClanUser = null;
 let currentUser = null;
 
+function getMemberSession() {
+  try {
+    return JSON.parse(localStorage.getItem("aether_member_session"));
+  } catch {
+    return null;
+  }
+}
+
+function clearMemberSession() {
+  localStorage.removeItem("aether_member_session");
+}
+
 async function loadUser() {
   const { data } = await supabase.auth.getSession();
   const user = data.session?.user;
-  if (!user) {
+  const memberSession = getMemberSession();
+
+  if (!user && !memberSession) {
     window.location.href = "/";
     return;
   }
 
-  currentUser = user;
+  if (!user && memberSession) {
+    currentUser = { id: memberSession.id };
+  } else {
+    currentUser = user;
+  }
+
+  const userId = currentUser?.id || user?.id;
 
   // Load clan user data
   let { data: clanUser, error } = await supabase
     .from("clan_users")
     .select("*")
-    .eq("id", user.id)
+    .eq("id", userId)
     .single();
 
-  // If clan user doesn't exist yet, create it!
   if (error && (error.code === 'PGRST116' || error.message.includes('No rows found'))) {
-    // PGRST116 is Supabase's "row not found" error code
     const { data: newClanUser, insertError } = await supabase
       .from("clan_users")
       .insert([{
-        id: user.id,
-        ign: user.user_metadata?.full_name || null,
+        id: userId,
+        ign: user?.user_metadata?.full_name || null,
         is_active: true,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -53,7 +71,13 @@ async function loadUser() {
     currentClanUser = clanUser;
   }
 
-  const isAdmin = user.app_metadata?.role && (user.app_metadata.role === "admin" || user.app_metadata.role === "superuser");
+  const memberSession = getMemberSession();
+  if (memberSession?.needsPasswordChange) {
+    window.location.href = "/settings.html";
+    return;
+  }
+
+  const isAdmin = user?.app_metadata?.role && (user.app_metadata.role === "admin" || user.app_metadata.role === "superuser");
 
   // Check if IGN is set - show button if not
   const changeIgnBtn = document.getElementById("change-ign-btn");
@@ -68,7 +92,7 @@ async function loadUser() {
   }
 
   // Set welcome text using IGN if available
-  const username = (currentClanUser?.ign) || user.user_metadata?.full_name || user.user_metadata?.name || user.email;
+  const username = currentClanUser?.ign || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || memberSession?.ign || "MEMBER";
   const welcomeEl = document.getElementById("welcome-text");
   if (welcomeEl) {
     welcomeEl.textContent = `WELCOME, ${username.toUpperCase()}`;
@@ -105,7 +129,7 @@ async function saveIgn(event) {
   statusEl.className = "status-text";
 
   const { data: sessionData } = await supabase.auth.getSession();
-  const userId = sessionData.session?.user.id;
+  const userId = currentUser?.id || sessionData.session?.user?.id;
 
   const { error } = await supabase
     .from("clan_users")
@@ -210,6 +234,7 @@ async function loadRules() {
 
 async function logout() {
   await supabase.auth.signOut();
+  clearMemberSession();
   window.location.href = "/";
 }
 
