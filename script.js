@@ -104,3 +104,4 @@ window.discordLogin = discordLogin;
 window.logout = logout;
 window.toggleAdminDropdown = toggleAdminDropdown;
 window.adminLogin = adminLogin;
+window.memberLogin = memberLogin;

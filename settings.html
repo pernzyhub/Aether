@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AetherClan - Settings</title>
+  <link rel="stylesheet" href="styles-portal.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="logo">AETHERCLAN</div>
+    <div class="user-info">
+      <span id="welcome-text" class="welcome-text">LOADING USER...</span>
+      <a href="/portal.html" class="nav-link" style="color: #00ff88; text-decoration: none; padding: 8px 12px; border: 1px solid #00ff88;">PORTAL</a>
+      <button class="logout-btn" onclick="logout()">LOGOUT</button>
+    </div>
+  </header>
+
+  <div class="container" style="grid-template-columns: 1fr;">
+    <section class="card">
+      <h2>PROFILE SETTINGS</h2>
+      <p style="margin-bottom: 20px; color: #00cc66;">Manage your clan profile credentials. These will be used for future warehouse, ranking, and clan systems.</p>
+      
+      <form id="settings-form" onsubmit="event.preventDefault(); saveSettings();">
+        <div class="form-group">
+          <label for="newIgn">New IGN / Username</label>
+          <input type="text" id="newIgn" placeholder="Enter your new username/IGN" required />
+        </div>
+        
+        <div class="form-group">
+          <label for="newPassword">New Password</label>
+          <input type="password" id="newPassword" placeholder="Enter your new password" required />
+        </div>
+        
+        <div class="form-group">
+          <label for="confirmPassword">Confirm Password</label>
+          <input type="password" id="confirmPassword" placeholder="Confirm your new password" required />
+        </div>
+        
+        <button type="submit" class="btn btn-primary">SAVE CHANGES</button>
+      </form>
+      
+      <p id="settings-status" class="status-text"></p>
+    </section>
+  </div>
+
+  <footer class="footer">
+    AETHERCLAN © 2026 | SYSTEM VERSION 2.0.4 | ALL RIGHTS RESERVED
+  </footer>
+
+  <script type="module" src="script-settings.js"></script>
+</body>
+</html>

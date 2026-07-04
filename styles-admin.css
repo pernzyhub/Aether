@@ -35,14 +35,15 @@ body::before {
 }
 
 .header {
-  background: rgba(20, 5, 5, 0.9);
+  background: rgba(20, 5, 5, 0.95);
   border-bottom: 2px solid #ff4466;
   padding: 20px 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  position: relative;
-  z-index: 10;
+  position: sticky;
+  top: 0;
+  z-index: 100;
   box-shadow: 0 4px 30px rgba(255, 68, 102, 0.2);
 }
 

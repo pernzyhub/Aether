@@ -35,14 +35,15 @@ body::before {
 }
 
 .header {
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0, 0, 0, 0.95);
   border-bottom: 2px solid #00ff88;
   padding: 20px 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  position: relative;
-  z-index: 10;
+  position: sticky;
+  top: 0;
+  z-index: 100;
   box-shadow: 0 4px 30px rgba(0, 255, 136, 0.2);
 }
 
@@ -52,6 +53,10 @@ body::before {
   text-shadow: 0 0 15px #00ff88, 0 0 30px #00ff88;
   letter-spacing: 3px;
   animation: glitchLogo 4s infinite;
+}
+
+.main-content-wrapper {
+  padding-top: 20px; /* Extra padding to account for sticky header */
 }
 
 @keyframes glitchLogo {
@@ -69,6 +74,29 @@ body::before {
 .welcome-text {
   font-size: 1.1rem;
   color: #00cc66;
+}
+
+.nav-links {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.nav-link {
+  color: #00ffaa;
+  text-decoration: none;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+  padding: 8px 16px;
+}
+
+.nav-link:hover {
+  color: #00ff88;
+  border-color: #00ff88;
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
 }
 
 .logout-btn {

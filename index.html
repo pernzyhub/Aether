@@ -22,6 +22,25 @@
             LOGIN WITH DISCORD
           </button>
         </div>
+        <p style="margin-top: 15px; color: #00cc66; font-size: 0.9rem;">Used discord login once for registration.</p>
+        
+        <hr style="border-color: #00ff41; border-style: solid; margin: 20px 0;">
+        
+        <h3>Login with IGN</h3>
+        <form id="member-login-form" onsubmit="event.preventDefault(); memberLogin();">
+          <div class="form-group">
+            <label for="memberIgn">IGN</label>
+            <input type="text" id="memberIgn" required />
+          </div>
+          <div class="form-group">
+            <label for="memberPassword">Password</label>
+            <input type="password" id="memberPassword" required />
+          </div>
+          <button type="submit" class="form-submit-btn">
+            LOGIN
+          </button>
+        </form>
+        <p id="memberStatus" class="status-text"></p>
       </div>
 
       <div class="login-box">
