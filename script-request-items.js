@@ -107,6 +107,7 @@ async function checkAuth() {
 
 async function loadItems() {
   const selectEl = document.getElementById("item-select");
+  selectEl.innerHTML = '<option value="">Loading items...</option>';
   
   try {
     const { data, error } = await supabase
