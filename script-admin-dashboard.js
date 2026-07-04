@@ -286,7 +286,7 @@ async function loadUsers() {
   try {
     const { data, error } = await supabase
       .from("clan_users")
-      .select("*, auth.users!inner(email)")
+      .select("*")
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -301,7 +301,7 @@ async function loadUsers() {
         <div class="list-item-content">
           <div class="list-item-title">${escapeHtml(user.ign || "IGN not set")}</div>
           <div class="list-item-meta">
-            ${escapeHtml(user.email)} | 
+            Username / IGN: ${escapeHtml(user.ign || "Not set")} | 
             Joined: ${new Date(user.created_at).toLocaleDateString()}
           </div>
           <div class="list-item-text">

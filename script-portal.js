@@ -53,17 +53,17 @@ async function loadUser() {
     currentClanUser = clanUser;
   }
 
+  const isAdmin = user.app_metadata?.role && (user.app_metadata.role === "admin" || user.app_metadata.role === "superuser");
+
   // Check if IGN is set - show button if not
   const changeIgnBtn = document.getElementById("change-ign-btn");
-  if (changeIgnBtn && (!currentClanUser || !currentClanUser.ign)) {
-    changeIgnBtn.style.display = "inline-block";
-  } else if (changeIgnBtn) {
-    changeIgnBtn.style.display = "none";
+  if (changeIgnBtn) {
+    changeIgnBtn.style.display = isAdmin || (currentClanUser && currentClanUser.ign) ? "none" : "inline-block";
   }
 
   // Check if user is admin to show admin menu
   const adminMenuItem = document.getElementById("admin-menu-item");
-  if (adminMenuItem && user.app_metadata?.role && (user.app_metadata.role === "admin" || user.app_metadata.role === "superuser")) {
+  if (adminMenuItem && isAdmin) {
     adminMenuItem.style.display = "inline-flex";
   }
 
