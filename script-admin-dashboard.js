@@ -155,16 +155,14 @@ async function postAnnouncement(event) {
 
     if (error) throw error;
 
-    statusEl.textContent = editingAnnouncementId ? "Announcement updated successfully!" : "Announcement posted successfully!";
-    statusEl.className = "status-text success";
+    showStatus("announcements-status", editingAnnouncementId ? "Announcement updated successfully!" : "Announcement posted successfully!", "success");
     document.getElementById("announcement-form").reset();
     document.getElementById("announcement-editor").innerHTML = "";
     editingAnnouncementId = null;
     document.querySelector("#announcement-form button[type='submit']").textContent = "POST ANNOUNCEMENT";
     loadAnnouncements();
   } catch (err) {
-    statusEl.textContent = "Error posting announcement: " + err.message;
-    statusEl.className = "status-text error";
+    showStatus("announcements-status", "Error posting announcement: " + err.message, "error");
   }
 }
 
@@ -218,12 +216,10 @@ async function deleteAnnouncement(id) {
       .eq("id", id);
 
     if (error) throw error;
-    statusEl.textContent = "Announcement deleted!";
-    statusEl.className = "status-text success";
+    showStatus("announcements-status", "Announcement deleted!", "success");
     loadAnnouncements();
   } catch (err) {
-    statusEl.textContent = "Error deleting: " + err.message;
-    statusEl.className = "status-text error";
+    showStatus("announcements-status", "Error deleting: " + err.message, "error");
   }
 }
 
@@ -299,16 +295,14 @@ async function postRule(event) {
 
     if (error) throw error;
 
-    statusEl.textContent = editingRuleId ? "Rule updated successfully!" : "Rule added successfully!";
-    statusEl.className = "status-text success";
+    showStatus("rules-status", editingRuleId ? "Rule updated successfully!" : "Rule added successfully!", "success");
     document.getElementById("rule-form").reset();
     document.getElementById("rule-editor").innerHTML = "";
     editingRuleId = null;
     document.querySelector("#rule-form button[type='submit']").textContent = "ADD RULE";
     loadRules();
   } catch (err) {
-    statusEl.textContent = "Error adding rule: " + err.message;
-    statusEl.className = "status-text error";
+    showStatus("rules-status", "Error adding rule: " + err.message, "error");
   }
 }
 
@@ -363,12 +357,10 @@ async function deleteRule(id) {
       .eq("id", id);
 
     if (error) throw error;
-    statusEl.textContent = "Rule deleted!";
-    statusEl.className = "status-text success";
+    showStatus("rules-status", "Rule deleted!", "success");
     loadRules();
   } catch (err) {
-    statusEl.textContent = "Error deleting: " + err.message;
-    statusEl.className = "status-text error";
+    showStatus("rules-status", "Error deleting: " + err.message, "error");
   }
 }
 
@@ -401,15 +393,13 @@ async function addItem(event) {
 
     if (error) throw error;
 
-    statusEl.textContent = editingItemId ? "Item updated successfully!" : "Item added successfully!";
-    statusEl.className = "status-text success";
+    showStatus("items-status", editingItemId ? "Item updated successfully!" : "Item added successfully!", "success");
     document.getElementById("item-form").reset();
     editingItemId = null;
     document.querySelector("#item-form button[type='submit']").textContent = "ADD ITEM";
     loadItems();
   } catch (err) {
-    statusEl.textContent = "Error adding item: " + err.message;
-    statusEl.className = "status-text error";
+    showStatus("items-status", "Error adding item: " + err.message, "error");
   }
 }
 
@@ -431,18 +421,16 @@ async function loadItems() {
       return;
     }
 
-    container.innerHTML = data.map(item => `
-      <div class="list-item compact" data-id="${item.id}">
-        <div class="list-item-content compact">
-          <div class="list-item-title compact">${escapeHtml(item.name)}</div>
-          <div class="list-item-meta">${new Date(item.created_at).toLocaleString()}</div>
-        </div>
-        <div class="list-item-actions compact">
+    container.innerHTML = `<ul class="item-list">` + data.map(item => `
+      <li class="item-list-item">
+        <span class="item-name">${escapeHtml(item.name)}</span>
+        <span class="item-date">${new Date(item.created_at).toLocaleDateString()}</span>
+        <div class="item-actions">
           <button class="btn-xs btn-secondary" onclick="editItem('${item.id}')">EDIT</button>
           <button class="btn-xs btn-danger" onclick="deleteItem('${item.id}')">DEL</button>
         </div>
-      </div>
-    `).join("");
+      </li>
+    `).join("") + `</ul>`;
   } catch (err) {
     container.innerHTML = "";
     statusEl.textContent = "Error loading items: " + err.message;
@@ -483,12 +471,10 @@ async function deleteItem(id) {
       .eq("id", id);
 
     if (error) throw error;
-    statusEl.textContent = "Item deleted!";
-    statusEl.className = "status-text success";
+    showStatus("items-status", "Item deleted!", "success");
     loadItems();
   } catch (err) {
-    statusEl.textContent = "Error deleting item: " + err.message;
-    statusEl.className = "status-text error";
+    showStatus("items-status", "Error deleting item: " + err.message, "error");
   }
 }
 
@@ -658,12 +644,10 @@ async function deleteUser(userId) {
       throw error;
     }
 
-    statusEl.textContent = "User deleted successfully.";
-    statusEl.className = "status-text success";
+    showStatus("users-status", "User deleted successfully.", "success");
     loadUsers();
   } catch (err) {
-    statusEl.textContent = `Error deleting user: ${err.message}`;
-    statusEl.className = "status-text error";
+    showStatus("users-status", `Error deleting user: ${err.message}`, "error");
   }
 }
 
@@ -672,8 +656,7 @@ async function changeUserIgn(userId, currentIgn) {
   const newIgn = prompt("Enter a new IGN for this user:", currentIgn || "");
 
   if (!newIgn || newIgn.trim().length === 0) {
-    statusEl.textContent = "IGN cannot be empty.";
-    statusEl.className = "status-text error";
+    showStatus("users-status", "IGN cannot be empty.", "error");
     return;
   }
 
@@ -687,12 +670,10 @@ async function changeUserIgn(userId, currentIgn) {
       .eq("id", userId);
 
     if (error) throw error;
-    statusEl.textContent = "IGN updated successfully.";
-    statusEl.className = "status-text success";
+    showStatus("users-status", "IGN updated successfully.", "success");
     loadUsers();
   } catch (err) {
-    statusEl.textContent = `Error updating IGN: ${err.message}`;
-    statusEl.className = "status-text error";
+    showStatus("users-status", `Error updating IGN: ${err.message}`, "error");
   }
 }
 
@@ -711,12 +692,10 @@ async function toggleUserStatus(userId, isActive) {
       .eq("id", userId);
 
     if (error) throw error;
-    statusEl.textContent = `User ${action}d successfully.`;
-    statusEl.className = "status-text success";
+    showStatus("users-status", `User ${action}d successfully.`, "success");
     loadUsers();
   } catch (err) {
-    statusEl.textContent = `Error updating user: ${err.message}`;
-    statusEl.className = "status-text error";
+    showStatus("users-status", `Error updating user: ${err.message}`, "error");
   }
 }
 
@@ -725,8 +704,7 @@ async function changeUserPassword(userId) {
   const newPassword = prompt("Enter a new password for this user:");
 
   if (!newPassword || newPassword.length < 6) {
-    statusEl.textContent = "Password must be at least 6 characters.";
-    statusEl.className = "status-text error";
+    showStatus("users-status", "Password must be at least 6 characters.", "error");
     return;
   }
 
@@ -741,11 +719,9 @@ async function changeUserPassword(userId) {
 
     if (error) throw error;
 
-    statusEl.textContent = "Password updated successfully.";
-    statusEl.className = "status-text success";
+    showStatus("users-status", "Password updated successfully.", "success");
   } catch (err) {
-    statusEl.textContent = `Error updating password: ${err.message}`;
-    statusEl.className = "status-text error";
+    showStatus("users-status", `Error updating password: ${err.message}`, "error");
   }
 }
 
@@ -758,52 +734,84 @@ async function loadRequests() {
     const { data: requests, error } = await supabase
       .from("item_requests")
       .select("*, items!inner(name)")
-      .neq("status", "approved")
+      .in("status", ["pending"])
       .order("created_at", { ascending: false });
 
     if (error) throw error;
 
     if (!requests || requests.length === 0) {
-      container.innerHTML = "<p>No requests yet.</p>";
-      return;
+      container.innerHTML = "<p>No pending requests.</p>";
+    } else {
+      renderRequests(requests, container);
     }
+    
+    loadRequestsHistory();
+  } catch (err) {
+    container.innerHTML = `<p class="status-text error">Error loading requests: ${err.message}</p>`;
+  }
+}
 
-    // Fetch clan_users for all user_ids in the requests
-    const userIds = [...new Set(requests.map(r => r.user_id))];
-    const { data: users, error: usersError } = await supabase
-      .from("clan_users")
-      .select("id, ign")
-      .in("id", userIds);
+async function loadRequestsHistory() {
+  const container = document.getElementById("requests-history-list");
+  container.innerHTML = "<p>Loading history...</p>";
 
-    if (usersError) throw usersError;
+  try {
+    const { data: requests, error } = await supabase
+      .from("item_requests")
+      .select("*, items!inner(name)")
+      .in("status", ["approved", "denied"])
+      .order("updated_at", { ascending: false });
 
-    // Create a map of user_id -> ign
-    const userMap = {};
-    users.forEach(u => {
-      userMap[u.id] = u.ign;
-    });
+    if (error) throw error;
 
-    container.innerHTML = requests.map(req => {
-      const ign = userMap[req.user_id] || "Unknown User";
-      return `
-      <div class="list-item compact" data-id="${req.id}">
+    if (!requests || requests.length === 0) {
+      container.innerHTML = "<p>No history yet.</p>";
+    } else {
+      renderRequests(requests, container, true);
+    }
+  } catch (err) {
+    container.innerHTML = `<p class="status-text error">Error loading history: ${err.message}</p>`;
+  }
+}
+
+async function renderRequests(requests, container, isHistory = false) {
+  // Fetch clan_users for all user_ids in the requests
+  const userIds = [...new Set(requests.map(r => r.user_id))];
+  const { data: users, error: usersError } = await supabase
+    .from("clan_users")
+    .select("id, ign")
+    .in("id", userIds);
+
+  if (usersError) throw usersError;
+
+  // Create a map of user_id -> ign
+  const userMap = {};
+  users.forEach(u => {
+    userMap[u.id] = u.ign;
+  });
+
+  container.innerHTML = requests.map(req => {
+    const ign = userMap[req.user_id] || "Unknown User";
+    const isDone = req.quantity === 0;
+    return `
+      <div class="list-item compact ${isDone ? 'completed' : ''}" data-id="${req.id}">
         <div class="list-item-content compact">
           <div class="list-item-title compact">
             ${escapeHtml(ign)} → ${escapeHtml(req.items.name)} <span class="qty-badge">x${req.quantity}</span>
             <span class="status-badge ${req.status}">${req.status.toUpperCase()}</span>
           </div>
         </div>
+        ${!isHistory ? `
         <div class="list-item-actions compact">
           <button class="btn-xs btn-secondary" onclick="adjustQuantity('${req.id}', ${req.quantity}, -1)">-1</button>
           <button class="btn-xs btn-secondary" onclick="adjustQuantity('${req.id}', ${req.quantity}, 1)">+1</button>
           <button class="btn-xs btn-success" onclick="markRequestDone('${req.id}')">APPROVE</button>
+          <button class="btn-xs btn-danger" onclick="rejectRequest('${req.id}')">REJECT</button>
           <button class="btn-xs btn-danger" onclick="deleteRequest('${req.id}')">DEL</button>
         </div>
+        ` : ''}
       </div>
     `}).join("");
-  } catch (err) {
-    container.innerHTML = `<p class="status-text error">Error loading requests: ${err.message}</p>`;
-  }
 }
 
 async function adjustQuantity(requestId, currentQuantity, delta) {
@@ -835,6 +843,25 @@ async function markRequestDone(requestId) {
       .from("item_requests")
       .update({
         status: "approved",
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", requestId);
+
+    if (error) throw error;
+    loadRequests();
+  } catch (err) {
+    alert(`Error updating request: ${err.message}`);
+  }
+}
+
+async function rejectRequest(requestId) {
+  if (!confirm("Reject this request?")) return;
+
+  try {
+    const { error } = await supabase
+      .from("item_requests")
+      .update({
+        status: "denied",
         updated_at: new Date().toISOString()
       })
       .eq("id", requestId);
@@ -894,16 +921,14 @@ async function updateAccessCode(event) {
   const newCode = document.getElementById("new-access-code")?.value.trim();
 
   if (!newCode) {
-    statusEl.textContent = "Please enter a valid access code.";
-    statusEl.className = "status-text error";
+    showStatus("access-code-status", "Please enter a valid access code.", "error");
     return;
   }
 
   localStorage.setItem("aether_access_code", newCode);
   loadAccessCode();
   document.getElementById("new-access-code").value = "";
-  statusEl.textContent = "Access code updated.";
-  statusEl.className = "status-text success";
+  showStatus("access-code-status", "Access code updated.", "success");
 }
 
 function setAccountsTab(tabName) {
@@ -927,6 +952,25 @@ async function logout() {
   localStorage.removeItem("aether_member_session");
   localStorage.removeItem("aether_access_granted");
   window.location.replace("/access-gate.html");
+}
+
+function showStatus(elementId, message, type = 'success') {
+  const statusEl = document.getElementById(elementId);
+  if (!statusEl) return;
+  
+  statusEl.textContent = message;
+  statusEl.className = `status-text ${type}`;
+  
+  // Auto-fade after 2.5 seconds
+  setTimeout(() => {
+    statusEl.style.opacity = '0';
+    statusEl.style.transition = 'opacity 0.5s ease';
+    setTimeout(() => {
+      statusEl.textContent = '';
+      statusEl.style.opacity = '1';
+      statusEl.className = 'status-text';
+    }, 500);
+  }, 2500);
 }
 
 function escapeHtml(text) {
@@ -959,7 +1003,7 @@ window.changeUserPassword = changeUserPassword;
 window.deleteUser = deleteUser;
 window.adjustQuantity = adjustQuantity;
 window.markRequestDone = markRequestDone;
-window.deleteRequest = deleteRequest;
+window.rejectRequest = rejectRequest;
 window.editAnnouncement = editAnnouncement;
 window.editRule = editRule;
 window.toggleAnnouncement = toggleAnnouncement;
