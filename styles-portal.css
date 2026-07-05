@@ -157,12 +157,10 @@ body::before {
 .container {
   position: relative;
   z-index: 1;
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 28px 20px 40px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 30px;
+  padding: 24px 16px 40px;
+  display: block;
 }
 
 /* Upcoming compact hover-expand */
@@ -468,7 +466,16 @@ body::before {
 
 @media (max-width: 900px) {
   .container {
-    grid-template-columns: 1fr;
+    padding: 16px 12px 30px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  .card h2 {
+    font-size: 1.1rem;
+    margin-bottom: 12px;
   }
 
   .request-page {
@@ -487,13 +494,18 @@ body::before {
   .request-action-row {
     justify-content: flex-start;
   }
+
+  /* Portal layout - stack on mobile */
+  main.container > div[style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 .card {
   background: rgba(8, 16, 12, 0.88);
   border: 1px solid rgba(0, 255, 136, 0.12);
   border-radius: 16px;
-  padding: 28px;
+  padding: 20px;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
   position: relative;
   overflow: hidden;
@@ -516,8 +528,8 @@ body::before {
 }
 
 .card h2 {
-  font-size: 1.4rem;
-  margin-bottom: 20px;
+  font-size: 1.2rem;
+  margin-bottom: 14px;
   color: #ffffff;
   text-shadow: 0 0 8px rgba(0, 255, 136, 0.15);
   display: flex;
@@ -541,14 +553,14 @@ body::before {
 .announcements-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .announcement-item {
   background: rgba(0, 255, 136, 0.05);
   border-left: 3px solid #00ff88;
   border-radius: 8px;
-  padding: 14px 16px;
+  padding: 10px 12px;
   transition: all 0.2s ease;
 }
 
@@ -560,34 +572,34 @@ body::before {
 
 .announcement-title {
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.95rem;
   color: #ffffff;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .announcement-date {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: #00cc66;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   opacity: 0.75;
 }
 
 .announcement-content {
-  line-height: 1.5;
+  line-height: 1.4;
   color: #c4d0cc;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 .rules-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .rule-item {
   display: flex;
-  gap: 14px;
-  padding: 14px 12px;
+  gap: 12px;
+  padding: 10px 8px;
   border-bottom: 1px solid rgba(0, 255, 136, 0.15);
   transition: all 0.2s ease;
   border-radius: 6px;
@@ -606,20 +618,20 @@ body::before {
   background: linear-gradient(135deg, #00ff88 0%, #00cc66 100%);
   color: #000;
   font-weight: 700;
-  min-width: 32px;
-  height: 32px;
+  min-width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 6px;
   flex-shrink: 0;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .rule-text {
-  line-height: 1.5;
+  line-height: 1.4;
   color: #d4dcd8;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 .rule-text strong {

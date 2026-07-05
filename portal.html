@@ -26,48 +26,55 @@
   </header>
 
   <main class="container">
-    <section class="card">
-      <h2>ANNOUNCEMENTS</h2>
-      <div id="announcements-list" class="announcements-list">
-        <p>Loading announcements...</p>
-      </div>
-    </section>
-
-    <section class="card" id="upcoming-card">
-      <h2>NEXT EVENT</h2>
-      <div id="upcoming-event" class="upcoming-compact" style="min-height:60px; display:flex; align-items:center; justify-content:space-between; gap:12px;">
-        <div id="upcoming-mini" style="width:48px; height:48px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:#111; font-size:20px;">📅</div>
-        <div id="upcoming-content" style="flex:1; overflow:hidden;">
-          <div id="upcoming-info" class="upcoming-details" style="flex:1;">
-            <p style="color:#aaa;">Loading next event...</p>
+    <div style="display: grid; grid-template-columns: 1fr 1.4fr; gap: 24px; align-items: start;">
+      <!-- LEFT COLUMN: Announcements & Rules -->
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        <section class="card">
+          <h2>ANNOUNCEMENTS</h2>
+          <div id="announcements-list" class="announcements-list">
+            <p>Loading announcements...</p>
           </div>
-          <div id="upcoming-countdown" class="upcoming-details" style="margin-top:6px; text-align:center; background:#0a0a0a; padding:8px; border-radius:6px; border:1px solid #333; display:inline-block;"></div>
-        </div>
-        <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
-          <button id="upcoming-rsvp-btn" class="btn btn-secondary upcoming-details" style="background:#333; color:#ff6688; padding:6px 10px; font-weight:700;">I WILL ATTEND</button>
-        </div>
+        </section>
+
+        <section class="card">
+          <h2>CLAN RULES</h2>
+          <div id="rules-list" class="rules-list">
+            <p>Loading rules...</p>
+          </div>
+        </section>
       </div>
-    </section>
 
-    <section class="card" id="my-attendance-card" style="margin-top:12px;">
-      <h2>MY ATTENDANCE</h2>
-      <div id="my-attendance" style="min-height:60px; color:#ccc;">Loading your attendance summary...</div>
-    </section>
+      <!-- RIGHT COLUMN: Events & Attendance -->
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        <section class="card" id="upcoming-card">
+          <h2>NEXT EVENT</h2>
+          <div id="upcoming-event" class="upcoming-compact" style="min-height:60px; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+            <div id="upcoming-mini" style="width:48px; height:48px; display:flex; align-items:center; justify-content:center; border-radius:8px; background:#111; font-size:20px;">📅</div>
+            <div id="upcoming-content" style="flex:1; overflow:hidden;">
+              <div id="upcoming-info" class="upcoming-details" style="flex:1;">
+                <p style="color:#aaa;">Loading next event...</p>
+              </div>
+              <div id="upcoming-countdown" class="upcoming-details" style="margin-top:6px; text-align:center; background:#0a0a0a; padding:8px; border-radius:6px; border:1px solid #333; display:inline-block;"></div>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+              <button id="upcoming-rsvp-btn" class="btn btn-secondary upcoming-details" style="background:#333; color:#ff6688; padding:6px 10px; font-weight:700;">I WILL ATTEND</button>
+            </div>
+          </div>
+        </section>
 
-    <section class="card">
-      <h2>CLAN RULES</h2>
-      <div id="rules-list" class="rules-list">
-        <p>Loading rules...</p>
+        <section class="card" id="my-attendance-card" style="margin-top:0;">
+          <h2>MY ATTENDANCE</h2>
+          <div id="my-attendance" style="min-height:60px; color:#ccc;">Loading your attendance summary...</div>
+        </section>
+
+        <section class="card">
+          <h2>EVENTS & ATTENDANCE</h2>
+          <div id="events-list" class="events-list">
+            <p>Loading events...</p>
+          </div>
+        </section>
       </div>
-    </section>
-
-    <section class="card" id="events">
-      <h2>EVENTS & ATTENDANCE</h2>
-      <div id="events-list" class="events-list">
-        <p>Loading events...</p>
-      </div>
-    </section>
-
+    </div>
   </main>
 
   <footer class="footer">
