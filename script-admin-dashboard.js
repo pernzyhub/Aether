@@ -1100,6 +1100,23 @@ async function adminLogout() {
   window.location.replace("/index.html?view=public");
 }
 
+// Backwards-compatible wrapper: some pages use an inline `logout()` handler.
+// Keep this in place so older inline onclick="logout()" calls don't throw.
+async function logout() {
+  try {
+    await adminLogout();
+  } catch (err) {
+    console.warn('logout wrapper error:', err);
+    // Fallback: attempt a minimal sign-out and redirect
+    try {
+      await supabase.auth.signOut();
+    } catch (_) {}
+    localStorage.removeItem('aether_member_session');
+    window.location.replace('/index.html?view=public');
+  }
+}
+window.logout = logout;
+
 function navigateToFrontPage(event) {
   if (event) {
     event.preventDefault();
