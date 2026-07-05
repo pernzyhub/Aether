@@ -1,17 +1,7 @@
 import { supabase } from './lib/supabaseClient.js';
+import { logout, setActiveNavLink } from './lib/memberAuth.js';
 
 function escapeHtml(text) { const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
-
-async function logout() {
-  try {
-    await supabase.auth.signOut();
-  } catch (err) {
-    console.warn('Logout warning:', err);
-  }
-  localStorage.removeItem('aether_member_session');
-  localStorage.removeItem('aether_access_granted');
-  window.location.replace('/access-gate.html');
-}
 
 window.logout = logout;
 
@@ -109,5 +99,6 @@ window.addEventListener('load', () => {
   const today = new Date();
   input.value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
   document.getElementById('sheet-load').addEventListener('click', loadSheet);
+  setActiveNavLink();
   loadSheet();
 });

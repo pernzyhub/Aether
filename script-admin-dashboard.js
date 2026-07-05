@@ -1080,12 +1080,14 @@ window.addEventListener("load", () => {
       loadUsers();
       loadRequests();
       loadAccessCode();
+      attachEditorUploadHandlers();
       setAccountsTab('register');
     }
   }, 80);
 });
 
 window.setActiveModule = setActiveModule;
+window.applyEditorCommand = applyEditorCommand;
 window.bulkRegisterMembers = bulkRegisterMembers;
 window.toggleUserStatus = toggleUserStatus;
 window.changeUserIgn = changeUserIgn;

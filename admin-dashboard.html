@@ -44,6 +44,8 @@
                     <button type="button" class="editor-btn" onclick="applyEditorCommand('bold', null, 'announcement-editor')"><b>B</b></button>
                     <button type="button" class="editor-btn" onclick="applyEditorCommand('italic', null, 'announcement-editor')"><i>I</i></button>
                     <button type="button" class="editor-btn" onclick="applyEditorCommand('underline', null, 'announcement-editor')"><u>U</u></button>
+                    <button type="button" class="editor-btn" onclick="applyEditorCommand('justifyCenter', null, 'announcement-editor')">C</button>
+                    <button type="button" class="editor-btn" onclick="applyEditorCommand('justifyFull', null, 'announcement-editor')">J</button>
                     <select class="editor-select" onchange="applyEditorCommand('insertHTML', '<span style=\"font-size:' + this.value + '\">' + (window.getSelection()?.toString() || 'Text') + '</span>', 'announcement-editor')">
                       <option value="14px">14px</option>
                       <option value="16px">16px</option>
@@ -88,6 +90,8 @@
                     <button type="button" class="editor-btn" onclick="applyEditorCommand('bold', null, 'rule-editor')"><b>B</b></button>
                     <button type="button" class="editor-btn" onclick="applyEditorCommand('italic', null, 'rule-editor')"><i>I</i></button>
                     <button type="button" class="editor-btn" onclick="applyEditorCommand('underline', null, 'rule-editor')"><u>U</u></button>
+                    <button type="button" class="editor-btn" onclick="applyEditorCommand('justifyCenter', null, 'rule-editor')">C</button>
+                    <button type="button" class="editor-btn" onclick="applyEditorCommand('justifyFull', null, 'rule-editor')">J</button>
                     <select class="editor-select" onchange="applyEditorCommand('insertHTML', '<span style=\"font-size:' + this.value + '\">' + (window.getSelection()?.toString() || 'Text') + '</span>', 'rule-editor')">
                       <option value="14px">14px</option>
                       <option value="16px">16px</option>

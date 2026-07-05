@@ -376,35 +376,7 @@
 
   <script type="module">
     import { supabase } from './lib/supabaseClient.js';
-
-    function getMemberSession() {
-      try {
-        return JSON.parse(localStorage.getItem('aether_member_session'));
-      } catch {
-        return null;
-      }
-    }
-
-    async function ensureSupabaseSession() {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (sessionData?.session) {
-        return sessionData.session;
-      }
-
-      const memberSession = getMemberSession();
-      if (!memberSession) return null;
-
-      try {
-        const { data, error } = await supabase.auth.signInAnonymously();
-        if (!error && data?.session) {
-          return data.session;
-        }
-      } catch (err) {
-        console.warn('Unable to establish anonymous session:', err);
-      }
-
-      return null;
-    }
+    import { getMemberSession, ensureSupabaseSession, logout, setActiveNavLink } from './lib/memberAuth.js';
 
     let currentPeriod = 'month';
     let currentUserId = null;
@@ -425,7 +397,7 @@
         const { data: { user } } = await supabase.auth.getUser();
         const memberSession = getMemberSession();
         if (!user && !memberSession) {
-          window.location.href = 'index.html';
+          window.location.href = '/access-gate.html';
           return;
         }
 
@@ -578,19 +550,10 @@
       }).join('');
     }
 
-    async function logout() {
-      try {
-        await supabase.auth.signOut();
-      } catch (err) {
-        console.warn('Logout warning:', err);
-      }
-      localStorage.removeItem('aether_member_session');
-      localStorage.removeItem('aether_access_granted');
-      window.location.replace('/access-gate.html');
-    }
-
     // Load leaderboard on page load
     loadLeaderboard();
+    setActiveNavLink();
+    window.logout = logout;
   </script>
 </body>
 </html>

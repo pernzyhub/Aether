@@ -1,47 +1,9 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-const supabaseUrl = "https://wpilukuwehxphmorjxzd.supabase.co";
-const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwaWx1a3V3ZWh4cGhtb3JqeHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwODgxNDMsImV4cCI6MjA5ODY2NDE0M30.PjBUX8c8ZU8YVYUuwb2ypGyfMtHg-jOPlFDausGDKZY";
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { supabase } from './lib/supabaseClient.js';
+import { getMemberSession, ensureSupabaseSession, logout, setActiveNavLink } from './lib/memberAuth.js';
 
 let currentUser = null;
 let currentClanUser = null;
 const DEFAULT_MEMBER_PASSWORD = "123";
-
-function getMemberSession() {
-  try {
-    return JSON.parse(localStorage.getItem("aether_member_session"));
-  } catch {
-    return null;
-  }
-}
-
-function clearMemberSession() {
-  localStorage.removeItem("aether_member_session");
-}
-
-async function ensureSupabaseSession() {
-  const { data: sessionData } = await supabase.auth.getSession();
-  if (sessionData?.session) {
-    return sessionData.session;
-  }
-
-  const memberSession = getMemberSession();
-  if (!memberSession) {
-    return null;
-  }
-
-  try {
-    const { data, error } = await supabase.auth.signInAnonymously();
-    if (!error && data?.session) {
-      return data.session;
-    }
-  } catch (err) {
-    console.warn("Unable to start a temporary member session:", err);
-  }
-
-  return null;
-}
 
 function showSettingsStatus(message, type) {
   const statusEl = document.getElementById("settings-status");
@@ -179,31 +141,11 @@ async function saveSettings() {
   }
 }
 
-async function logout() {
-  try {
-    await supabase.auth.signOut();
-  } catch (err) {
-    console.warn("Logout warning:", err);
-  }
-
-  clearMemberSession();
-  localStorage.removeItem("aether_access_granted");
-  window.location.replace("/access-gate.html");
-}
-
-function setActiveNavLink() {
-  const currentPath = window.location.pathname.split("/").pop().toLowerCase();
-  document.querySelectorAll('.nav-link').forEach((link) => {
-    const href = link.getAttribute('href') || '';
-    const normalized = href.split('/').pop().toLowerCase();
-    link.classList.toggle('active', normalized === currentPath);
-  });
-}
 
 // Load user on page load
 window.addEventListener("load", () => {
-  window.setTimeout(() => {
-    loadUser();
+  window.setTimeout(async () => {
+    await loadUser();
     setActiveNavLink();
   }, 80);
 });

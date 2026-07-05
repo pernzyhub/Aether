@@ -607,10 +607,19 @@ body::before {
   opacity: 0.75;
 }
 
-.announcement-content {
-  line-height: 1.4;
+.announcement-content,
+.rule-text {
+  line-height: 1.5;
   color: #c4d0cc;
   font-size: 0.9rem;
+}
+
+.announcement-content img,
+.rule-text img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin-top: 8px;
 }
 
 .rules-list {
