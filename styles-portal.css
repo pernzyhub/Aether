@@ -5,7 +5,7 @@
 }
 
 body {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
   background: linear-gradient(135deg, #050505 0%, #0a140a 50%, #050505 100%);
   color: #f8fbff;
   min-height: 100vh;
@@ -21,8 +21,8 @@ body::before {
   width: 100%;
   height: 100%;
   background-image: 
-    linear-gradient(rgba(0, 255, 136, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 255, 136, 0.04) 1px, transparent 1px);
+    linear-gradient(rgba(0, 255, 136, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 136, 0.02) 1px, transparent 1px);
   background-size: 40px 40px;
   pointer-events: none;
   z-index: 0;
@@ -48,12 +48,11 @@ body::before {
 }
 
 .logo {
-  font-size: 2.1rem;
-  font-weight: bold;
+  font-size: 1.6rem;
+  font-weight: 800;
   color: #ffffff;
-  text-shadow: 0 0 15px rgba(0, 255, 136, 0.35);
-  letter-spacing: 3px;
-  animation: none;
+  letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
 .main-content-wrapper {
@@ -160,6 +159,24 @@ body::before {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 30px;
+}
+
+/* Upcoming compact hover-expand */
+#upcoming-event.upcoming-compact {
+  max-width: 140px;
+  transition: max-width 180ms ease, box-shadow 180ms ease;
+  overflow: hidden;
+  cursor: pointer;
+}
+#upcoming-event.upcoming-compact:hover {
+  max-width: 100%;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+#upcoming-event.upcoming-compact .upcoming-details {
+  display: none;
+}
+#upcoming-event.upcoming-compact:hover .upcoming-details {
+  display: block;
 }
 
 .header + .container {
