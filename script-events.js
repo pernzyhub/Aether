@@ -90,6 +90,7 @@ async function loadEventTypes() {
               <button class="btn ${type.is_active ? 'btn-danger' : 'btn-success'}" onclick="toggleEventTypeStatus('${type.id}', ${!type.is_active})">
                 ${type.is_active ? 'DEACTIVATE' : 'ACTIVATE'}
               </button>
+              <button class="btn btn-danger" onclick="deleteEventType('${type.id}')">DELETE</button>
             </div>
           </div>
         `).join("");
@@ -141,10 +142,27 @@ async function editEventType(typeId) {
   const newName = prompt("Enter new name:", type.name);
   if (!newName) return;
 
+  const newDescription = prompt("Enter new description:", type.description || "");
+  const newPoints = prompt("Enter new default points:", type.default_points);
+  const newColor = prompt("Enter new color (hex):", type.color);
+
+  if (isNaN(parseInt(newPoints))) {
+    showStatus("event-type-status", "Points must be a number.", "error");
+    return;
+  }
+
+  showStatus("event-type-status", "Updating event type...", "");
+
   try {
     const { error } = await supabase
       .from("event_types")
-      .update({ name: newName, updated_at: new Date().toISOString() })
+      .update({
+        name: newName,
+        description: newDescription || null,
+        default_points: parseInt(newPoints),
+        color: newColor || type.color,
+        updated_at: new Date().toISOString()
+      })
       .eq("id", typeId);
 
     if (error) throw error;
@@ -163,6 +181,23 @@ async function toggleEventTypeStatus(typeId, isActive) {
       .eq("id", typeId);
 
     if (error) throw error;
+    loadEventTypes();
+  } catch (err) {
+    showStatus("event-type-status", `Error: ${err.message}`, "error");
+  }
+}
+
+async function deleteEventType(typeId) {
+  if (!confirm("Are you sure you want to delete this event type? Events using this type will not be affected.")) return;
+  
+  try {
+    const { error } = await supabase
+      .from("event_types")
+      .delete()
+      .eq("id", typeId);
+
+    if (error) throw error;
+    showStatus("event-type-status", "Event type deleted successfully.", "success");
     loadEventTypes();
   } catch (err) {
     showStatus("event-type-status", `Error: ${err.message}`, "error");
@@ -362,6 +397,8 @@ async function deleteEvent(eventId) {
 }
 
 /* BULK ATTENDANCE */
+let allMembers = [];
+
 async function loadBulkEventSelect() {
   try {
     const { data: events, error } = await supabase
@@ -396,27 +433,88 @@ async function loadBulkMembers() {
 
     if (error) throw error;
 
-    container.innerHTML = (members || []).map(member => `
-      <label style="display: block; padding: 5px 0; cursor: pointer;">
-        <input type="checkbox" value="${member.id}" name="bulk-member" class="bulk-member-checkbox" />
-        ${escapeHtml(member.ign)}
-      </label>
-    `).join("");
-
-    document.querySelectorAll(".bulk-member-checkbox").forEach(checkbox => {
-      checkbox.addEventListener("change", (e) => {
-        if (e.target.checked) {
-          if (!selectedMembers.includes(e.target.value)) {
-            selectedMembers.push(e.target.value);
-          }
-        } else {
-          selectedMembers = selectedMembers.filter(id => id !== e.target.value);
-        }
-      });
-    });
+    allMembers = members || [];
+    renderBulkMembers(allMembers);
   } catch (err) {
     container.innerHTML = `<p class="status-text error">Error loading members: ${err.message}</p>`;
   }
+}
+
+function renderBulkMembers(members) {
+  const container = document.getElementById("bulk-members-list");
+  const countEl = document.getElementById("member-count");
+  
+  if (countEl) countEl.textContent = members.length;
+  
+  container.innerHTML = (members || []).map(member => `
+    <label style="display: block; padding: 8px 0; cursor: pointer; color: #fff;">
+      <input type="checkbox" value="${member.id}" name="bulk-member" class="bulk-member-checkbox" />
+      ${escapeHtml(member.ign)}
+    </label>
+  `).join("");
+
+  document.querySelectorAll(".bulk-member-checkbox").forEach(checkbox => {
+    checkbox.addEventListener("change", (e) => {
+      if (e.target.checked) {
+        if (!selectedMembers.includes(e.target.value)) {
+          selectedMembers.push(e.target.value);
+        }
+      } else {
+        selectedMembers = selectedMembers.filter(id => id !== e.target.value);
+      }
+    });
+  });
+}
+
+function filterBulkMembers() {
+  const searchTerm = document.getElementById("bulk-search").value.trim().toLowerCase();
+  
+  if (!searchTerm) {
+    renderBulkMembers(allMembers);
+    return;
+  }
+  
+  const filtered = allMembers.filter(member => 
+    member.ign.toLowerCase().includes(searchTerm)
+  );
+  
+  renderBulkMembers(filtered);
+}
+
+function parseBulkPaste() {
+  const pasteText = document.getElementById("bulk-paste-input").value.trim();
+  
+  if (!pasteText) {
+    showStatus("bulk-status", "Please paste member IGNs.", "error");
+    return;
+  }
+  
+  // Split by comma or newline
+  const igns = pasteText.split(/[,\n]/).map(ign => ign.trim().toLowerCase()).filter(ign => ign);
+  
+  if (igns.length === 0) {
+    showStatus("bulk-status", "No valid IGNs found.", "error");
+    return;
+  }
+  
+  // Find matching members
+  const matched = allMembers.filter(member => 
+    igns.includes(member.ign.toLowerCase())
+  );
+  
+  if (matched.length === 0) {
+    showStatus("bulk-status", `No members found matching the pasted IGNs.`, "error");
+    return;
+  }
+  
+  selectedMembers = matched.map(m => m.id);
+  
+  // Update checkboxes
+  document.querySelectorAll(".bulk-member-checkbox").forEach(checkbox => {
+    checkbox.checked = selectedMembers.includes(checkbox.value);
+  });
+  
+  showStatus("bulk-status", `Selected ${matched.length} members from paste.`, "success");
 }
 
 async function applyBulkAttendance() {
@@ -461,10 +559,12 @@ async function applyBulkAttendance() {
 
     if (insertError) throw insertError;
 
-    showStatus("bulk-status", `Successfully marked ${selectedMembers.length} members attended! Points: ${pointsToAward}`, "success");
+    showStatus("bulk-status", `✓ Successfully marked ${selectedMembers.length} members attended! Points: ${pointsToAward}`, "success");
     selectedMembers = [];
     document.getElementById("bulk-points").value = "";
     document.getElementById("bulk-event-select").value = "";
+    document.getElementById("bulk-search").value = "";
+    document.getElementById("bulk-paste-input").value = "";
     document.querySelectorAll(".bulk-member-checkbox").forEach(cb => cb.checked = false);
     loadBulkMembers();
     loadAttendance();
@@ -692,6 +792,9 @@ window.addEventListener("load", () => {
   const recurringOptions = document.getElementById("recurring-options");
   const recurrenceTypeSelect = document.getElementById("recurrence-type");
   const weeklyDaysDiv = document.getElementById("weekly-days");
+  const bulkPasteToggle = document.getElementById("bulk-paste-toggle");
+  const bulkPasteArea = document.getElementById("bulk-paste-area");
+  const bulkSearch = document.getElementById("bulk-search");
 
   if (isRecurringCheckbox) {
     isRecurringCheckbox.addEventListener("change", (e) => {
@@ -702,6 +805,18 @@ window.addEventListener("load", () => {
   if (recurrenceTypeSelect) {
     recurrenceTypeSelect.addEventListener("change", (e) => {
       weeklyDaysDiv.style.display = e.target.value === "weekly" ? "block" : "none";
+    });
+  }
+
+  if (bulkPasteToggle) {
+    bulkPasteToggle.addEventListener("change", (e) => {
+      bulkPasteArea.style.display = e.target.checked ? "block" : "none";
+    });
+  }
+
+  if (bulkSearch) {
+    bulkSearch.addEventListener("input", () => {
+      filterBulkMembers();
     });
   }
 
@@ -720,6 +835,7 @@ window.addEventListener("load", () => {
     if (isAuth) {
       loadEventTypes();
       loadBulkEventSelect();
+      loadBulkMembers();
       loadEvents();
       loadAttendance();
       
@@ -736,6 +852,7 @@ window.logout = logout;
 window.createEventType = createEventType;
 window.editEventType = editEventType;
 window.toggleEventTypeStatus = toggleEventTypeStatus;
+window.deleteEventType = deleteEventType;
 window.loadEventTypes = loadEventTypes;
 window.createEvent = createEvent;
 window.editEvent = editEvent;
@@ -744,6 +861,8 @@ window.deleteEvent = deleteEvent;
 window.loadEvents = loadEvents;
 window.loadBulkEventSelect = loadBulkEventSelect;
 window.loadBulkMembers = loadBulkMembers;
+window.filterBulkMembers = filterBulkMembers;
+window.parseBulkPaste = parseBulkPaste;
 window.applyBulkAttendance = applyBulkAttendance;
 window.loadAttendance = loadAttendance;
 window.toggleAttendance = toggleAttendance;
