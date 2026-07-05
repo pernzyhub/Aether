@@ -1127,8 +1127,7 @@ async function toggleAccessGate() {
     };
 
     const { error } = await supabase
-      .from('site_settings')
-      .upsert(payload, { returning: 'minimal' });
+      .rpc('set_access_gate', { enabled: newVal, access_code: payload.value.access_code });
 
     if (error) throw error;
 

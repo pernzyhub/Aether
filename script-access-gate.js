@@ -14,44 +14,19 @@ function hasAccessGate() {
   return localStorage.getItem("aether_access_granted") === "true";
 }
 
-async function fetchAccessGateSetting() {
-  try {
-    const { data, error } = await supabase
-      .from('site_settings')
-      .select('value')
-      .eq('key', 'access_gate')
-      .single();
-    if (error) return null;
-    return data?.value || null;
-  } catch (err) {
-    return null;
-  }
-}
-
 async function submitAccessCode() {
   const codeEl = document.getElementById("access-code");
-  const code = (codeEl?.value || '').trim().toUpperCase();
+  const code = (codeEl?.value || '').trim();
   const statusEl = document.getElementById("access-gate-status");
 
   statusEl.textContent = "Checking code...";
   statusEl.className = "status-text";
 
   try {
-    const setting = await fetchAccessGateSetting();
-    const enabled = setting ? (setting.enabled === true) : (localStorage.getItem('aether_access_gate_enabled') === 'true');
+    const { data, error } = await supabase.rpc('validate_access_code', { input_code: code });
+    if (error) throw error;
 
-    if (!enabled) {
-      // Gate disabled globally, allow access
-      saveAccessGate();
-      statusEl.textContent = "Access gate disabled — redirecting...";
-      statusEl.className = "status-text success";
-      setTimeout(() => window.location.href = '/index.html', 400);
-      return;
-    }
-
-    const expected = (setting && setting.access_code) || localStorage.getItem('aether_access_code') || ACCESS_CODE;
-
-    if (code === (expected || '').toString().trim().toUpperCase()) {
+    if (data === true) {
       saveAccessGate();
       statusEl.textContent = "Access granted. Redirecting...";
       statusEl.className = "status-text success";
@@ -69,16 +44,9 @@ async function submitAccessCode() {
 
 window.addEventListener("load", () => {
   window.setTimeout(async () => {
-    try {
-      const setting = await fetchAccessGateSetting();
-      const enabled = setting ? (setting.enabled === true) : (localStorage.getItem('aether_access_gate_enabled') === 'true');
-
-      if (!enabled || hasAccessGate()) {
-        // If gate disabled globally or already granted locally, proceed to index
-        window.location.href = "/index.html";
-      }
-    } catch (e) {
-      if (hasAccessGate()) window.location.href = "/index.html";
+    if (hasAccessGate()) {
+      window.location.href = "/index.html";
+      return;
     }
   }, 80);
 });
