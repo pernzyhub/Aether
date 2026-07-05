@@ -1030,8 +1030,9 @@ body::before {
   display: block;
 }
 
-
-
+/* EVENT ITEM STYLES - Portal Theme (Green Accent)
+   Note: Admin dashboard uses separate event-item styles in styles-admin.css
+   with red theme. These are intentionally separate to maintain theme consistency. */
 .event-item { 
   background: rgba(0, 255, 136, 0.06);
   border: 1px solid rgba(0, 255, 136, 0.18);

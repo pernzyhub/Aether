@@ -60,7 +60,10 @@ CREATE POLICY "Admins can view all attendance" ON public.attendance
 
 -- Members can insert their own attendance records
 CREATE POLICY "Authenticated users can create own attendance" ON public.attendance
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+  FOR INSERT WITH CHECK (
+    auth.uid() = user_id 
+    AND (attended = false OR attended IS NULL)
+  );
 
 -- Members can update their own attendance records (if not marked by admin)
 CREATE POLICY "Authenticated users can update own attendance" ON public.attendance

@@ -394,9 +394,8 @@ function formatTimeRemaining(ms) {
 let upcomingInterval = null;
 async function loadUpcomingEvent() {
   const container = document.getElementById('upcoming-info');
-  const countdownEl = document.getElementById('upcoming-countdown');
-  if (!container || !countdownEl) return;
-  container.innerHTML = '<p style="color:#aaa;">Loading next event...</p>';
+  if (!container) return;
+  container.innerHTML = '<p style="color:#aaa;">Loading upcoming events...</p>';
 
   try {
     await ensureSupabaseSession();
@@ -404,133 +403,124 @@ async function loadUpcomingEvent() {
       .from('events')
       .select('id, name, description, event_date, is_recurring, recurrence_type, recurrence_days, recurrence_time, points')
       .eq('is_active', true);
-    if (error) throw error;
+    
+    if (error) {
+      throw new Error(`Failed to fetch events: ${error.message}`);
+    }
+    
     if (!events || events.length === 0) {
-      container.innerHTML = '<p style="color:#ccc">No upcoming events.</p>';
-      countdownEl.textContent = '';
+      container.innerHTML = '<p style="color:#ccc">No upcoming events scheduled.</p>';
       return;
     }
 
-    // compute next occurrence for each and pick earliest
-    let best = null; let bestEvent = null;
+    // compute next 3 occurrences
+    const upcomingOccurrences = [];
     for (const ev of events) {
       const next = computeNextOccurrenceForEvent(ev);
       if (!next) continue;
-      if (!best || next < best) { best = next; bestEvent = ev; }
+      upcomingOccurrences.push({ date: next, event: ev });
     }
 
-    if (!bestEvent || !best) {
+    if (upcomingOccurrences.length === 0) {
       container.innerHTML = '<p style="color:#ccc">No upcoming occurrences found.</p>';
-      countdownEl.textContent = '';
       return;
     }
 
-    // compute attendance for that occurrence (use month_year)
-    const monthYear = `${best.getFullYear()}-${String(best.getMonth() + 1).padStart(2,'0')}`;
-    const [membersRes, attendedRes] = await Promise.all([
-      supabase.from('clan_users').select('id', { count: 'exact' }).eq('is_active', true),
-      supabase.from('attendance').select('id', { count: 'exact' }).eq('event_id', bestEvent.id).eq('month_year', monthYear).eq('attended', true)
-    ]);
-    const totalMembers = membersRes?.count || 0;
-    const attendedCount = attendedRes?.count || 0;
-    // check current user's attendance
-    let userAttended = false;
-    try {
-      const userId = currentClanUser?.id || null;
-      if (userId) {
-        const { data: udata, error: uerr } = await supabase.from('attendance').select('id, attended').eq('event_id', bestEvent.id).eq('user_id', userId).eq('month_year', monthYear).limit(1).single();
-        if (!uerr && udata) userAttended = !!udata.attended;
-      }
-    } catch (e) { userAttended = false; }
+    // sort by date and get first 3
+    upcomingOccurrences.sort((a, b) => a.date - b.date);
+    const top3 = upcomingOccurrences.slice(0, 3);
 
-    const total = Number(totalMembers || 0);
-    const attended = Number(attendedCount || 0);
-    const percent = total > 0 ? Math.round((attended / total) * 100) : 0;
-
-    const now = new Date();
-    const completed = best <= now;
-
-    // Slim compact card: small icon, tiny title, and compact meta
-    container.innerHTML = `
-      <div style="display:flex; align-items:center; gap:8px;">
-        <div style="width:36px; height:36px; border-radius:8px; background:#111; display:flex; align-items:center; justify-content:center; font-size:18px;">📅</div>
-        <div style="font-size:13px; color:#fff; font-weight:700; line-height:1">${escapeHtml(bestEvent.name)}</div>
-        <div style="margin-left:8px; font-size:12px; color:#ffaa00">${bestEvent.points} pts</div>
-      </div>
-      <div style="color:#999; font-size:11px; margin-top:6px;">${bestEvent.description ? escapeHtml(bestEvent.description) : ''} · ${best.toLocaleString()}</div>
-      <div style="margin-top:6px; font-size:12px; color:${userAttended ? '#00ff88' : '#ff6688'}">${userAttended ? 'You are marked' : 'You are not marked'}</div>
-      <div style="margin-top:6px; font-size:12px; color:#ccc">${completed ? 'Final attendance:' : 'Current completion:'} <strong style="color:#ffaa00">${percent}%</strong> (${attended}/${total})</div>
-    `;
-
-    // start countdown
-    if (upcomingInterval) clearInterval(upcomingInterval);
-    function tick() {
+    // render all 3 events
+    const eventsHtml = top3.map((item, idx) => {
+      const { date, event } = item;
       const now = new Date();
-      const ms = best - now;
-      countdownEl.textContent = formatTimeRemaining(ms);
-    }
-    tick();
-    upcomingInterval = setInterval(tick, 1000);
-    // Wire RSVP button
-    const rsvpBtn = document.getElementById('upcoming-rsvp-btn');
-    if (rsvpBtn) {
-      // show current RSVP state
-      (async () => {
-        try {
-          const userId = currentClanUser?.id || null;
-          if (!userId) return;
-          const { data: existing, error: exErr } = await supabase.from('attendance').select('id, attended').eq('event_id', bestEvent.id).eq('user_id', userId).eq('month_year', monthYear).limit(1).single();
-          if (!exErr && existing) {
-            rsvpBtn.textContent = existing.attended ? 'YOU ARE MARKED (ADMIN)' : 'CANCEL RSVP';
-            rsvpBtn.style.background = existing.attended ? '#00ff88' : '#ff4444';
-            rsvpBtn.style.color = existing.attended ? '#000' : '#fff';
-          } else {
-            rsvpBtn.textContent = 'I WILL ATTEND';
-            rsvpBtn.style.background = '#333'; rsvpBtn.style.color = '#ff6688';
-          }
-        } catch (e) { /* ignore */ }
-      })();
+      const isClosest = idx === 0;
+      const highlightColor = isClosest ? 'rgba(0, 255, 136, 0.15)' : 'rgba(0, 255, 136, 0.05)';
+      const borderColor = isClosest ? '#00ff88' : 'rgba(0, 255, 136, 0.1)';
+      
+      return `
+        <div style="background:${highlightColor}; border:1px solid ${borderColor}; border-radius:8px; padding:10px 12px; margin-bottom:8px; cursor:pointer; transition:all 0.2s ease; display:flex; justify-content:space-between; align-items:center;">
+          <div style="flex:1;">
+            <div style="font-size:12px; color:${isClosest ? '#00ff88' : '#ccc'}; font-weight:600; margin-bottom:2px;">${isClosest ? '⭐ NEXT' : ''} ${escapeHtml(event.name)}</div>
+            <div style="font-size:10px; color:#999;">${date.toLocaleString()}</div>
+            <div style="font-size:10px; color:#ffaa00; margin-top:2px;">${event.points} pts</div>
+          </div>
+          <button class="upcoming-rsvp" data-event-id="${event.id}" data-event-name="${event.name}" data-date="${date.toISOString()}" style="padding:4px 8px; font-size:10px; background:#333; color:#ff6688; border:1px solid #ff6688; border-radius:4px; cursor:pointer; white-space:nowrap;">RSVP</button>
+        </div>
+      `;
+    }).join('');
 
-      rsvpBtn.onclick = async function () {
-        try {
-          const userId = currentClanUser?.id || null;
-          if (!userId) { alert('Please login to RSVP.'); return; }
-          // check existing
-          const { data: existing } = await supabase.from('attendance').select('id, attended').eq('event_id', bestEvent.id).eq('user_id', userId).eq('month_year', monthYear).limit(1).single();
-          if (existing && existing.id) {
-            // toggle off: delete RSVP only if not attended
-            if (!existing.attended) {
-              if (!confirm('Remove your RSVP?')) return;
-              const { error: delErr } = await supabase.from('attendance').delete().eq('id', existing.id);
-              if (delErr) throw delErr;
-              rsvpBtn.textContent = 'I WILL ATTEND'; rsvpBtn.style.background = '#333'; rsvpBtn.style.color = '#ff6688';
-              loadUpcomingEvent();
-              return;
-            } else {
-              alert('Your attendance has already been marked by admin.');
-              return;
-            }
-          }
-          // insert RSVP (attended=false, points_awarded=0) — this will not award points
-          const insert = {
-            event_id: bestEvent.id,
-            user_id: userId,
-            attended: false,
-            points_awarded: 0,
-            month_year: monthYear
-          };
-          const { error: insErr } = await supabase.from('attendance').insert([insert]);
-          if (insErr) throw insErr;
-          rsvpBtn.textContent = 'CANCEL RSVP'; rsvpBtn.style.background = '#ff4444'; rsvpBtn.style.color = '#fff';
-          loadUpcomingEvent();
-        } catch (err) {
-          alert('RSVP error: ' + (err.message || err));
-        }
+    container.innerHTML = eventsHtml;
+
+    // attach RSVP handlers
+    container.querySelectorAll('.upcoming-rsvp').forEach(btn => {
+      btn.onclick = async (e) => {
+        e.stopPropagation();
+        await handleRsvp(btn);
       };
-    }
+    });
+
   } catch (err) {
-    container.innerHTML = `<p style="color:#f66">Error loading next event: ${err.message}</p>`;
-    countdownEl.textContent = '';
+    console.error('Error in loadUpcomingEvent:', err);
+    container.innerHTML = `<p style="color:#f66;">⚠️ Error: ${escapeHtml(err.message || 'Failed to load events')}</p>`;
+  }
+}
+
+async function handleRsvp(btn) {
+  try {
+    const userId = currentClanUser?.id || null;
+    if (!userId) {
+      alert('Please login to RSVP.');
+      return;
+    }
+
+    const eventId = btn.dataset.eventId;
+    const eventName = btn.dataset.eventName;
+    const eventDate = new Date(btn.dataset.date);
+    const monthYear = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}`;
+
+    // check existing attendance
+    const { data: existing, error: checkErr } = await supabase
+      .from('attendance')
+      .select('id, attended')
+      .eq('event_id', eventId)
+      .eq('user_id', userId)
+      .eq('month_year', monthYear)
+      .maybeSingle();
+
+    if (checkErr && checkErr.code !== 'PGRST116') {
+      throw new Error(`Failed to check attendance: ${checkErr.message}`);
+    }
+
+    if (existing && existing.id) {
+      if (!existing.attended) {
+        if (!confirm('Remove your RSVP for ' + eventName + '?')) return;
+        const { error: delErr } = await supabase.from('attendance').delete().eq('id', existing.id);
+        if (delErr) throw new Error(`Failed to remove RSVP: ${delErr.message}`);
+        btn.textContent = 'RSVP';
+        btn.style.background = '#333';
+        btn.style.color = '#ff6688';
+      } else {
+        alert('Your attendance has already been marked by admin.');
+        return;
+      }
+    } else {
+      const { error: insErr } = await supabase.from('attendance').insert([{
+        event_id: eventId,
+        user_id: userId,
+        attended: false,
+        points_awarded: 0,
+        month_year: monthYear
+      }]);
+      if (insErr) throw new Error(`RLS/Insert error: ${insErr.message}`);
+      btn.textContent = 'CANCEL';
+      btn.style.background = '#ff4444';
+      btn.style.color = '#fff';
+    }
+    loadUpcomingEvent();
+  } catch (err) {
+    console.error('RSVP error:', err);
+    alert('RSVP error: ' + (err.message || 'Unknown error'));
   }
 }
 

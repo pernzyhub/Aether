@@ -772,6 +772,10 @@ body::before {
   gap: 16px;
 }
 
+/* EVENT ITEM STYLES - Admin Dashboard Theme (Green + Red Accents)
+   Note: Portal uses separate event-item styles in styles-portal.css
+   with green-only theme. These are intentionally separate to maintain theme consistency.
+   Admin version includes colored left border and more elaborate hover effects. */
 .event-item {
   background: linear-gradient(135deg, rgba(0, 255, 136, 0.08) 0%, rgba(0, 255, 136, 0.02) 100%);
   border: 1px solid rgba(0, 255, 136, 0.25);
