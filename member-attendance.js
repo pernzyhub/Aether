@@ -29,13 +29,46 @@ async function loadSheet() {
   container.innerHTML = '<p style="color:#aaa">Loading...</p>';
 
   try {
-    const { data: events, error: evErr } = await supabase
+    const monthParts = month.split('-');
+    const monthYear = monthParts.length === 2 ? month : (() => {
+      const parsed = new Date(month);
+      return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}`;
+    })();
+
+    const monthStart = new Date(`${monthYear}-01T00:00:00Z`);
+    const nextMonthStart = new Date(monthStart);
+    nextMonthStart.setMonth(nextMonthStart.getMonth() + 1);
+    const monthStartIso = `${monthStart.getFullYear()}-${String(monthStart.getMonth() + 1).padStart(2, '0')}-01`;
+    const nextMonthStartIso = `${nextMonthStart.getFullYear()}-${String(nextMonthStart.getMonth() + 1).padStart(2, '0')}-01`;
+
+    const { data: attendance, error: attMonthErr } = await supabase
+      .from('attendance')
+      .select('id, user_id, event_id, attended, points_awarded, month_year, attendance_date, created_at')
+      .or(`month_year.eq.${monthYear},and(attendance_date.gte.${monthStartIso},attendance_date.lt.${nextMonthStartIso})`);
+
+    if (attMonthErr) throw new Error(`Attendance query failed: ${attMonthErr.message}`);
+
+    const attendedEventIds = new Set((attendance || []).map(a => a.event_id).filter(Boolean));
+
+    const { data: eventsInRange, error: evErr } = await supabase
       .from('events')
       .select('id, name, event_date')
-      .or(`month_year.eq.${month},and(event_date.gte.${month}-01,event_date.lt.${month}-31)`)
+      .or(`month_year.eq.${monthYear},and(event_date.gte.${monthStartIso},event_date.lt.${nextMonthStartIso})`)
       .order('event_date', { ascending: true });
 
     if (evErr) throw new Error(`Events query failed: ${evErr.message}`);
+
+    const eventIds = new Set((eventsInRange || []).map(e => e.id));
+    attendedEventIds.forEach(id => eventIds.add(id));
+
+    const eventIdArray = Array.from(eventIds);
+    const { data: events, error: eventsErr } = await supabase
+      .from('events')
+      .select('id, name, event_date')
+      .in('id', eventIdArray)
+      .order('event_date', { ascending: true });
+
+    if (eventsErr) throw new Error(`Events query failed: ${eventsErr.message}`);
 
     const { data: users, error: usErr } = await supabase
       .from('clan_users')
