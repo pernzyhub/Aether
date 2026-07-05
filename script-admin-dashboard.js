@@ -852,14 +852,18 @@ async function renderRequests(requests, container, isHistory = false) {
 
   container.innerHTML = requests.map(req => {
     const ign = userMap[req.user_id] || "Unknown User";
-    const isDone = req.quantity === 0;
+    const requestedQty = Number(req.requested_quantity ?? req.quantity ?? 1);
+    const remainingQty = Math.max(0, Number(req.quantity ?? 0));
+    const fulfilledQty = Math.max(0, requestedQty - remainingQty);
+    const isDone = remainingQty === 0;
     return `
       <div class="list-item compact ${isDone ? 'completed' : ''}" data-id="${req.id}">
         <div class="list-item-content compact">
           <div class="list-item-title compact">
-            ${escapeHtml(ign)} → ${escapeHtml(req.items.name)} <span class="qty-badge">x${req.quantity}</span>
+            ${escapeHtml(ign)} → ${escapeHtml(req.items.name)} <span class="qty-badge">${remainingQty}/${requestedQty}</span>
             <span class="status-badge ${req.status}">${req.status.toUpperCase()}</span>
           </div>
+          <div class="request-progress-inline">${fulfilledQty} fulfilled • ${remainingQty} remaining</div>
           ${req.proof_image ? `
             <div class="request-proof">
               <button class="proof-link" onclick="openImageModal('${escapeHtml(req.proof_image)}')">
@@ -883,7 +887,8 @@ async function renderRequests(requests, container, isHistory = false) {
 }
 
 async function adjustQuantity(requestId, currentQuantity, delta) {
-  const newQuantity = Math.max(0, currentQuantity + delta);
+  const currentRequestedQty = Number(currentQuantity || 0);
+  const newQuantity = Math.max(0, currentRequestedQty + delta);
   const nextStatus = newQuantity === 0 ? "approved" : "pending";
 
   try {
@@ -891,6 +896,7 @@ async function adjustQuantity(requestId, currentQuantity, delta) {
       .from("item_requests")
       .update({
         quantity: newQuantity,
+        requested_quantity: Math.max(currentRequestedQty, newQuantity),
         status: nextStatus,
         updated_at: new Date().toISOString()
       })

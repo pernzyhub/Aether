@@ -601,6 +601,12 @@ body::before {
   color: #ff2222;
 }
 
+.request-progress-inline {
+  margin-top: 6px;
+  color: #8fe7b1;
+  font-size: 0.8rem;
+}
+
 .toggle-badge {
   padding: 2px 8px;
   border-radius: 4px;
