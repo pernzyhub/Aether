@@ -858,12 +858,15 @@ async function renderRequests(requests, container, isHistory = false) {
     const isDone = remainingQty === 0;
     const stateBadgeClass = isDone ? "approved" : (fulfilledQty > 0 ? "partial" : "pending");
     const stateLabel = isDone ? "FULFILLED" : (fulfilledQty > 0 ? "PARTIAL" : "PENDING");
+    const storedStatus = (req.status || 'pending');
+    const displayClass = (storedStatus === 'approved' || remainingQty === 0) ? 'approved' : storedStatus;
+    const displayText = displayClass === 'approved' ? 'FULFILLED' : displayClass.toUpperCase();
     return `
       <div class="list-item compact ${isDone ? 'completed' : ''}" data-id="${req.id}">
         <div class="list-item-content compact">
           <div class="list-item-title compact">
             ${escapeHtml(ign)} → ${escapeHtml(req.items.name)} <span class="qty-badge">${remainingQty}/${requestedQty}</span>
-            <span class="status-badge ${req.status}">${req.status.toUpperCase()}</span>
+            <span class="status-badge ${displayClass}">${displayText}</span>
             <span class="request-state-badge ${stateBadgeClass}">${stateLabel}</span>
           </div>
           <div class="request-progress-inline">${fulfilledQty} fulfilled • ${remainingQty} remaining</div>
@@ -878,8 +881,8 @@ async function renderRequests(requests, container, isHistory = false) {
         </div>
         ${!isHistory ? `
         <div class="list-item-actions compact">
-          <button class="btn-xs btn-secondary" onclick="adjustQuantity('${req.id}', ${req.quantity}, -1)">-1</button>
-          <button class="btn-xs btn-secondary" onclick="adjustQuantity('${req.id}', ${req.quantity}, 1)">+1</button>
+          <button class="btn-xs btn-secondary" onclick="adjustQuantity('${req.id}', ${req.quantity}, ${requestedQty}, -1)">-1</button>
+          <button class="btn-xs btn-secondary" onclick="adjustQuantity('${req.id}', ${req.quantity}, ${requestedQty}, 1)">+1</button>
           <button class="btn-xs btn-success" onclick="markRequestDone('${req.id}')">FULFILL</button>
           <button class="btn-xs btn-danger" onclick="rejectRequest('${req.id}')">REJECT</button>
           <button class="btn-xs btn-danger" onclick="deleteRequest('${req.id}')">DEL</button>
@@ -889,9 +892,13 @@ async function renderRequests(requests, container, isHistory = false) {
     `}).join("");
 }
 
-async function adjustQuantity(requestId, currentQuantity, delta) {
-  const currentRequestedQty = Number(currentQuantity || 0);
-  const newQuantity = Math.max(0, currentRequestedQty + delta);
+async function adjustQuantity(requestId, currentQuantity, requestedQty, delta) {
+  const curRemaining = Number(currentQuantity || 0);
+  const origRequested = Number(requestedQty || 0);
+  // Cap increases so admin cannot raise the remaining quantity above the original requested amount
+  let newQuantity = curRemaining + delta;
+  newQuantity = Math.max(0, newQuantity);
+  newQuantity = Math.min(newQuantity, origRequested);
   const nextStatus = newQuantity === 0 ? "approved" : "pending";
 
   try {
@@ -899,11 +906,12 @@ async function adjustQuantity(requestId, currentQuantity, delta) {
       .from("item_requests")
       .update({
         quantity: newQuantity,
-        requested_quantity: Math.max(currentRequestedQty, newQuantity),
+        requested_quantity: origRequested,
         status: nextStatus,
         updated_at: new Date().toISOString()
       })
       .eq("id", requestId);
+
     if (error) {
       if (/requested_quantity|column .*does not exist/i.test(error.message)) {
         const { error: retryError } = await supabase

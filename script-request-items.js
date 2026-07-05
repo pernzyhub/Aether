@@ -452,8 +452,9 @@ async function loadMyRequests() {
 
       // Display 'approved' when remaining quantity is zero even if stored status is stale
       const storedStatus = (req.status || "pending");
-      const displayStatus = remainingQty === 0 ? 'approved' : storedStatus;
-      const isPendingForOwner = isOwner && displayStatus === 'pending';
+      const displayClass = (storedStatus === 'approved' || remainingQty === 0) ? 'approved' : storedStatus;
+      const displayText = displayClass === 'approved' ? 'FULFILLED' : displayClass.toUpperCase();
+      const isPendingForOwner = isOwner && displayClass === 'pending';
 
       return `
         <div class="request-entry" data-id="${req.id}">
@@ -477,7 +478,7 @@ async function loadMyRequests() {
             ` : ""}
           </div>
           <div class="request-entry-actions">
-            <span class="request-status ${displayStatus}">${displayStatus.toUpperCase()}</span>
+            <span class="request-status ${displayClass}">${displayText}</span>
             ${isPendingForOwner ? `
               <div class="request-action-row">
                 <button class="btn request-action request-action-edit" onclick="startEditRequest('${req.id}')">Edit</button>
@@ -491,8 +492,23 @@ async function loadMyRequests() {
 
     const groupedSummary = new Map();
 
-    // Only include pending requests in summary (live counts)
-    const pendingRequests = sortedRequests.filter(req => (req.status || "pending") === "pending");
+    // Build the summary from ALL pending requests (ignore the feed filter)
+    let pendingRequests = [];
+    try {
+      const { data: allPending, error: pendingError } = await supabase
+        .from("item_requests")
+        .select("*, items!inner(name)")
+        .eq("status", "pending");
+
+      if (!pendingError && Array.isArray(allPending)) {
+        pendingRequests = allPending;
+      } else {
+        // Fallback to using the already-fetched requests if the separate query fails
+        pendingRequests = sortedRequests.filter(req => (req.status || "pending") === "pending");
+      }
+    } catch (e) {
+      pendingRequests = sortedRequests.filter(req => (req.status || "pending") === "pending");
+    }
 
     pendingRequests.forEach(req => {
       const itemName = req.items?.name || "Unknown Item";
