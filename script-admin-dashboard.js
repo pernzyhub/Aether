@@ -82,20 +82,23 @@ function attachEditorUploadHandlers() {
 async function checkAuth() {
   const { data } = await supabase.auth.getSession();
   const user = data.session?.user;
-  
+
   if (!user) {
-    window.location.href = "/admin-login.html";
+    window.location.replace("/admin-login.html");
     return false;
   }
 
   if (!isAdminUser(user)) {
-    await supabase.auth.signOut();
-    window.location.href = "/admin-login.html";
+    console.warn("Non-admin session detected on admin dashboard. Redirecting to login without forcing sign-out.");
+    window.location.replace("/admin-login.html");
     return false;
   }
 
   currentUser = user;
-  document.getElementById("admin-welcome").textContent = `WELCOME, ${user.user_metadata?.full_name || user.email}`;
+  const welcomeEl = document.getElementById("admin-welcome");
+  if (welcomeEl) {
+    welcomeEl.textContent = `WELCOME, ${user.user_metadata?.full_name || user.email}`;
+  }
   return true;
 }
 
@@ -1087,14 +1090,21 @@ function setAccountsTab(tabName) {
   });
 }
 
-async function logout() {
+async function adminLogout() {
   try {
     await supabase.auth.signOut();
   } catch (err) {
     console.warn("Logout warning:", err);
   }
   localStorage.removeItem("aether_member_session");
-  window.location.replace("/index.html");
+  window.location.replace("/index.html?view=public");
+}
+
+function navigateToFrontPage(event) {
+  if (event) {
+    event.preventDefault();
+  }
+  window.location.assign("/index.html?view=public");
 }
 
 function showStatus(elementId, message, type = 'success') {
@@ -1141,6 +1151,8 @@ window.addEventListener("load", () => {
 window.setActiveModule = setActiveModule;
 window.applyEditorCommand = applyEditorCommand;
 window.bulkRegisterMembers = bulkRegisterMembers;
+window.adminLogout = adminLogout;
+window.navigateToFrontPage = navigateToFrontPage;
 window.toggleUserStatus = toggleUserStatus;
 window.changeUserIgn = changeUserIgn;
 window.changeUserPassword = changeUserPassword;

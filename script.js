@@ -77,6 +77,10 @@ function setLoginSide(side) {
   }
 }
 
+function shouldSkipAuthRedirect() {
+  return new URLSearchParams(window.location.search).get("view") === "public";
+}
+
 async function adminLogin() {
   const email = document.getElementById("adminEmail").value;
   const password = document.getElementById("adminPassword").value;
@@ -162,7 +166,7 @@ async function memberLogin() {
 }
 
 supabase.auth.onAuthStateChange((_event, session) => {
-  if (!session?.user) return;
+  if (shouldSkipAuthRedirect() || !session?.user) return;
   if (isAdminUser(session.user)) {
     window.location.replace("/admin-dashboard.html");
   } else {
@@ -182,6 +186,10 @@ window.addEventListener("load", () => {
     }
 
     if (user || memberSession) {
+      if (shouldSkipAuthRedirect()) {
+        setLoginSide('member');
+        return;
+      }
       if (user && isAdminUser(user)) {
         window.location.replace("/admin-dashboard.html");
         return;
