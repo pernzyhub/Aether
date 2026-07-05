@@ -447,11 +447,19 @@ async function loadUpcomingEvent() {
     const attended = Number(attendedCount || 0);
     const percent = total > 0 ? Math.round((attended / total) * 100) : 0;
 
+    const now = new Date();
+    const completed = best <= now;
+
+    // Slim compact card: small icon, tiny title, and compact meta
     container.innerHTML = `
-      <div style="font-weight:700; color:#fff">${escapeHtml(bestEvent.name)} <span style="color:#ffaa00; font-weight:600;">${bestEvent.points} pts</span></div>
-      <div style="color:#ccc; font-size:13px; margin-top:6px;">${bestEvent.description ? escapeHtml(bestEvent.description) : ''}<br/>Occurrence: ${best.toLocaleString()}</div>
-      <div style="margin-top:8px; font-size:13px; color:${userAttended ? '#00ff88' : '#ff6688'}">Your attendance: ${userAttended ? 'Marked' : 'Not marked'}</div>
-      <div style="margin-top:6px; font-size:13px; color:#ccc">Completion: <strong style="color:#ffaa00">${percent}%</strong> (${attended}/${total})</div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div style="width:36px; height:36px; border-radius:8px; background:#111; display:flex; align-items:center; justify-content:center; font-size:18px;">📅</div>
+        <div style="font-size:13px; color:#fff; font-weight:700; line-height:1">${escapeHtml(bestEvent.name)}</div>
+        <div style="margin-left:8px; font-size:12px; color:#ffaa00">${bestEvent.points} pts</div>
+      </div>
+      <div style="color:#999; font-size:11px; margin-top:6px;">${bestEvent.description ? escapeHtml(bestEvent.description) : ''} · ${best.toLocaleString()}</div>
+      <div style="margin-top:6px; font-size:12px; color:${userAttended ? '#00ff88' : '#ff6688'}">${userAttended ? 'You are marked' : 'You are not marked'}</div>
+      <div style="margin-top:6px; font-size:12px; color:#ccc">${completed ? 'Final attendance:' : 'Current completion:'} <strong style="color:#ffaa00">${percent}%</strong> (${attended}/${total})</div>
     `;
 
     // start countdown
@@ -463,9 +471,100 @@ async function loadUpcomingEvent() {
     }
     tick();
     upcomingInterval = setInterval(tick, 1000);
+    // Wire RSVP button
+    const rsvpBtn = document.getElementById('upcoming-rsvp-btn');
+    if (rsvpBtn) {
+      // show current RSVP state
+      (async () => {
+        try {
+          const userId = currentClanUser?.id || null;
+          if (!userId) return;
+          const { data: existing, error: exErr } = await supabase.from('attendance').select('id, attended').eq('event_id', bestEvent.id).eq('user_id', userId).eq('month_year', monthYear).limit(1).single();
+          if (!exErr && existing) {
+            rsvpBtn.textContent = existing.attended ? 'YOU ARE MARKED (ADMIN)' : 'CANCEL RSVP';
+            rsvpBtn.style.background = existing.attended ? '#00ff88' : '#ff4444';
+            rsvpBtn.style.color = existing.attended ? '#000' : '#fff';
+          } else {
+            rsvpBtn.textContent = 'I WILL ATTEND';
+            rsvpBtn.style.background = '#333'; rsvpBtn.style.color = '#ff6688';
+          }
+        } catch (e) { /* ignore */ }
+      })();
+
+      rsvpBtn.onclick = async function () {
+        try {
+          const userId = currentClanUser?.id || null;
+          if (!userId) { alert('Please login to RSVP.'); return; }
+          // check existing
+          const { data: existing } = await supabase.from('attendance').select('id, attended').eq('event_id', bestEvent.id).eq('user_id', userId).eq('month_year', monthYear).limit(1).single();
+          if (existing && existing.id) {
+            // toggle off: delete RSVP only if not attended
+            if (!existing.attended) {
+              if (!confirm('Remove your RSVP?')) return;
+              const { error: delErr } = await supabase.from('attendance').delete().eq('id', existing.id);
+              if (delErr) throw delErr;
+              rsvpBtn.textContent = 'I WILL ATTEND'; rsvpBtn.style.background = '#333'; rsvpBtn.style.color = '#ff6688';
+              loadUpcomingEvent();
+              return;
+            } else {
+              alert('Your attendance has already been marked by admin.');
+              return;
+            }
+          }
+          // insert RSVP (attended=false, points_awarded=0) — this will not award points
+          const insert = {
+            event_id: bestEvent.id,
+            user_id: userId,
+            attended: false,
+            points_awarded: 0,
+            month_year: monthYear
+          };
+          const { error: insErr } = await supabase.from('attendance').insert([insert]);
+          if (insErr) throw insErr;
+          rsvpBtn.textContent = 'CANCEL RSVP'; rsvpBtn.style.background = '#ff4444'; rsvpBtn.style.color = '#fff';
+          loadUpcomingEvent();
+        } catch (err) {
+          alert('RSVP error: ' + (err.message || err));
+        }
+      };
+    }
   } catch (err) {
     container.innerHTML = `<p style="color:#f66">Error loading next event: ${err.message}</p>`;
     countdownEl.textContent = '';
+  }
+}
+
+async function loadMemberAttendance() {
+  const container = document.getElementById('my-attendance');
+  if (!container) return;
+  container.textContent = 'Loading...';
+  try {
+    await ensureSupabaseSession();
+    const userId = currentClanUser?.id || null;
+    if (!userId) { container.textContent = 'Please login to see your attendance.'; return; }
+
+    // total points and total attended
+    const [{ data: pointsData, error: pErr }, { data: attendedList, error: aErr }] = await Promise.all([
+      supabase.from('attendance').select('points_awarded', { count: 'exact' }).eq('user_id', userId),
+      supabase.from('attendance').select('*, events(name, event_date)').eq('user_id', userId).order('created_at', { ascending: false }).limit(12)
+    ]);
+    const totalPoints = (pointsData || []).reduce((s, r) => s + (r.points_awarded || 0), 0);
+    const totalAttended = (attendedList || []).filter(r => r.attended).length;
+
+    const recentHtml = (attendedList || []).map(r => {
+      const ev = r.events || {};
+      return `<div style="padding:6px 0; border-bottom:1px solid #222; font-size:13px; color:#ccc">${escapeHtml(ev.name || 'Event')} · ${r.month_year || (ev.event_date ? new Date(ev.event_date).toLocaleDateString() : '')} · ${r.attended ? '<span style="color:#00ff88">Attended</span>' : '<span style="color:#ffcc66">RSVP/Not marked</span>'} · ${r.points_awarded || 0} pts</div>`;
+    }).join('');
+
+    container.innerHTML = `
+      <div style="display:flex; gap:12px; align-items:center;">
+        <div style="font-weight:700; color:#fff; font-size:14px">Total Points: <span style="color:#ffaa00">${totalPoints}</span></div>
+        <div style="font-weight:700; color:#fff; font-size:14px">Events: <span style="color:#00ff88">${totalAttended}</span></div>
+      </div>
+      <div style="margin-top:8px; max-height:260px; overflow:auto;">${recentHtml || '<div style="color:#888">No recent attendance.</div>'}</div>
+    `;
+  } catch (err) {
+    container.textContent = `Error loading attendance: ${err.message}`;
   }
 }
 
@@ -500,6 +599,7 @@ window.addEventListener("load", () => {
     loadRules();
     loadEvents();
     loadUpcomingEvent();
+    loadMemberAttendance();
     setActiveNavLink();
   }, 80);
 });

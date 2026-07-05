@@ -39,9 +39,16 @@
         <div id="upcoming-info" style="flex:1">
           <p style="color:#aaa;">Loading next event...</p>
         </div>
-        <div id="upcoming-countdown" style="min-width:220px; text-align:center; background:#0a0a0a; padding:12px; border-radius:6px; border:1px solid #333;">
+        <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+          <div id="upcoming-countdown" style="min-width:220px; text-align:center; background:#0a0a0a; padding:12px; border-radius:6px; border:1px solid #333;"></div>
+          <button id="upcoming-rsvp-btn" class="btn btn-secondary" style="background:#333; color:#ff6688; padding:6px 10px; font-weight:700;">I WILL ATTEND</button>
         </div>
       </div>
+    </section>
+
+    <section class="card" id="my-attendance-card" style="margin-top:12px;">
+      <h2>MY ATTENDANCE</h2>
+      <div id="my-attendance" style="min-height:60px; color:#ccc;">Loading your attendance summary...</div>
     </section>
 
     <section class="card">

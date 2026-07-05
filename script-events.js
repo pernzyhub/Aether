@@ -7,6 +7,7 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 let currentUser = null;
 let eventTypes = [];
 let selectedMembers = [];
+let lastBulkInsertedIds = [];
 
 /* AUTH & UTILITIES */
 async function checkAuth() {
@@ -645,17 +646,21 @@ async function applyBulkAttendance() {
       month_year: monthYear
     }));
 
-    const { error: insertError } = await supabase
+    const { data: insertedRows, error: insertError } = await supabase
       .from("attendance")
-      .insert(attendanceRecords);
+      .insert(attendanceRecords)
+      .select('id');
 
     if (insertError) throw insertError;
 
+    // store inserted IDs so admin can undo if they misclicked
+    lastBulkInsertedIds = (insertedRows || []).map(r => r.id).filter(Boolean);
     showStatus("bulk-status", `✓ Successfully marked ${selectedMembers.length} members attended! Points: ${pointsToAward}`, "success");
     selectedMembers = [];
     document.getElementById("bulk-points").value = "";
     document.getElementById("bulk-event-select").value = "";
-    document.getElementById("bulk-search").value = "";
+    // clear optional inputs
+    const bulkSearchEl = document.getElementById("bulk-search"); if (bulkSearchEl) bulkSearchEl.value = "";
     document.getElementById("bulk-paste-input").value = "";
     document.querySelectorAll(".bulk-member-checkbox").forEach(cb => cb.checked = false);
     loadBulkMembers();
@@ -710,6 +715,24 @@ async function loadAttendance() {
     `).join("");
   } catch (err) {
     container.innerHTML = `<p class="status-text error">Error loading attendance: ${err.message}</p>`;
+  }
+}
+
+async function undoLastBulk() {
+  if (!lastBulkInsertedIds || lastBulkInsertedIds.length === 0) {
+    showStatus('bulk-status', 'No recent bulk to undo.', 'error');
+    return;
+  }
+  if (!confirm(`Undo last bulk action and delete ${lastBulkInsertedIds.length} attendance records?`)) return;
+  try {
+    const { error } = await supabase.from('attendance').delete().in('id', lastBulkInsertedIds);
+    if (error) throw error;
+    showStatus('bulk-status', `✓ Undone ${lastBulkInsertedIds.length} attendance records.`, 'success');
+    lastBulkInsertedIds = [];
+    loadBulkMembers();
+    loadAttendance();
+  } catch (err) {
+    showStatus('bulk-status', `Error undoing bulk: ${err.message}`, 'error');
   }
 }
 
@@ -987,7 +1010,6 @@ window.addEventListener("load", () => {
   const weeklyDaysDiv = document.getElementById("weekly-days");
   const bulkPasteToggle = document.getElementById("bulk-paste-toggle");
   const bulkPasteArea = document.getElementById("bulk-paste-area");
-  const bulkSearch = document.getElementById("bulk-search");
 
   const recurringBtn = document.getElementById("recurring-toggle-btn");
   const isRecurringInput = document.getElementById("is-recurring");
@@ -1089,12 +1111,7 @@ window.addEventListener("load", () => {
       bulkPasteArea.style.display = e.target.checked ? "block" : "none";
     });
   }
-
-  if (bulkSearch) {
-    bulkSearch.addEventListener("input", () => {
-      filterBulkMembers();
-    });
-  }
+  // bulk search removed per admin request (hidden in UI)
 
   const eventTypeForm = document.getElementById("event-type-form");
   if (eventTypeForm) {
