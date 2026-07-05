@@ -327,12 +327,14 @@
 </head>
 <body>
   <header class="header">
-    <div class="logo">⚔ AETHER</div>
+    <div class="logo">⚔ AETHER CLAN</div>
     <div class="nav-links">
-      <a href="portal.html" class="nav-link">Portal</a>
-      <a href="member-attendance.html" class="nav-link">Attendance</a>
-      <a href="leaderboard.html" class="nav-link active">Leaderboard</a>
-      <button class="logout-btn" onclick="logout()">Logout</button>
+      <a href="/portal.html" class="nav-link">HOME</a>
+      <a href="/request-items.html" class="nav-link">REQUESTS</a>
+      <a href="/member-attendance.html" class="nav-link">ATTENDANCE</a>
+      <a href="/leaderboard.html" class="nav-link active">LEADERBOARD</a>
+      <a href="/settings.html" class="nav-link">SETTINGS</a>
+      <button class="logout-btn" onclick="logout()">LOGOUT</button>
     </div>
   </header>
 
@@ -375,6 +377,35 @@
   <script type="module">
     import { supabase } from './lib/supabaseClient.js';
 
+    function getMemberSession() {
+      try {
+        return JSON.parse(localStorage.getItem('aether_member_session'));
+      } catch {
+        return null;
+      }
+    }
+
+    async function ensureSupabaseSession() {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData?.session) {
+        return sessionData.session;
+      }
+
+      const memberSession = getMemberSession();
+      if (!memberSession) return null;
+
+      try {
+        const { data, error } = await supabase.auth.signInAnonymously();
+        if (!error && data?.session) {
+          return data.session;
+        }
+      } catch (err) {
+        console.warn('Unable to establish anonymous session:', err);
+      }
+
+      return null;
+    }
+
     let currentPeriod = 'month';
     let currentUserId = null;
 
@@ -390,70 +421,50 @@
 
     async function loadLeaderboard() {
       try {
-        // Get current user
+        await ensureSupabaseSession();
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        const memberSession = getMemberSession();
+        if (!user && !memberSession) {
           window.location.href = 'index.html';
           return;
         }
-        currentUserId = user.id;
 
-        // Get user's clan
-        const { data: userData } = await supabase
+        currentUserId = user?.id || memberSession?.id;
+
+        const { data: clanUser, error: clanUserError } = await supabase
           .from('clan_users')
-          .select('clan_id')
+          .select('ign, is_active')
           .eq('id', currentUserId)
           .single();
 
-        if (!userData) return;
-
-        let query = supabase
-          .from('monthly_points_summary')
-          .select(`
-            user_id,
-            total_points,
-            events_attended,
-            clan_users:user_id (
-              username,
-              is_active
-            )
-          `)
-          .eq('clan_users.clan_id', userData.clan_id);
-
-        if (currentPeriod === 'month') {
-          const now = new Date();
-          const monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-          query = query.eq('month_year', monthYear);
+        if (clanUserError) {
+          console.warn('Unable to load current user data for leaderboard:', clanUserError.message);
         }
 
-        const { data: leaderboardData } = await query.order('total_points', { ascending: false });
-
-        // Calculate attendance stats for all-time view
         if (currentPeriod === 'all') {
-          const { data: allAttendance } = await supabase
+          const { data: allAttendance, error: attendanceError } = await supabase
             .from('attendance')
-            .select(`
-              user_id,
-              attended,
-              points_awarded,
-              clan_users:user_id (
-                username,
-                is_active
-              )
-            `)
-            .eq('clan_users.clan_id', userData.clan_id);
+            .select('user_id, attended, points_awarded')
+            .eq('user_id', currentUserId);
 
-          // Aggregate data
+          if (attendanceError) {
+            console.warn('Unable to load attendance leaderboard:', attendanceError.message);
+            renderLeaderboard([]);
+            return;
+          }
+
           const aggregated = {};
-          allAttendance?.forEach(record => {
+          (allAttendance || []).forEach(record => {
             const userId = record.user_id;
             if (!aggregated[userId]) {
               aggregated[userId] = {
                 user_id: userId,
                 total_points: 0,
                 events_attended: 0,
-                username: record.clan_users?.[0]?.username,
-                is_active: record.clan_users?.[0]?.is_active
+                clan_users: [{
+                  username: clanUser?.ign || 'You',
+                  is_active: clanUser?.is_active
+                }]
               };
             }
             if (record.attended) {
@@ -463,9 +474,34 @@
           });
 
           renderLeaderboard(Object.values(aggregated).sort((a, b) => b.total_points - a.total_points));
-        } else {
-          renderLeaderboard(leaderboardData || []);
+          return;
         }
+
+        const now = new Date();
+        const monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+        const { data: leaderboardData, error: leaderboardError } = await supabase
+          .from('monthly_points_summary')
+          .select('user_id, total_points, events_attended')
+          .eq('user_id', currentUserId)
+          .eq('month_year', monthYear)
+          .maybeSingle();
+
+        if (leaderboardError && leaderboardError.code !== 'PGRST116') {
+          console.warn('Unable to load leaderboard:', leaderboardError.message);
+          renderLeaderboard([]);
+          return;
+        }
+
+        const enriched = leaderboardData ? [{
+          ...leaderboardData,
+          clan_users: [{
+            username: clanUser?.ign || 'You',
+            is_active: clanUser?.is_active
+          }]
+        }] : [];
+
+        renderLeaderboard(enriched);
       } catch (error) {
         console.error('Error loading leaderboard:', error);
       }
@@ -543,8 +579,14 @@
     }
 
     async function logout() {
-      await supabase.auth.signOut();
-      window.location.href = 'index.html';
+      try {
+        await supabase.auth.signOut();
+      } catch (err) {
+        console.warn('Logout warning:', err);
+      }
+      localStorage.removeItem('aether_member_session');
+      localStorage.removeItem('aether_access_granted');
+      window.location.replace('/access-gate.html');
     }
 
     // Load leaderboard on page load
