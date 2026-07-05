@@ -108,17 +108,49 @@ async function persistRequestRequest(payload, isEdit = false) {
   };
 
   try {
+    // Determine the currently authenticated Supabase user (if any)
+    const { data: authData } = await supabase.auth.getUser();
+    const authUserId = authData?.user?.id || null;
+    const targetUserId = requestPayload.user_id || currentUser?.id || currentClanUser?.id || null;
+
+    // If the authenticated user matches the target user, use direct table queries
     if (isEdit) {
-      return await supabase
-        .from("item_requests")
-        .update(requestPayload)
-        .eq("id", editingRequestId)
-        .eq("user_id", currentUser?.id || currentClanUser?.id || null);
+      if (authUserId && targetUserId && authUserId === targetUserId) {
+        return await supabase
+          .from("item_requests")
+          .update(requestPayload)
+          .eq("id", editingRequestId)
+          .eq("user_id", targetUserId);
+      }
+
+      // Otherwise use the security-definer RPC for updates (members logged in via local session)
+      const { data, error } = await supabase.rpc("update_item_request", {
+        target_request_id: editingRequestId,
+        target_user_id: targetUserId,
+        target_item_id: requestPayload.item_id,
+        target_quantity: requestPayload.requested_quantity ?? requestPayload.quantity,
+        target_notes: requestPayload.notes ?? null
+      });
+
+      return { data, error };
     }
 
-    return await supabase
-      .from("item_requests")
-      .insert([requestPayload]);
+    // Create path: prefer direct insert when auth user matches
+    if (authUserId && targetUserId && authUserId === targetUserId) {
+      return await supabase
+        .from("item_requests")
+        .insert([requestPayload]);
+    }
+
+    // Otherwise call the create_item_request RPC (security-definer)
+    const { data, error } = await supabase.rpc("create_item_request", {
+      target_user_id: targetUserId,
+      target_item_id: requestPayload.item_id,
+      target_quantity: requestPayload.requested_quantity ?? requestPayload.quantity,
+      target_notes: requestPayload.notes ?? null
+    });
+
+    return { data, error };
   } catch (err) {
     return { error: err };
   }
