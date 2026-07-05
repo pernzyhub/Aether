@@ -203,8 +203,7 @@ async function loadSheet() {
     head += '<th style="padding:10px; text-align:center; font-size:11px;">Month</th>';
     occurrenceList.forEach(o => {
       const displayDate = formatDate(o.dateTime);
-      const displayTime = formatTime(o.dateTime);
-      head += `<th style="padding:10px; text-align:center; font-size:11px;"><div style="max-width:140px;">${escapeHtml(o.eventName)}<br/><small style=\"color:#999\">${escapeHtml(displayTime)} ${escapeHtml(displayDate)}</small></div></th>`;
+      head += `<th style="padding:10px; text-align:center; font-size:11px;"><div style="max-width:160px; white-space:normal; word-break:break-word; margin:0 auto;">${escapeHtml(o.eventName)}<br/><small style=\"color:#999\">${escapeHtml(displayDate)}</small></div></th>`;
     });
     head += '</tr>';
     thead.innerHTML = head;
