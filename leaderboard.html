@@ -465,12 +465,43 @@
           return;
         }
 
-        const enriched = (leaderboardData || []).map(row => ({
+        let enriched = (leaderboardData || []).map(row => ({
           user_id: row.user_id,
           total_points: row.total_points || 0,
           events_attended: row.events_attended || 0,
           clan_users: [{ username: row.clan_users?.ign || 'Unknown member', is_active: row.clan_users?.is_active }]
         }));
+
+        if ((!enriched || enriched.length === 0) && !leaderboardError) {
+          const { data: attendanceRows, error: attendanceFallbackError } = await supabase
+            .from('attendance')
+            .select('user_id, attended, points_awarded, month_year, clan_users(ign, is_active)')
+            .eq('month_year', monthYear);
+
+          if (!attendanceFallbackError && attendanceRows && attendanceRows.length > 0) {
+            const aggregated = {};
+            attendanceRows.forEach(record => {
+              if (!record.user_id) return;
+              const userId = record.user_id;
+              if (!aggregated[userId]) {
+                aggregated[userId] = {
+                  user_id: userId,
+                  total_points: 0,
+                  events_attended: 0,
+                  clan_users: [{
+                    username: record.clan_users?.ign || 'Unknown member',
+                    is_active: record.clan_users?.is_active
+                  }]
+                };
+              }
+              if (record.attended) {
+                aggregated[userId].total_points += record.points_awarded || 0;
+                aggregated[userId].events_attended += 1;
+              }
+            });
+            enriched = Object.values(aggregated).sort((a, b) => b.total_points - a.total_points);
+          }
+        }
 
         renderLeaderboard(enriched);
       } catch (error) {

@@ -506,8 +506,11 @@ async function loadMemberAttendance() {
 
     const recentHtml = (attendedList || []).map(r => {
       const ev = r.events || {};
-      const dateText = r.month_year ? formatMonthYear(r.month_year) : (ev.event_date ? formatDate(ev.event_date) : '');
-      return `<div style="padding:6px 0; border-bottom:1px solid #222; font-size:13px; color:#ccc">${escapeHtml(ev.name || 'Event')} · ${escapeHtml(dateText)} · ${r.attended ? '<span style="color:#00ff88">Attended</span>' : '<span style="color:#ffcc66">RSVP/Not marked</span>'} · ${r.points_awarded || 0} pts</div>`;
+      const attendanceDate = r.attendance_date || r.created_at || null;
+      const dateText = attendanceDate
+        ? formatDate(attendanceDate)
+        : (ev.event_date ? formatDate(ev.event_date) : (r.month_year ? formatMonthYear(r.month_year) : ''));
+      return `<div style="padding:6px 0; border-bottom:1px solid #222; font-size:13px; color:#ccc">${escapeHtml(ev.name || 'Event')} · ${escapeHtml(dateText)} · ${r.attended ? '<span style="color:#00ff88">Attended</span>' : '<span class="attendance-status">RSVP/Not marked</span>'} · ${r.points_awarded || 0} pts</div>`;
     }).join('');
 
     container.innerHTML = `
