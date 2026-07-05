@@ -663,7 +663,7 @@ async function applyBulkAttendance() {
 
     const { data: upsertedRows, error: upsertError } = await supabase
       .from("attendance")
-      .upsert(attendanceRecords, { onConflict: "event_id,user_id" })
+      .upsert(attendanceRecords, { onConflict: "event_id,user_id,attendance_date" })
       .select('id, event_id, user_id, attended, points_awarded, month_year');
 
     if (upsertError) throw upsertError;
@@ -684,13 +684,27 @@ async function applyBulkAttendance() {
 }
 
 /* ATTENDANCE MANAGEMENT */
-let attendanceLogState = { events: [], attendance: [], users: [] };
+let attendanceLogState = { events: [], attendance: [], users: [], selectedDateByEvent: {} };
 
 function getAttendanceMonthYear(value) {
   if (!value) return null;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function getAttendanceDateKey(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function formatAttendanceDateKey(key) {
+  if (!key) return "Unknown date";
+  const date = new Date(key);
+  if (Number.isNaN(date.getTime())) return "Unknown date";
+  return date.toLocaleDateString();
 }
 
 function formatEventDateTime(value) {
@@ -708,9 +722,17 @@ function formatEventDateTime(value) {
 }
 
 function toggleAttendanceCard(eventId) {
+  attendanceLogState.openEventIds = attendanceLogState.openEventIds || {};
+  attendanceLogState.openEventIds[eventId] = !attendanceLogState.openEventIds[eventId];
   const body = document.getElementById(`attendance-event-body-${eventId}`);
   if (!body) return;
-  body.style.display = body.style.display === "block" ? "none" : "block";
+  body.style.display = attendanceLogState.openEventIds[eventId] ? "block" : "none";
+}
+
+function selectAttendanceDate(eventId, dateKey) {
+  attendanceLogState.selectedDateByEvent = attendanceLogState.selectedDateByEvent || {};
+  attendanceLogState.selectedDateByEvent[eventId] = dateKey;
+  loadAttendance();
 }
 
 async function loadAttendance() {
@@ -742,10 +764,12 @@ async function loadAttendance() {
 
     if (usersError) throw usersError;
 
+    const selectedDateByEvent = attendanceLogState.selectedDateByEvent || {};
     attendanceLogState = {
       events: events || [],
       attendance: attendance || [],
-      users: users || []
+      users: users || [],
+      selectedDateByEvent
     };
 
     if (!events || events.length === 0) {
@@ -757,7 +781,26 @@ async function loadAttendance() {
 
     container.innerHTML = events.map(event => {
       const eventRecords = (attendance || []).filter(record => record.event_id === event.id);
-      const presentRecords = eventRecords.filter(record => record.attended);
+      const dateKeys = Array.from(new Set(
+        eventRecords
+          .map(record => getAttendanceDateKey(record.attendance_date || record.created_at))
+          .filter(Boolean)
+      )).sort((a, b) => b.localeCompare(a));
+
+      const hasDateTabs = dateKeys.length > 0;
+      const selectedDateKey = hasDateTabs
+        ? attendanceLogState.selectedDateByEvent[event.id] || dateKeys[0]
+        : null;
+
+      if (selectedDateKey) {
+        attendanceLogState.selectedDateByEvent[event.id] = selectedDateKey;
+      }
+
+      const selectedRecords = selectedDateKey
+        ? eventRecords.filter(record => getAttendanceDateKey(record.attendance_date || record.created_at) === selectedDateKey)
+        : eventRecords;
+
+      const presentRecords = selectedRecords.filter(record => record.attended);
       const presentUserIds = new Set(presentRecords.map(record => record.user_id));
       const activeUsers = (users || []).filter(user => user.is_active !== false);
       const absentUsers = activeUsers.filter(user => !presentUserIds.has(user.id));
@@ -779,13 +822,23 @@ async function loadAttendance() {
               <span class="attendance-pill absent">${hasAttendance ? absentUsers.length : 0} absent</span>
             </div>
           </button>
-          <div id="attendance-event-body-${event.id}" class="attendance-event-body" style="display: none;">
+          <div id="attendance-event-body-${event.id}" class="attendance-event-body" style="display: ${attendanceLogState.openEventIds[event.id] ? 'block' : 'none'};">
             <div class="attendance-event-actions">
               <button type="button" class="btn btn-secondary" onclick="editAttendanceEvent('${event.id}')">EDIT EVENT</button>
               <button type="button" class="btn btn-secondary" onclick="deleteAttendanceForEvent('${event.id}')">CLEAR ATTENDANCE LOG</button>
               <button type="button" class="btn btn-secondary" onclick="archiveEvent('${event.id}')">ARCHIVE EVENT</button>
               <button type="button" class="btn btn-danger" onclick="deleteAttendanceEvent('${event.id}')">DELETE EVENT + ATTENDANCE</button>
             </div>
+
+            ${hasDateTabs ? `
+              <div class="attendance-date-tabs" style="margin: 12px 0; display:flex; flex-wrap:wrap; gap:8px;">
+                ${dateKeys.map(dateKey => `
+                  <button type="button" class="btn btn-xs ${selectedDateKey === dateKey ? 'btn-primary' : 'btn-secondary'}" onclick="selectAttendanceDate('${event.id}', '${dateKey}')">
+                    ${escapeHtml(formatAttendanceDateKey(dateKey))}
+                  </button>
+                `).join("")}
+              </div>
+            ` : ``}
 
             <div class="attendance-section">
               <div class="attendance-section-title">Present members</div>
@@ -797,7 +850,7 @@ async function loadAttendance() {
                   </div>
                   <div class="attendance-member-actions">
                     <span class="attendance-status-pill present">PRESENT</span>
-                    <button type="button" class="btn-xs btn-danger" onclick="toggleAttendanceStatus('${event.id}', '${record.user_id}', true)">MARK ABSENT</button>
+                    <button type="button" class="btn-xs btn-danger" onclick="toggleAttendanceStatus('${event.id}', '${record.user_id}', true, '${selectedDateKey}', '${record.id}')">MARK ABSENT</button>
                     <button type="button" class="btn-xs btn-secondary" onclick="editAttendancePoints('${record.id}', ${record.points_awarded || 0})">EDIT POINTS</button>
                     <button type="button" class="btn-xs btn-danger" onclick="deleteAttendanceRecord('${record.id}')">DELETE ATTENDANCE RECORD</button>
                   </div>
@@ -812,7 +865,7 @@ async function loadAttendance() {
                   <div class="attendance-member-name">${escapeHtml(user.ign || "Unknown member")}</div>
                   <div class="attendance-member-actions">
                     <span class="attendance-status-pill absent">ABSENT</span>
-                    <button type="button" class="btn-xs btn-success" onclick="toggleAttendanceStatus('${event.id}', '${user.id}', false)">MARK PRESENT</button>
+                    <button type="button" class="btn-xs btn-success" onclick="toggleAttendanceStatus('${event.id}', '${user.id}', false, '${selectedDateKey}')">MARK PRESENT</button>
                   </div>
                 </div>
               `).join("") : `<div class="attendance-empty-state">Everyone is marked present.</div>` : `<div class="attendance-empty-state">No attendance recorded yet for this event.</div>`}
@@ -826,9 +879,20 @@ async function loadAttendance() {
   }
 }
 
-async function toggleAttendanceStatus(eventId, userId, currentlyPresent) {
+async function toggleAttendanceStatus(eventId, userId, currentlyPresent, attendanceDateKey = null, attendanceRecordId = null) {
   const event = attendanceLogState.events.find(item => item.id === eventId);
-  const existing = attendanceLogState.attendance.find(record => record.event_id === eventId && record.user_id === userId);
+  let existing = null;
+
+  if (attendanceRecordId) {
+    existing = attendanceLogState.attendance.find(record => record.id === attendanceRecordId);
+  } else if (attendanceDateKey) {
+    existing = attendanceLogState.attendance.find(record =>
+      record.event_id === eventId &&
+      record.user_id === userId &&
+      getAttendanceDateKey(record.attendance_date) === attendanceDateKey
+    );
+  }
+
   const nextAttended = !currentlyPresent;
 
   try {
@@ -844,17 +908,20 @@ async function toggleAttendanceStatus(eventId, userId, currentlyPresent) {
 
       if (error) throw error;
     } else if (nextAttended) {
+      const attendanceDate = attendanceDateKey ? new Date(attendanceDateKey) : new Date();
+      const monthYear = getAttendanceMonthYear(attendanceDate.toISOString());
+
       const { error } = await supabase
         .from("attendance")
-        .upsert([{
+        .insert([{
           event_id: eventId,
           user_id: userId,
           attended: true,
           points_awarded: event?.points || 0,
-          attendance_date: new Date().toISOString(),
-          month_year: event?.month_year || getAttendanceMonthYear(event?.event_date),
+          attendance_date: attendanceDate.toISOString(),
+          month_year: monthYear,
           updated_at: new Date().toISOString()
-        }], { onConflict: "event_id,user_id" });
+        }]);
 
       if (error) throw error;
     }
