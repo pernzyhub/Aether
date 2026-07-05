@@ -43,8 +43,9 @@ const fallbackEvents = [
 
 async function loadUser() {
   const supabaseSession = await ensureSupabaseSession();
-  const { data } = await supabase.auth.getSession();
-  const user = supabaseSession?.user || data?.session?.user || null;
+  const { data: sessionData } = await supabase.auth.getSession();
+  const { data: userData } = await supabase.auth.getUser();
+  const user = supabaseSession?.user || sessionData?.session?.user || userData?.user;
   const memberSession = getMemberSession();
 
   if (!user && !memberSession) {

@@ -1,5 +1,5 @@
 import { supabase } from './lib/supabaseClient.js';
-import { logout } from './lib/memberAuth.js';
+import { getMemberSession, ensureSupabaseSession, logout } from './lib/memberAuth.js';
 
 const DEFAULT_MEMBER_PASSWORD = "123";
 
@@ -176,19 +176,26 @@ function hasAccessGate() {
 
 window.addEventListener("load", () => {
   window.setTimeout(async () => {
+    const memberSession = getMemberSession();
+    const supabaseSession = await ensureSupabaseSession();
     const { data } = await supabase.auth.getSession();
+    const user = supabaseSession?.user || data.session?.user;
     const userEl = document.getElementById("user");
     if (userEl) {
-      userEl.textContent = JSON.stringify(data.session?.user || "Not logged in", null, 2);
+      userEl.textContent = JSON.stringify(user || memberSession || "Not logged in", null, 2);
+    }
+
+    if (user || memberSession) {
+      if (user && isAdminUser(user)) {
+        window.location.replace("/admin-dashboard.html");
+        return;
+      }
+      window.location.replace("/portal.html");
+      return;
     }
 
     if (!hasAccessGate()) {
       window.location.replace("/access-gate.html");
-      return;
-    }
-
-    if (data.session?.user && isAdminUser(data.session.user)) {
-      window.location.replace("/admin-dashboard.html");
       return;
     }
 

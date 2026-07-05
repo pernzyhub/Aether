@@ -127,6 +127,43 @@ async function loadSheet() {
     table.appendChild(tbody);
     container.innerHTML = '';
     container.appendChild(table);
+
+    // Diagnostic: toggle raw attendance rows for debugging
+    (function addDiagnosticView() {
+      let diagContainer = document.getElementById('attendance-diagnostic-container');
+      if (!diagContainer) {
+        diagContainer = document.createElement('div');
+        diagContainer.id = 'attendance-diagnostic-container';
+        diagContainer.style.marginTop = '12px';
+
+        const btn = document.createElement('button');
+        btn.textContent = 'Toggle Raw Attendance Data';
+        btn.className = 'btn btn-secondary';
+        btn.style.marginBottom = '8px';
+        btn.onclick = () => {
+          const pre = diagContainer.querySelector('pre');
+          if (pre) pre.style.display = pre.style.display === 'none' ? 'block' : 'none';
+        };
+
+        const pre = document.createElement('pre');
+        pre.style.display = 'none';
+        pre.style.maxHeight = '300px';
+        pre.style.overflow = 'auto';
+        pre.style.background = '#07110a';
+        pre.style.color = '#b8ffb8';
+        pre.style.padding = '10px';
+        pre.style.border = '1px solid #113';
+        pre.style.borderRadius = '6px';
+        pre.textContent = JSON.stringify(attendance || [], null, 2);
+
+        diagContainer.appendChild(btn);
+        diagContainer.appendChild(pre);
+        container.appendChild(diagContainer);
+      } else {
+        const pre = diagContainer.querySelector('pre');
+        if (pre) pre.textContent = JSON.stringify(attendance || [], null, 2);
+      }
+    })();
   } catch (err) {
     console.error('Load sheet error:', err);
     container.innerHTML = `<p style="color:#f66">⚠️ Error: ${escapeHtml(err.message)}</p>`;
