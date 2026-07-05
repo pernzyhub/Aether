@@ -904,8 +904,23 @@ async function adjustQuantity(requestId, currentQuantity, delta) {
         updated_at: new Date().toISOString()
       })
       .eq("id", requestId);
+    if (error) {
+      if (/requested_quantity|column .*does not exist/i.test(error.message)) {
+        const { error: retryError } = await supabase
+          .from("item_requests")
+          .update({
+            quantity: newQuantity,
+            status: nextStatus,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", requestId);
 
-    if (error) throw error;
+        if (retryError) throw retryError;
+      } else {
+        throw error;
+      }
+    }
+
     loadRequests();
   } catch (err) {
     alert(`Error updating request: ${err.message}`);
@@ -916,18 +931,35 @@ async function markRequestDone(requestId) {
   if (!confirm("Mark this request as fulfilled?")) return;
 
   try {
-    const { data: request, error: fetchError } = await supabase
-      .from("item_requests")
-      .select("requested_quantity, quantity")
-      .eq("id", requestId)
-      .maybeSingle();
+    // Try to fetch requested_quantity, but gracefully handle older schemas
+    let requestedQty = 1;
+    try {
+      const { data: request, error: fetchError } = await supabase
+        .from("item_requests")
+        .select("requested_quantity, quantity")
+        .eq("id", requestId)
+        .maybeSingle();
 
-    if (fetchError) throw fetchError;
-    if (!request) throw new Error("Request not found.");
+      if (fetchError) throw fetchError;
+      if (!request) throw new Error("Request not found.");
+      requestedQty = Number(request.requested_quantity ?? request.quantity ?? 1);
+    } catch (fetchErr) {
+      if (!/requested_quantity|column .*does not exist/i.test(fetchErr.message)) {
+        throw fetchErr;
+      }
+      // fallback: fetch just quantity
+      const { data: req2, error: fetchError2 } = await supabase
+        .from("item_requests")
+        .select("quantity")
+        .eq("id", requestId)
+        .maybeSingle();
+      if (fetchError2) throw fetchError2;
+      if (!req2) throw new Error("Request not found.");
+      requestedQty = Number(req2.quantity ?? 1);
+    }
 
-    const requestedQty = Number(request.requested_quantity ?? request.quantity ?? 1);
-
-    const { error } = await supabase
+    // Attempt update; if the column doesn't exist, retry without it
+    let { error } = await supabase
       .from("item_requests")
       .update({
         quantity: 0,
@@ -936,6 +968,17 @@ async function markRequestDone(requestId) {
         updated_at: new Date().toISOString()
       })
       .eq("id", requestId);
+
+    if (error && /requested_quantity|column .*does not exist/i.test(error.message)) {
+      ({ error } = await supabase
+        .from("item_requests")
+        .update({
+          quantity: 0,
+          status: "approved",
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", requestId));
+    }
 
     if (error) throw error;
     loadRequests();
