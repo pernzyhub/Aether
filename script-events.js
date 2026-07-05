@@ -721,7 +721,12 @@ function formatDateTime(value) {
   if (!value) return "No date set";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "No date set";
-  return `${formatDate(date)} ${formatTime(date)}`;
+
+  const formattedDate = formatDate(date);
+  const formattedTime = formatTime(date);
+  const isMidnight = date.getHours() === 0 && date.getMinutes() === 0 && date.getSeconds() === 0;
+
+  return isMidnight ? formattedDate : `${formattedDate} ${formattedTime}`;
 }
 
 function formatAttendanceDateKey(key) {

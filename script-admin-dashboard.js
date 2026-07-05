@@ -19,6 +19,30 @@ function isAdminUser(user) {
   return superFlag || /superuser|admin/i.test(roleText);
 }
 
+function formatDate(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}/${date.getFullYear()}`;
+}
+
+function formatTime(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+
+function formatDateTime(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const formattedDate = formatDate(date);
+  const formattedTime = formatTime(date);
+  const isMidnight = date.getHours() === 0 && date.getMinutes() === 0 && date.getSeconds() === 0;
+  return isMidnight ? formattedDate : `${formattedDate} ${formattedTime}`;
+}
+
 function setActiveModule(moduleName) {
   document.querySelectorAll('.module-card').forEach(btn => {
     btn.classList.toggle('is-active', btn.dataset.module === moduleName);

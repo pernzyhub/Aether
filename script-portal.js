@@ -151,7 +151,12 @@ function formatDateTime(dateValue) {
   if (!dateValue) return '';
   const d = new Date(dateValue);
   if (Number.isNaN(d.getTime())) return '';
-  return `${formatDate(d)} ${formatTime(d)}`;
+
+  const formattedDate = formatDate(d);
+  const formattedTime = formatTime(d);
+  const isMidnight = d.getHours() === 0 && d.getMinutes() === 0 && d.getSeconds() === 0;
+
+  return isMidnight ? formattedDate : `${formattedDate} ${formattedTime}`;
 }
 
 function renderAnnouncements(items, container) {
