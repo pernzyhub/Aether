@@ -78,7 +78,10 @@ function setLoginSide(side) {
 }
 
 function shouldSkipAuthRedirect() {
-  return new URLSearchParams(window.location.search).get("view") === "public";
+  const path = window.location.pathname.toLowerCase();
+  const isLandingPage = path === "/" || path.endsWith("/index.html");
+  const isPublicView = new URLSearchParams(window.location.search).get("view") === "public";
+  return isLandingPage || isPublicView;
 }
 
 async function adminLogin() {
@@ -167,6 +170,9 @@ async function memberLogin() {
 
 supabase.auth.onAuthStateChange((_event, session) => {
   if (shouldSkipAuthRedirect() || !session?.user) return;
+  if (window.location.pathname.toLowerCase().endsWith('/index.html') || window.location.pathname === '/') {
+    return;
+  }
   if (isAdminUser(session.user)) {
     window.location.replace("/admin-dashboard.html");
   } else {
@@ -185,11 +191,12 @@ window.addEventListener("load", () => {
       userEl.textContent = JSON.stringify(user || memberSession || "Not logged in", null, 2);
     }
 
+    if (shouldSkipAuthRedirect()) {
+      setLoginSide('member');
+      return;
+    }
+
     if (user || memberSession) {
-      if (shouldSkipAuthRedirect()) {
-        setLoginSide('member');
-        return;
-      }
       if (user && isAdminUser(user)) {
         window.location.replace("/admin-dashboard.html");
         return;
