@@ -755,13 +755,16 @@ async function loadAttendance() {
     const memberMap = Object.fromEntries((users || []).map(user => [user.id, user]));
 
     container.innerHTML = events.map(event => {
-      const presentRecords = (attendance || []).filter(record => record.event_id === event.id && record.attended);
+      const eventRecords = (attendance || []).filter(record => record.event_id === event.id);
+      const presentRecords = eventRecords.filter(record => record.attended);
       const presentUserIds = new Set(presentRecords.map(record => record.user_id));
-      const absentUsers = (users || []).filter(user => user.is_active !== false && !presentUserIds.has(user.id));
+      const activeUsers = (users || []).filter(user => user.is_active !== false);
+      const absentUsers = activeUsers.filter(user => !presentUserIds.has(user.id));
       const presentMembers = presentRecords.map(record => ({
         ...record,
         user: memberMap[record.user_id] || null
       }));
+      const hasAttendance = eventRecords.length > 0;
 
       return `
         <div class="attendance-event-card">
@@ -772,7 +775,7 @@ async function loadAttendance() {
             </div>
             <div class="attendance-event-badges">
               <span class="attendance-pill present">${presentMembers.length} present</span>
-              <span class="attendance-pill absent">${absentUsers.length} absent</span>
+              <span class="attendance-pill absent">${hasAttendance ? absentUsers.length : 0} absent</span>
             </div>
           </button>
           <div id="attendance-event-body-${event.id}" class="attendance-event-body" style="display: none;">
@@ -802,7 +805,7 @@ async function loadAttendance() {
 
             <div class="attendance-section">
               <div class="attendance-section-title">Absent members</div>
-              ${absentUsers.length > 0 ? absentUsers.map(user => `
+              ${hasAttendance ? absentUsers.length > 0 ? absentUsers.map(user => `
                 <div class="attendance-member-row absent">
                   <div class="attendance-member-name">${escapeHtml(user.ign || "Unknown member")}</div>
                   <div class="attendance-member-actions">
@@ -810,7 +813,7 @@ async function loadAttendance() {
                     <button type="button" class="btn-xs btn-success" onclick="toggleAttendanceStatus('${event.id}', '${user.id}', false)">MARK PRESENT</button>
                   </div>
                 </div>
-              `).join("") : `<div class="attendance-empty-state">Everyone is marked present.</div>`}
+              `).join("") : `<div class="attendance-empty-state">Everyone is marked present.</div>` : `<div class="attendance-empty-state">No attendance recorded yet for this event.</div>`}
             </div>
           </div>
         </div>
