@@ -321,6 +321,20 @@ body::before {
   font-size: 0.95rem;
 }
 
+.request-progress-pill {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(0, 255, 136, 0.14);
+  border: 1px solid rgba(0, 255, 136, 0.25);
+  color: #7dffb4;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
 .request-note {
   display: block;
   margin-top: 4px;

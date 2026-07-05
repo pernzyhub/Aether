@@ -202,8 +202,6 @@ async function loadAnnouncements() {
     container.innerHTML = "<p>Loading announcements...</p>";
   }
 
-  await ensureSupabaseSession();
-
   try {
     const { data, error } = await supabase
       .from("announcements")
@@ -246,8 +244,6 @@ async function loadRules() {
   } else {
     container.innerHTML = "<p>Loading rules...</p>";
   }
-
-  await ensureSupabaseSession();
 
   try {
     const { data, error } = await supabase

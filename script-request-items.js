@@ -135,6 +135,29 @@ async function loadItems() {
   }
 }
 
+async function persistRequestRequest(payload, isEdit = false) {
+  const requestPayload = {
+    ...payload,
+    ...(payload.requested_quantity !== undefined ? { requested_quantity: payload.requested_quantity } : {})
+  };
+
+  try {
+    if (isEdit) {
+      return await supabase
+        .from("item_requests")
+        .update(requestPayload)
+        .eq("id", editingRequestId)
+        .eq("user_id", currentUser?.id || currentClanUser?.id || null);
+    }
+
+    return await supabase
+      .from("item_requests")
+      .insert([requestPayload]);
+  } catch (err) {
+    return { error: err };
+  }
+}
+
 async function submitRequest(event) {
   event.preventDefault();
   
@@ -177,18 +200,24 @@ async function submitRequest(event) {
         return;
       }
 
-      // Direct update to include proof_image
-      const { error } = await supabase
-        .from("item_requests")
-        .update({
+      let { error } = await persistRequestRequest({
+        item_id: itemId,
+        quantity,
+        requested_quantity: quantity,
+        notes: notes || null,
+        proof_image: proofImageUrl || null,
+        updated_at: new Date().toISOString()
+      }, true);
+
+      if (error && /requested_quantity|column .*does not exist/i.test(error.message)) {
+        ({ error } = await persistRequestRequest({
           item_id: itemId,
           quantity,
           notes: notes || null,
           proof_image: proofImageUrl || null,
           updated_at: new Date().toISOString()
-        })
-        .eq("id", editingRequestId)
-        .eq("user_id", requestUserId);
+        }, true));
+      }
 
       if (error) throw error;
 
@@ -204,17 +233,26 @@ async function submitRequest(event) {
         return;
       }
 
-      // Direct insert to include proof_image
-      const { error } = await supabase
-        .from("item_requests")
-        .insert([{
+      let { error } = await persistRequestRequest({
+        user_id: requestUserId,
+        item_id: itemId,
+        quantity,
+        requested_quantity: quantity,
+        notes: notes || null,
+        proof_image: proofImageUrl || null,
+        status: "pending"
+      });
+
+      if (error && /requested_quantity|column .*does not exist/i.test(error.message)) {
+        ({ error } = await persistRequestRequest({
           user_id: requestUserId,
           item_id: itemId,
           quantity,
           notes: notes || null,
           proof_image: proofImageUrl || null,
           status: "pending"
-        }]);
+        }));
+      }
 
       if (error) {
         if (/row-level security|permission denied/i.test(error.message)) {
@@ -309,7 +347,8 @@ async function cancelRequest(requestId) {
 }
 
 function formatQuantity(value) {
-  return `${value} ${value === 1 ? "pc" : "pcs"}`;
+  const safeValue = Math.max(0, Number(value) || 0);
+  return `${safeValue} ${safeValue === 1 ? "pc" : "pcs"}`;
 }
 
 function animateCountUp(elements) {
@@ -365,7 +404,7 @@ async function loadMyRequests() {
   try {
     let query = supabase
       .from("item_requests")
-      .select("id, quantity, notes, status, created_at, user_id, proof_image, items!inner(name)")
+      .select("*, items!inner(name)")
       .order("created_at", { ascending: false })
       .limit(12);
 
@@ -408,6 +447,10 @@ async function loadMyRequests() {
     container.innerHTML = sortedRequests.map(req => {
       const memberName = memberNames.get(req.user_id) || "Unknown Member";
       const isOwner = req.user_id === currentUser?.id;
+      const originalQty = Number(req.requested_quantity ?? req.quantity ?? 1);
+      const remainingQty = Math.max(0, Number(req.quantity ?? 0));
+      const fulfilledQty = Math.max(0, originalQty - remainingQty);
+      const progressText = originalQty > 0 ? `${fulfilledQty}/${originalQty} fulfilled` : "Pending";
       return `
         <div class="request-entry" data-id="${req.id}">
           <div class="request-entry-main">
@@ -419,6 +462,7 @@ async function loadMyRequests() {
               Requested ${formatQuantity(req.quantity)} of ${escapeHtml(req.items.name)}
               ${req.notes ? `<span class="request-note">${escapeHtml(req.notes)}</span>` : ""}
             </div>
+            <div class="request-progress-pill">${progressText}</div>
             ${req.proof_image ? `
               <div class="request-proof">
                 <button class="proof-link" onclick="openImageModal('${escapeHtml(req.proof_image)}')">
@@ -449,16 +493,20 @@ async function loadMyRequests() {
     pendingRequests.forEach(req => {
       const itemName = req.items?.name || "Unknown Item";
       const memberName = memberNames.get(req.user_id) || "Unknown Member";
+      const originalQty = Number(req.requested_quantity ?? req.quantity ?? 1);
+      const remainingQty = Math.max(0, Number(req.quantity ?? 0));
+      const fulfilledQty = Math.max(0, originalQty - remainingQty);
       const group = groupedSummary.get(itemName) || { itemName, total: 0, members: [] };
       const existingMember = group.members.find(member => member.name === memberName);
 
       if (existingMember) {
-        existingMember.quantity += req.quantity;
+        existingMember.quantity += remainingQty;
+        existingMember.fulfilled += fulfilledQty;
       } else {
-        group.members.push({ name: memberName, quantity: req.quantity });
+        group.members.push({ name: memberName, quantity: remainingQty, fulfilled: fulfilledQty });
       }
 
-      group.total += req.quantity;
+      group.total += remainingQty;
       groupedSummary.set(itemName, group);
     });
 
@@ -517,7 +565,7 @@ async function loadMyRequests() {
             ${sortedMembers.map(member => `
               <div class="summary-member">
                 <span>${escapeHtml(member.name)}</span>
-                <strong><span class="count-up" data-target="${member.quantity}">0</span> ${member.quantity === 1 ? "pc" : "pcs"}</strong>
+                <strong><span class="count-up" data-target="${member.quantity}">0</span> / <span class="count-up" data-target="${member.fulfilled + member.quantity}">0</span></strong>
               </div>
             `).join("")}
           </div>
