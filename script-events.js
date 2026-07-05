@@ -684,7 +684,7 @@ async function applyBulkAttendance() {
 }
 
 /* ATTENDANCE MANAGEMENT */
-let attendanceLogState = { events: [], attendance: [], users: [], selectedDateByEvent: {} };
+let attendanceLogState = { events: [], attendance: [], users: [], selectedDateByEvent: {}, openEventIds: {} };
 
 function getAttendanceMonthYear(value) {
   if (!value) return null;
@@ -765,11 +765,13 @@ async function loadAttendance() {
     if (usersError) throw usersError;
 
     const selectedDateByEvent = attendanceLogState.selectedDateByEvent || {};
+    const openEventIds = attendanceLogState.openEventIds || {};
     attendanceLogState = {
       events: events || [],
       attendance: attendance || [],
       users: users || [],
-      selectedDateByEvent
+      selectedDateByEvent,
+      openEventIds
     };
 
     if (!events || events.length === 0) {
