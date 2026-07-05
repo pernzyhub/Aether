@@ -1104,6 +1104,7 @@ async function adminLogout() {
 // Keep this in place so older inline onclick="logout()" calls don't throw.
 async function logout() {
   try {
+    console.debug('[admin] logout wrapper invoked');
     await adminLogout();
   } catch (err) {
     console.warn('logout wrapper error:', err);
@@ -1121,6 +1122,7 @@ function navigateToFrontPage(event) {
   if (event) {
     event.preventDefault();
   }
+  console.debug('[admin] navigateToFrontPage invoked');
   window.location.assign("/index.html?view=public");
 }
 

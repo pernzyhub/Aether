@@ -169,8 +169,10 @@ async function memberLogin() {
 }
 
 supabase.auth.onAuthStateChange((_event, session) => {
+  console.debug('[auth] onAuthStateChange', { skip: shouldSkipAuthRedirect(), hasSession: !!session?.user });
   if (shouldSkipAuthRedirect() || !session?.user) return;
   if (window.location.pathname.toLowerCase().endsWith('/index.html') || window.location.pathname === '/') {
+    console.debug('[auth] onAuthStateChange: landing page - skipping redirect');
     return;
   }
   if (isAdminUser(session.user)) {
