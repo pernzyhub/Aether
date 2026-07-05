@@ -2,7 +2,8 @@
 CREATE OR REPLACE FUNCTION public.admin_create_clan_user(
   user_id UUID,
   ign TEXT,
-  role TEXT DEFAULT 'member'
+  role TEXT DEFAULT 'member',
+  is_active BOOLEAN DEFAULT true
 )
 RETURNS VOID
 LANGUAGE plpgsql
@@ -10,7 +11,7 @@ SECURITY DEFINER
 AS $$
 BEGIN
   INSERT INTO public.clan_users (id, ign, role, is_active)
-  VALUES (user_id, ign, role, true);
+  VALUES (user_id, ign, role, is_active);
 END;
 $$;
 

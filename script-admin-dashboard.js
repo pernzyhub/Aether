@@ -771,21 +771,21 @@ async function changeUserPassword(userId) {
 
 async function createUser() {
   const statusEl = document.getElementById("create-user-status");
-  const userId = document.getElementById("new-user-id").value.trim();
+  const userId = crypto.randomUUID();
   const ign = document.getElementById("new-user-ign").value.trim();
-  const role = document.getElementById("new-user-role").value;
+  const role = document.querySelector('input[name="new-user-role"]:checked')?.value || 'member';
 
-  if (!userId || !ign) {
-    showStatus("create-user-status", "User ID and IGN are required.", "error");
+  if (!ign) {
+    showStatus("create-user-status", "IGN is required.", "error");
     return;
   }
 
-  // Validate UUID format
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!uuidRegex.test(userId)) {
-    showStatus("create-user-status", "Invalid User ID format. Must be a valid UUID.", "error");
+  if (!['member', 'superuser'].includes(role)) {
+    showStatus("create-user-status", "Role must be Member or Superuser.", "error");
     return;
   }
+
+  const isActive = document.getElementById("new-user-active")?.checked ?? true;
 
   statusEl.textContent = "Creating user...";
   statusEl.className = "status-text";
@@ -794,7 +794,8 @@ async function createUser() {
     const { error } = await supabase.rpc("admin_create_clan_user", {
       user_id: userId,
       ign: ign,
-      role: role
+      role: role,
+      is_active: isActive
     });
 
     if (error) {

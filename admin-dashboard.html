@@ -170,19 +170,25 @@
                   <h2>CREATE USER</h2>
                   <form id="create-user-form" class="form">
                     <div class="form-group">
-                      <label>User ID (Auth UUID)</label>
-                      <input type="text" id="new-user-id" class="input" placeholder="Enter auth user UUID" required />
-                    </div>
-                    <div class="form-group">
                       <label>IGN (In-Game Name)</label>
                       <input type="text" id="new-user-ign" class="input" placeholder="Enter IGN" required />
                     </div>
-                    <div class="form-group">
-                      <label>Role</label>
-                      <select id="new-user-role" class="input">
-                        <option value="member">Member</option>
-                        <option value="admin">Admin</option>
-                      </select>
+                    <div class="form-group" style="display:flex; flex-wrap:wrap; gap:0.75rem; align-items:center;">
+                      <label style="margin:0; min-width:6rem;">Role</label>
+                      <label style="display:flex; align-items:center; gap:0.4rem; margin:0;">
+                        <input type="radio" name="new-user-role" value="member" checked />
+                        Member
+                      </label>
+                      <label style="display:flex; align-items:center; gap:0.4rem; margin:0;">
+                        <input type="radio" name="new-user-role" value="superuser" />
+                        Superuser
+                      </label>
+                    </div>
+                    <div class="form-group" style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem;">
+                      <label style="display:flex; align-items:center; gap:0.5rem; margin:0;">
+                        <input type="checkbox" id="new-user-active" checked />
+                        Active registration
+                      </label>
                     </div>
                     <button type="submit" class="btn btn-primary">CREATE USER</button>
                   </form>
