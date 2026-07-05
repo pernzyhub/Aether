@@ -257,6 +257,47 @@ async function loadEvents() {
   }
 }
 
+// Helpers to compute next recurrence occurrence (global so other functions can use it)
+function formatReadableDate(d) {
+  if (!d || !(d instanceof Date)) return '';
+  const opts = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' };
+  return d.toLocaleDateString(undefined, opts);
+}
+
+function getNextOccurrenceFromUI() {
+  try {
+    const isRecurring = document.getElementById('is-recurring')?.checked;
+    if (!isRecurring) return null;
+    const type = document.getElementById('recurrence-type')?.value;
+    const time = document.getElementById('recurrence-time')?.value || '00:00';
+    const today = new Date();
+
+    if (type === 'weekly' || type === 'biweekly') {
+      const dayVal = document.getElementById('recurrence-day-select')?.value;
+      const target = dayVal ? parseInt(dayVal, 10) : today.getDay();
+      const todayDow = today.getDay();
+      let daysAhead = (target - todayDow + 7) % 7;
+      const next = new Date(today);
+      next.setDate(today.getDate() + daysAhead);
+      const [hh, mm] = time.split(':').map(n => parseInt(n || '0', 10));
+      next.setHours(hh, mm, 0, 0);
+      return next;
+    }
+
+    if (type === 'monthly') {
+      const next = new Date(today);
+      next.setMonth(today.getMonth() + 1);
+      const [hh, mm] = time.split(':').map(n => parseInt(n || '0', 10));
+      next.setHours(hh, mm, 0, 0);
+      return next;
+    }
+
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
+
 async function createEvent(e) {
   e.preventDefault();
   const typeId = document.getElementById("event-type-select").value;
@@ -314,6 +355,17 @@ async function createEvent(e) {
     document.getElementById("event-form").reset();
     document.getElementById("recurring-options").style.display = "none";
     loadEvents();
+    // If recurring, show next occurrence sample in status
+    try {
+      if (isRecurring) {
+        const next = getNextOccurrenceFromUI();
+        if (next) {
+          showStatus("event-status", `Event created successfully. Next occurrence: ${formatReadableDate(next)}`, "success");
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
   } catch (err) {
     showStatus("event-status", `Error creating event: ${err.message}`, "error");
   }
@@ -812,6 +864,84 @@ window.addEventListener("load", () => {
       weeklyDaysDiv.style.display = e.target.value === "weekly" ? "block" : "none";
     });
   }
+
+  // Update recurrence sample when relevant inputs change
+  const recurrenceSampleEl = document.getElementById('recurrence-sample');
+  function formatReadable(d) {
+    if (!d || !(d instanceof Date)) return '';
+    const opts = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' };
+    return d.toLocaleDateString(undefined, opts);
+  }
+
+  function computeNextOccurrence() {
+    const isRecurring = document.getElementById('is-recurring')?.checked;
+    if (!isRecurring) return null;
+    const type = document.getElementById('recurrence-type')?.value;
+    const time = document.getElementById('recurrence-time')?.value || '00:00';
+    const today = new Date();
+
+    if (type === 'weekly') {
+      const dayVal = document.getElementById('recurrence-day-select')?.value;
+      if (!dayVal) return null;
+      const target = parseInt(dayVal, 10);
+      // JS: 0 = Sunday ... 6 = Saturday
+      const todayDow = today.getDay();
+      let daysAhead = (target - todayDow + 7) % 7;
+      if (daysAhead === 0) daysAhead = 0; // allow today
+      const next = new Date(today);
+      next.setDate(today.getDate() + daysAhead);
+      // apply time
+      const [hh, mm] = time.split(':').map(n => parseInt(n || '0', 10));
+      next.setHours(hh, mm, 0, 0);
+      return next;
+    }
+
+    if (type === 'biweekly') {
+      // find next occurrence same as weekly, then show two-week interval
+      const dayVal = document.getElementById('recurrence-day-select')?.value;
+      const target = dayVal ? parseInt(dayVal, 10) : today.getDay();
+      const todayDow = today.getDay();
+      let daysAhead = (target - todayDow + 7) % 7;
+      const next = new Date(today);
+      next.setDate(today.getDate() + daysAhead);
+      const [hh, mm] = time.split(':').map(n => parseInt(n || '0', 10));
+      next.setHours(hh, mm, 0, 0);
+      return next;
+    }
+
+    if (type === 'monthly') {
+      // use today's day in next month
+      const next = new Date(today);
+      next.setMonth(today.getMonth() + 1);
+      const [hh, mm] = time.split(':').map(n => parseInt(n || '0', 10));
+      next.setHours(hh, mm, 0, 0);
+      return next;
+    }
+
+    return null;
+  }
+
+  function updateRecurrenceSample() {
+    if (!recurrenceSampleEl) return;
+    const isRecurring = document.getElementById('is-recurring')?.checked;
+    if (!isRecurring) {
+      recurrenceSampleEl.textContent = '';
+      return;
+    }
+    const next = computeNextOccurrence();
+    if (next) {
+      recurrenceSampleEl.textContent = `Next occurrence: ${formatReadable(next)}`;
+    } else {
+      recurrenceSampleEl.textContent = 'Configure recurrence options to see a sample date.';
+    }
+  }
+
+  // Wire controls to update sample
+  const recurrenceControls = ['is-recurring', 'recurrence-type', 'recurrence-day-select', 'recurrence-time'];
+  recurrenceControls.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', updateRecurrenceSample);
+  });
 
   if (bulkPasteToggle) {
     bulkPasteToggle.addEventListener("change", (e) => {
