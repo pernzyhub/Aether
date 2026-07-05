@@ -43,14 +43,24 @@ const fallbackEvents = [
 ];
 
 async function loadUser() {
-  // In admin preview mode, do not call ensureSupabaseSession or redirect to login.
-  const supabaseSession = isAdminPreview ? null : await ensureSupabaseSession();
-  const { data: sessionData } = isAdminPreview ? {} : await supabase.auth.getSession();
-  const { data: userData } = isAdminPreview ? {} : await supabase.auth.getUser();
+  if (isAdminPreview) {
+    const badge = document.getElementById('adminPreviewBadge');
+    if (badge) badge.style.display = 'block';
+    const welcomeEl = document.getElementById('welcome-text');
+    if (welcomeEl) {
+      welcomeEl.textContent = 'ADMIN PREVIEW MODE';
+    }
+    return;
+  }
+
+  // In regular portal mode, load session and current user data.
+  const supabaseSession = await ensureSupabaseSession();
+  const { data: sessionData } = await supabase.auth.getSession();
+  const { data: userData } = await supabase.auth.getUser();
   const user = supabaseSession?.user || sessionData?.session?.user || userData?.user;
   const memberSession = getMemberSession();
 
-  if (!user && !memberSession && !isAdminPreview) {
+  if (!user && !memberSession) {
     window.location.replace("/index.html");
     return;
   }
