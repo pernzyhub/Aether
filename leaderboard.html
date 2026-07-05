@@ -417,8 +417,7 @@
         if (currentPeriod === 'all') {
           const { data: allAttendance, error: attendanceError } = await supabase
             .from('attendance')
-            .select('user_id, attended, points_awarded')
-            .eq('user_id', currentUserId);
+            .select('user_id, attended, points_awarded, clan_users(ign, is_active)');
 
           if (attendanceError) {
             console.warn('Unable to load attendance leaderboard:', attendanceError.message);
@@ -435,8 +434,8 @@
                 total_points: 0,
                 events_attended: 0,
                 clan_users: [{
-                  username: clanUser?.ign || 'You',
-                  is_active: clanUser?.is_active
+                  username: record.clan_users?.ign || 'Unknown member',
+                  is_active: record.clan_users?.is_active
                 }]
               };
             }
