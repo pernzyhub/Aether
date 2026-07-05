@@ -50,33 +50,53 @@ async function loadSheet() {
 
     if (attErr) throw new Error(`Attendance query failed: ${attErr.message}`);
 
-    // Build a lookup of the latest attendance record per event+user
-    const attendanceMap = {};
+    // Build a lookup of the latest attendance record per event+user+date (date-keyed)
+    const attendanceMap = {}; // key: eventId::userId::YYYY-MM-DD -> record
     (attendance || []).forEach(a => {
-      const key = `${a.event_id}::${a.user_id}`;
+      const dt = a.attendance_date ? new Date(a.attendance_date) : (a.created_at ? new Date(a.created_at) : null);
+      if (!dt) return;
+      const dateKey = dt.toISOString().slice(0,10);
+      const key = `${a.event_id}::${a.user_id}::${dateKey}`;
       const existing = attendanceMap[key];
-      const aDate = a.attendance_date ? new Date(a.attendance_date) : (a.created_at ? new Date(a.created_at) : null);
-      const existingDate = existing ? (existing.attendance_date ? new Date(existing.attendance_date) : (existing.created_at ? new Date(existing.created_at) : null)) : null;
-      if (!existing || (aDate && existingDate && aDate > existingDate) || (aDate && !existingDate)) {
-        attendanceMap[key] = a;
-      }
+      const aTs = dt.getTime();
+      const existingTs = existing ? (existing.attendance_date ? new Date(existing.attendance_date).getTime() : (existing.created_at ? new Date(existing.created_at).getTime() : 0)) : 0;
+      if (!existing || aTs > existingTs) attendanceMap[key] = a;
     });
 
-    // Compute weekly and monthly progress per user
+    // Build occurrence list: each event occurrence (event_id + dateKey)
+    const occurrenceList = [];
+    events.forEach(ev => {
+      // collect dates from attendance rows for this event
+      const dateSet = new Set();
+      (attendance || []).forEach(a => {
+        if (a.event_id !== ev.id) return;
+        const dt = a.attendance_date ? new Date(a.attendance_date) : (a.created_at ? new Date(a.created_at) : null);
+        if (!dt) return;
+        dateSet.add(dt.toISOString().slice(0,10));
+      });
+      // if no attendance dates, include event.event_date if present and in month
+      if (dateSet.size === 0 && ev.event_date) {
+        try { dateSet.add(new Date(ev.event_date).toISOString().slice(0,10)); } catch(e) {}
+      }
+      const dates = Array.from(dateSet).sort();
+      dates.forEach(dk => occurrenceList.push({ eventId: ev.id, eventName: ev.name || 'Event', dateKey: dk }));
+    });
+
+    // Compute weekly and monthly progress per user based on unique occurrences
     const now = new Date();
     const weekAgo = new Date(now);
     weekAgo.setDate(now.getDate() - (WEEK_WINDOW_DAYS - 1)); // include today
     const monthlyTarget = month; // 'YYYY-MM'
     const progressMap = {};
     users.forEach(u => progressMap[u.id] = { weekPoints: 0, weekAttended: 0, monthPoints: 0, monthAttended: 0 });
-    (attendance || []).forEach(a => {
+    Object.values(attendanceMap).forEach(a => {
       const uid = a.user_id;
       if (!progressMap[uid]) return;
-      const aDate = a.attendance_date ? new Date(a.attendance_date) : (a.created_at ? new Date(a.created_at) : null);
-      if (!aDate) return;
-      const my = a.month_year || aDate.toISOString().slice(0,7);
+      const dt = a.attendance_date ? new Date(a.attendance_date) : (a.created_at ? new Date(a.created_at) : null);
+      if (!dt) return;
+      const my = a.month_year || dt.toISOString().slice(0,7);
       if (a.attended) {
-        if (aDate >= weekAgo) {
+        if (dt >= weekAgo) {
           progressMap[uid].weekPoints += a.points_awarded || 0;
           progressMap[uid].weekAttended += 1;
         }
@@ -97,9 +117,9 @@ async function loadSheet() {
     head += '<th style="padding:10px; text-align:left; min-width:200px; font-weight:700;">Member</th>';
     head += '<th style="padding:10px; text-align:center; font-size:11px;">Week</th>';
     head += '<th style="padding:10px; text-align:center; font-size:11px;">Month</th>';
-    events.forEach(ev => {
-      const eventDate = ev.event_date ? new Date(ev.event_date).toLocaleDateString() : 'No date';
-      head += `<th style="padding:10px; text-align:center; font-size:11px;"><div style="max-width:110px;">${escapeHtml(ev.name || 'Event')}</div><small>${eventDate}</small></th>`;
+    occurrenceList.forEach(o => {
+      const displayDate = o.dateKey ? new Date(o.dateKey).toLocaleDateString() : 'No date';
+      head += `<th style="padding:10px; text-align:center; font-size:11px;"><div style="max-width:140px;">${escapeHtml(o.eventName)}<br/><small style=\"color:#999\">${escapeHtml(displayDate)}</small></div></th>`;
     });
     head += '</tr>';
     thead.innerHTML = head;
@@ -112,8 +132,8 @@ async function loadSheet() {
       row += `<td style="padding:10px; text-align:center; color:#b8ffb8;">${prog.weekAttended}/${prog.weekPoints}</td>`;
       row += `<td style="padding:10px; text-align:center; color:#ffaa00;">${prog.monthAttended}/${prog.monthPoints}</td>`;
 
-      events.forEach(ev => {
-        const key = `${ev.id}::${u.id}`;
+      occurrenceList.forEach(o => {
+        const key = `${o.eventId}::${u.id}::${o.dateKey}`;
         const match = attendanceMap[key] || null;
         const status = match ? (match.attended === true ? '✔️' : '⏳') : '';
         const cellClass = match ? (match.attended === true ? 'attendance-attended' : 'attendance-pending') : 'attendance-missing';
