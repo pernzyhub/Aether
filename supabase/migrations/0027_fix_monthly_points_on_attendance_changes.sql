@@ -1,7 +1,11 @@
 -- Fix monthly points summary so it updates when attendance records are changed or deleted
 
 CREATE OR REPLACE FUNCTION public.adjust_monthly_points_summary()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   old_month_year VARCHAR(7);
   new_month_year VARCHAR(7);
@@ -66,7 +70,7 @@ BEGIN
 
   RETURN NULL;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 DROP TRIGGER IF EXISTS update_monthly_points_on_attendance ON public.attendance;
 DROP TRIGGER IF EXISTS update_monthly_points_on_attendance_insert ON public.attendance;
