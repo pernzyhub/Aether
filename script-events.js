@@ -832,6 +832,62 @@ function setEventsTab(tabName) {
   if (tabName === "manage") loadEvents();
   if (tabName === "attendance") loadAttendance();
   if (tabName === "bulk-attendance") loadBulkMembers();
+  if (tabName === "members") loadMembersSheet();
+}
+
+/* MEMBERS SHEET */
+async function loadMembersSheet() {
+  const statusEl = document.getElementById('members-status');
+  const container = document.getElementById('members-sheet');
+  if (!container) return;
+  statusEl.textContent = 'Loading members...';
+
+  try {
+    const { data: users, error: usersErr } = await supabase
+      .from('clan_users')
+      .select('id, ign, is_active')
+      .order('ign');
+    if (usersErr) throw usersErr;
+
+    const { data: attendance, error: attErr } = await supabase
+      .from('attendance')
+      .select('user_id, points_awarded, attended, created_at')
+      .order('created_at', { ascending: false });
+    if (attErr) throw attErr;
+
+    // Aggregate attendance per user
+    const map = {};
+    users.forEach(u => map[u.id] = { ign: u.ign, is_active: u.is_active, total_points: 0, total_attended: 0, last_attended: null });
+    (attendance || []).forEach(a => {
+      if (!map[a.user_id]) return;
+      map[a.user_id].total_points += a.points_awarded || 0;
+      if (a.attended) map[a.user_id].total_attended += 1;
+      const dt = a.created_at ? new Date(a.created_at) : null;
+      if (dt && (!map[a.user_id].last_attended || dt > map[a.user_id].last_attended)) map[a.user_id].last_attended = dt;
+    });
+
+    const rows = users.map(u => map[u.id]);
+
+    const table = document.createElement('table');
+    table.style.width = '100%'; table.style.borderCollapse = 'collapse';
+    const thead = document.createElement('thead');
+    thead.innerHTML = `<tr style="background:#222;color:#fff"><th style="padding:8px">Member</th><th style="padding:8px;text-align:center">Active</th><th style="padding:8px;text-align:center">Total Attended</th><th style="padding:8px;text-align:center">Total Points</th><th style="padding:8px">Last Attended</th></tr>`;
+    table.appendChild(thead);
+    const tbody = document.createElement('tbody');
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.style.borderBottom = '1px solid #333';
+      tr.innerHTML = `<td style="padding:8px"><strong>${escapeHtml(r.ign)}</strong></td><td style="padding:8px;text-align:center">${r.is_active ? 'Yes' : 'No'}</td><td style="padding:8px;text-align:center">${r.total_attended}</td><td style="padding:8px;text-align:center;color:#ffaa00">${r.total_points}</td><td style="padding:8px">${r.last_attended ? r.last_attended.toLocaleString() : '—'}</td>`;
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+
+    container.innerHTML = '';
+    container.appendChild(table);
+    statusEl.textContent = `Showing ${users.length} members`;
+  } catch (err) {
+    statusEl.textContent = `Error loading members: ${err.message}`;
+  }
 }
 
 async function logout() {

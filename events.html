@@ -25,6 +25,7 @@
         <button class="events-tab is-active" data-tab="event-types" onclick="setEventsTab('event-types')">EVENT TYPES</button>
         <button class="events-tab" data-tab="create" onclick="setEventsTab('create')">CREATE EVENT</button>
         <button class="events-tab" data-tab="manage" onclick="setEventsTab('manage')">MANAGE EVENTS</button>
+          <button class="events-tab" data-tab="members" onclick="setEventsTab('members')">MEMBERS</button>
         <button class="events-tab" data-tab="bulk-attendance" onclick="setEventsTab('bulk-attendance')">BULK ATTENDANCE</button>
         <button class="events-tab" data-tab="attendance" onclick="setEventsTab('attendance')">ATTENDANCE LOG</button>
         <button class="events-tab" data-tab="monthly-points" onclick="setEventsTab('monthly-points')">MONTHLY POINTS</button>
@@ -122,6 +123,12 @@
       <div id="events-tab-manage" class="events-tab-content">
         <p id="events-status" class="status-text"></p>
         <div id="events-list"></div>
+      </div>
+
+      <!-- Members Sheet Tab -->
+      <div id="events-tab-members" class="events-tab-content">
+        <p id="members-status" class="status-text"></p>
+        <div id="members-sheet" style="overflow-x:auto;"></div>
       </div>
 
       <!-- Bulk Attendance Tab -->
