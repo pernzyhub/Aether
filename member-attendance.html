@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Member Attendance Spreadsheet</title>
+  <link rel="stylesheet" href="styles-portal.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="logo">AETHER ATTENDANCE</div>
+    <div class="nav-links">
+      <a href="/portal.html" class="nav-link">HOME</a>
+      <a href="/member-attendance.html" class="nav-link active">ATTENDANCE SHEET</a>
+    </div>
+  </header>
+
+  <main class="container" style="grid-template-columns: 1fr;">
+    <section class="card">
+      <div style="display:flex; gap:12px; align-items:center; margin-bottom:12px;">
+        <label style="color:#ccc">Month:</label>
+        <input type="month" id="sheet-month" class="input" />
+        <button id="sheet-load" class="btn btn-secondary" style="background:#00ff88; color:#000; font-weight:700;">LOAD</button>
+      </div>
+
+      <div id="attendance-sheet" style="overflow:auto; background:#0a0a0a; padding:12px; border-radius:8px; border:1px solid #222;"></div>
+    </section>
+  </main>
+
+  <script type="module" src="member-attendance.js"></script>
+</body>
+</html>

@@ -692,24 +692,12 @@ async function loadAttendance() {
     }
 
     container.innerHTML = attendance.map(record => `
-      <div class="list-item ${record.attended ? '' : 'completed'}" data-id="${record.id}">
-        <div class="list-item-content">
-          <div class="list-item-title">${escapeHtml(record.clan_users.ign)} → ${escapeHtml(record.events.name)}</div>
-          <div class="list-item-meta">
-            Points: ${record.points_awarded} / ${record.events.points} | Month: ${record.month_year || 'N/A'}
-          </div>
-          <div class="list-item-text">
-            Status: <strong style="color: ${record.attended ? '#00ff88' : '#ff4444'};">
-              ${record.attended ? 'Attended' : 'Not Attended'}
-            </strong>
-          </div>
-        </div>
-        <div class="list-item-actions">
-          <button class="btn ${record.attended ? 'btn-danger' : 'btn-success'}" onclick="toggleAttendance('${record.id}', ${!record.attended})">
-            ${record.attended ? 'MARK ABSENT' : 'MARK ATTENDED'}
-          </button>
-          <button class="btn btn-secondary" onclick="editAttendancePoints('${record.id}', ${record.points_awarded})">EDIT POINTS</button>
-          <button class="btn btn-danger" onclick="deleteAttendance('${record.id}')">DELETE</button>
+      <div class="list-item compact ${record.attended ? '' : 'not-attended'}" data-id="${record.id}" style="display:flex; align-items:center; gap:10px; padding:8px;">
+        <div style="width:160px; font-weight:700;">${escapeHtml(record.clan_users.ign)}</div>
+        <div style="flex:1; font-size:13px; color:#ddd;">${escapeHtml(record.events.name)}</div>
+        <div style="width:110px; text-align:center; font-size:13px;">${record.month_year || 'N/A'}</div>
+        <div style="width:120px; text-align:center;">
+          <button class="btn small ${record.attended ? 'btn-danger' : 'btn-success'}" onclick="toggleAttendance('${record.id}', ${!record.attended})" style="padding:6px 8px; font-size:12px;">${record.attended ? 'MARK ABSENT' : 'MARK ATTENDED'}</button>
         </div>
       </div>
     `).join("");
