@@ -266,9 +266,35 @@ function formatReadableDate(d) {
   return d.toLocaleDateString(undefined, opts);
 }
 
+// Recurrence state helpers - support old checkbox or new compact button + hidden input
+function isRecurringEnabled() {
+  const el = document.getElementById('is-recurring');
+  if (!el) return false;
+  if (el.tagName === 'INPUT' && el.type === 'checkbox') return el.checked;
+  return String(el.value) === 'true';
+}
+
+function setRecurringEnabled(state) {
+  const el = document.getElementById('is-recurring');
+  if (!el) return;
+  if (el.tagName === 'INPUT' && el.type === 'checkbox') {
+    el.checked = !!state;
+  } else {
+    el.value = state ? 'true' : 'false';
+  }
+  const opts = document.getElementById('recurring-options');
+  if (opts) opts.style.display = state ? 'block' : 'none';
+  const btn = document.getElementById('recurring-toggle-btn');
+  if (btn) {
+    btn.textContent = state ? 'RECURRING: ON' : 'RECURRING: OFF';
+    btn.style.background = state ? '#00ff88' : '#333';
+    btn.style.color = state ? '#000' : '#ff6688';
+  }
+}
+
 function getNextOccurrenceFromUI() {
   try {
-    const isRecurring = document.getElementById('is-recurring')?.checked;
+    const isRecurring = isRecurringEnabled();
     if (!isRecurring) return null;
     const type = document.getElementById('recurrence-type')?.value;
     const time = document.getElementById('recurrence-time')?.value || '00:00';
@@ -308,7 +334,7 @@ async function createEvent(e) {
   const description = document.getElementById("event-description").value.trim();
   const points = parseInt(document.getElementById("event-points").value);
   const eventDate = document.getElementById("event-date").value;
-  const isRecurring = document.getElementById("is-recurring").checked;
+  const isRecurring = isRecurringEnabled();
   const recurrenceType = document.getElementById("recurrence-type").value;
   const recurrenceTime = document.getElementById("recurrence-time").value;
   
@@ -952,7 +978,6 @@ async function logout() {
 
 /* INITIALIZATION */
 window.addEventListener("load", () => {
-  const isRecurringCheckbox = document.getElementById("is-recurring");
   const recurringOptions = document.getElementById("recurring-options");
   const recurrenceTypeSelect = document.getElementById("recurrence-type");
   const weeklyDaysDiv = document.getElementById("weekly-days");
@@ -960,10 +985,16 @@ window.addEventListener("load", () => {
   const bulkPasteArea = document.getElementById("bulk-paste-area");
   const bulkSearch = document.getElementById("bulk-search");
 
-  if (isRecurringCheckbox) {
-    isRecurringCheckbox.addEventListener("change", (e) => {
-      recurringOptions.style.display = e.target.checked ? "block" : "none";
+  const recurringBtn = document.getElementById("recurring-toggle-btn");
+  const isRecurringInput = document.getElementById("is-recurring");
+  if (recurringBtn && isRecurringInput) {
+    recurringBtn.addEventListener("click", () => {
+      const newState = !(String(isRecurringInput.value) === 'true');
+      setRecurringEnabled(newState);
+      updateRecurrenceSample();
     });
+    // initialize display based on current state
+    setRecurringEnabled(isRecurringEnabled());
   }
 
   if (recurrenceTypeSelect) {
@@ -981,7 +1012,7 @@ window.addEventListener("load", () => {
   }
 
   function computeNextOccurrence() {
-    const isRecurring = document.getElementById('is-recurring')?.checked;
+    const isRecurring = isRecurringEnabled();
     if (!isRecurring) return null;
     const type = document.getElementById('recurrence-type')?.value;
     const time = document.getElementById('recurrence-time')?.value || '00:00';
@@ -1030,7 +1061,7 @@ window.addEventListener("load", () => {
 
   function updateRecurrenceSample() {
     if (!recurrenceSampleEl) return;
-    const isRecurring = document.getElementById('is-recurring')?.checked;
+    const isRecurring = isRecurringEnabled();
     if (!isRecurring) {
       recurrenceSampleEl.textContent = '';
       return;
@@ -1043,9 +1074,8 @@ window.addEventListener("load", () => {
     }
   }
 
-  // Wire controls to update sample
-  const recurrenceControls = ['is-recurring', 'recurrence-type', 'recurrence-day-select', 'recurrence-time'];
-  recurrenceControls.forEach(id => {
+  // Wire controls to update sample (note: recurring toggle calls updateRecurrenceSample directly)
+  ['recurrence-type', 'recurrence-day-select', 'recurrence-time'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('change', updateRecurrenceSample);
   });
