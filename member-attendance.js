@@ -169,7 +169,7 @@ async function loadSheet() {
     weekAgo.setDate(now.getDate() - (WEEK_WINDOW_DAYS - 1)); // include today
     const monthlyTarget = month; // 'YYYY-MM'
     const progressMap = {};
-    users.forEach(u => progressMap[u.id] = { weekPoints: 0, weekAttended: 0, monthPoints: 0, monthAttended: 0 });
+    users.forEach(u => progressMap[u.id] = { totalPoints: 0, weekPoints: 0, weekAttended: 0, monthPoints: 0, monthAttended: 0 });
     Object.values(attendanceMap).forEach(a => {
       const uid = a.user_id;
       if (!progressMap[uid]) return;
@@ -177,12 +177,14 @@ async function loadSheet() {
       if (!dt) return;
       const my = a.month_year || dt.toISOString().slice(0,7);
       if (a.attended) {
+        const points = a.points_awarded || 0;
+        progressMap[uid].totalPoints += points;
         if (dt >= weekAgo) {
-          progressMap[uid].weekPoints += a.points_awarded || 0;
+          progressMap[uid].weekPoints += points;
           progressMap[uid].weekAttended += 1;
         }
         if (my === monthlyTarget) {
-          progressMap[uid].monthPoints += a.points_awarded || 0;
+          progressMap[uid].monthPoints += points;
           progressMap[uid].monthAttended += 1;
         }
       }
@@ -196,6 +198,7 @@ async function loadSheet() {
     const thead = document.createElement('thead');
     let head = '<tr style="background:#111;color:#fff;position:sticky;top:0;">';
     head += '<th style="padding:10px; text-align:left; min-width:200px; font-weight:700;">Member</th>';
+    head += '<th style="padding:10px; text-align:center; font-size:11px;">Points</th>';
     head += '<th style="padding:10px; text-align:center; font-size:11px;">Week</th>';
     head += '<th style="padding:10px; text-align:center; font-size:11px;">Month</th>';
     occurrenceList.forEach(o => {
@@ -210,7 +213,8 @@ async function loadSheet() {
     const tbody = document.createElement('tbody');
     users.forEach(u => {
       let row = `<tr style="border-bottom:1px solid #222;"><td style="padding:10px; font-weight:600; color:#00ff88;">${escapeHtml(u.ign || 'Unknown')}</td>`;
-      const prog = progressMap[u.id] || { weekPoints: 0, weekAttended: 0, monthPoints: 0, monthAttended: 0 };
+      const prog = progressMap[u.id] || { totalPoints: 0, weekPoints: 0, weekAttended: 0, monthPoints: 0, monthAttended: 0 };
+      row += `<td style="padding:10px; text-align:center; color:#fff;">${prog.totalPoints}</td>`;
       row += `<td style="padding:10px; text-align:center; color:#b8ffb8;">${prog.weekAttended}/${prog.weekPoints}</td>`;
       row += `<td style="padding:10px; text-align:center; color:#ffaa00;">${prog.monthAttended}/${prog.monthPoints}</td>`;
 
