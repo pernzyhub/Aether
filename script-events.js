@@ -723,6 +723,7 @@ async function loadAttendance() {
     const { data: events, error: eventsError } = await supabase
       .from("events")
       .select("id, name, description, points, event_date, month_year, is_active")
+      .eq("is_active", true)
       .order("event_date", { ascending: false });
 
     if (eventsError) throw eventsError;
@@ -781,8 +782,9 @@ async function loadAttendance() {
           <div id="attendance-event-body-${event.id}" class="attendance-event-body" style="display: none;">
             <div class="attendance-event-actions">
               <button type="button" class="btn btn-secondary" onclick="editAttendanceEvent('${event.id}')">EDIT EVENT</button>
-              <button type="button" class="btn btn-secondary" onclick="deleteAttendanceForEvent('${event.id}')">CLEAR LOG</button>
-              <button type="button" class="btn btn-danger" onclick="deleteAttendanceEvent('${event.id}')">DELETE EVENT</button>
+              <button type="button" class="btn btn-secondary" onclick="deleteAttendanceForEvent('${event.id}')">CLEAR ATTENDANCE LOG</button>
+              <button type="button" class="btn btn-secondary" onclick="archiveEvent('${event.id}')">ARCHIVE EVENT</button>
+              <button type="button" class="btn btn-danger" onclick="deleteAttendanceEvent('${event.id}')">DELETE EVENT + ATTENDANCE</button>
             </div>
 
             <div class="attendance-section">
@@ -797,7 +799,7 @@ async function loadAttendance() {
                     <span class="attendance-status-pill present">PRESENT</span>
                     <button type="button" class="btn-xs btn-danger" onclick="toggleAttendanceStatus('${event.id}', '${record.user_id}', true)">MARK ABSENT</button>
                     <button type="button" class="btn-xs btn-secondary" onclick="editAttendancePoints('${record.id}', ${record.points_awarded || 0})">EDIT POINTS</button>
-                    <button type="button" class="btn-xs btn-danger" onclick="deleteAttendanceRecord('${record.id}')">DELETE</button>
+                    <button type="button" class="btn-xs btn-danger" onclick="deleteAttendanceRecord('${record.id}')">DELETE ATTENDANCE RECORD</button>
                   </div>
                 </div>
               `).join("") : `<div class="attendance-empty-state">No members marked present yet.</div>`}
@@ -930,8 +932,25 @@ async function editAttendanceEvent(eventId) {
   }
 }
 
+async function archiveEvent(eventId) {
+  if (!confirm("Archive this event? This will hide it from the active event list but keep all attendance records intact.")) return;
+
+  try {
+    const { error } = await supabase
+      .from("events")
+      .update({ is_active: false, updated_at: new Date().toISOString() })
+      .eq("id", eventId);
+
+    if (error) throw error;
+    showStatus("attendance-status", "Event archived successfully.", "success");
+    await loadAttendance();
+  } catch (err) {
+    showStatus("attendance-status", `Error archiving event: ${err.message}`, "error");
+  }
+}
+
 async function deleteAttendanceEvent(eventId) {
-  if (!confirm("Delete this event and its attendance log?")) return;
+  if (!confirm("Delete this event and its attendance log? This will remove the event and all associated attendance records.")) return;
 
   try {
     const { error } = await supabase
