@@ -184,6 +184,13 @@ supabase.auth.onAuthStateChange((_event, session) => {
 
 window.addEventListener("load", () => {
   window.setTimeout(async () => {
+    // If this is the public landing page, do not call any auth APIs
+    // (avoids creating anonymous sessions that replace existing sessions in other tabs)
+    if (shouldSkipAuthRedirect()) {
+      setLoginSide('member');
+      return;
+    }
+
     const memberSession = getMemberSession();
     const supabaseSession = await ensureSupabaseSession();
     const { data } = await supabase.auth.getSession();
