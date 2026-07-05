@@ -2,6 +2,19 @@ import { supabase } from './lib/supabaseClient.js';
 
 function escapeHtml(text) { const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
 
+async function logout() {
+  try {
+    await supabase.auth.signOut();
+  } catch (err) {
+    console.warn('Logout warning:', err);
+  }
+  localStorage.removeItem('aether_member_session');
+  localStorage.removeItem('aether_access_granted');
+  window.location.replace('/access-gate.html');
+}
+
+window.logout = logout;
+
 async function loadSheet() {
   const input = document.getElementById('sheet-month');
   const container = document.getElementById('attendance-sheet');
