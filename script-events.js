@@ -9,6 +9,9 @@ let eventTypes = [];
 let selectedMembers = [];
 let lastBulkInsertedIds = [];
 
+// configurable week window (days) - override by setting `window.WEEK_WINDOW_DAYS` in the browser console
+const WEEK_WINDOW_DAYS = (typeof window !== 'undefined' && window.WEEK_WINDOW_DAYS) ? parseInt(window.WEEK_WINDOW_DAYS, 10) : 14;
+
 /* AUTH & UTILITIES */
 async function checkAuth() {
   const { data: sessionData } = await supabase.auth.getSession();

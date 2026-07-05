@@ -1,5 +1,8 @@
 import { supabase } from './lib/supabaseClient.js';
 import { logout, setActiveNavLink } from './lib/memberAuth.js';
+
+// configurable week window (days) - alter by setting `window.WEEK_WINDOW_DAYS` in the console
+const WEEK_WINDOW_DAYS = (typeof window !== 'undefined' && window.WEEK_WINDOW_DAYS) ? parseInt(window.WEEK_WINDOW_DAYS, 10) : 14;
     // Build a quick lookup of the latest attendance record per event+user
     const attendanceMap = {};
     (attendance || []).forEach(a => {
