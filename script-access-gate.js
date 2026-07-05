@@ -44,9 +44,18 @@ async function submitAccessCode() {
 
 window.addEventListener("load", () => {
   window.setTimeout(async () => {
-    if (hasAccessGate()) {
-      window.location.href = "/index.html";
-      return;
+    try {
+      const { data, error } = await supabase.rpc('validate_access_code', { input_code: null });
+      if (error) throw error;
+      if (data === true) {
+        window.location.href = "/index.html";
+        return;
+      }
+    } catch (err) {
+      // Fallback to local grant if the RPC fails or gate is unknown.
+      if (hasAccessGate()) {
+        window.location.href = "/index.html";
+      }
     }
   }, 80);
 });

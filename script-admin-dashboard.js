@@ -1120,18 +1120,17 @@ async function toggleAccessGate() {
     const setting = await getAccessGateSetting();
     const current = setting?.enabled === true || localStorage.getItem('aether_access_gate_enabled') === 'true';
     const newVal = !current;
-    const payload = {
-      key: 'access_gate',
-      value: { enabled: newVal, access_code: localStorage.getItem('aether_access_code') || getAccessCode() },
-      updated_at: new Date().toISOString()
-    };
+    const accessCode = localStorage.getItem('aether_access_code') || getAccessCode();
 
     const { error } = await supabase
-      .rpc('set_access_gate', { enabled: newVal, access_code: payload.value.access_code });
+      .rpc('set_access_gate', { enabled: newVal, access_code: accessCode });
 
     if (error) throw error;
 
     localStorage.setItem('aether_access_gate_enabled', newVal ? 'true' : 'false');
+    if (!newVal) {
+      localStorage.removeItem('aether_access_granted');
+    }
     loadAccessGate();
     showStatus('access-code-status', `Access gate ${newVal ? 'enabled' : 'disabled'}.`, 'success');
   } catch (err) {
