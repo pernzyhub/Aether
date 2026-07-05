@@ -199,7 +199,8 @@ window.addEventListener("load", () => {
     if (shouldSkipAuthRedirect()) {
       setLoginSide('member');
       if (isAdminPreview) {
-        document.getElementById('adminPreviewBadge')?.style.display = 'block';
+        const badge = document.getElementById('adminPreviewBadge');
+        if (badge) badge.style.display = 'block';
       }
       return;
     }
