@@ -756,18 +756,20 @@ async function loadAttendance() {
           <div id="attendance-event-body-${event.id}" class="attendance-event-body" style="display: none;">
             <div class="attendance-event-actions">
               <button type="button" class="btn btn-secondary" onclick="editAttendanceEvent('${event.id}')">EDIT EVENT</button>
+              <button type="button" class="btn btn-secondary" onclick="deleteAttendanceForEvent('${event.id}')">CLEAR LOG</button>
               <button type="button" class="btn btn-danger" onclick="deleteAttendanceEvent('${event.id}')">DELETE EVENT</button>
             </div>
 
             <div class="attendance-section">
               <div class="attendance-section-title">Present members</div>
               ${presentMembers.length > 0 ? presentMembers.map(record => `
-                <div class="attendance-member-row">
+                <div class="attendance-member-row present">
                   <div>
                     <div class="attendance-member-name">${escapeHtml(record.user?.ign || "Unknown member")}</div>
                     <div class="attendance-member-meta">Points: ${record.points_awarded ?? 0}</div>
                   </div>
                   <div class="attendance-member-actions">
+                    <span class="attendance-status-pill present">PRESENT</span>
                     <button type="button" class="btn-xs btn-danger" onclick="toggleAttendanceStatus('${event.id}', '${record.user_id}', true)">MARK ABSENT</button>
                     <button type="button" class="btn-xs btn-secondary" onclick="editAttendancePoints('${record.id}', ${record.points_awarded || 0})">EDIT POINTS</button>
                     <button type="button" class="btn-xs btn-danger" onclick="deleteAttendanceRecord('${record.id}')">DELETE</button>
@@ -779,9 +781,10 @@ async function loadAttendance() {
             <div class="attendance-section">
               <div class="attendance-section-title">Absent members</div>
               ${absentUsers.length > 0 ? absentUsers.map(user => `
-                <div class="attendance-member-row">
+                <div class="attendance-member-row absent">
                   <div class="attendance-member-name">${escapeHtml(user.ign || "Unknown member")}</div>
                   <div class="attendance-member-actions">
+                    <span class="attendance-status-pill absent">ABSENT</span>
                     <button type="button" class="btn-xs btn-success" onclick="toggleAttendanceStatus('${event.id}', '${user.id}', false)">MARK PRESENT</button>
                   </div>
                 </div>
@@ -849,6 +852,23 @@ async function deleteAttendanceRecord(attendanceId) {
     await loadAttendance();
   } catch (err) {
     showStatus("attendance-status", `Error deleting attendance: ${err.message}`, "error");
+  }
+}
+
+async function deleteAttendanceForEvent(eventId) {
+  if (!confirm("Clear all attendance records for this event?")) return;
+
+  try {
+    const { error } = await supabase
+      .from("attendance")
+      .delete()
+      .eq("event_id", eventId);
+
+    if (error) throw error;
+    showStatus("attendance-status", "Attendance log cleared for this event.", "success");
+    await loadAttendance();
+  } catch (err) {
+    showStatus("attendance-status", `Error clearing attendance log: ${err.message}`, "error");
   }
 }
 
@@ -1350,6 +1370,7 @@ window.toggleAttendance = toggleAttendance;
 window.toggleAttendanceCard = toggleAttendanceCard;
 window.toggleAttendanceStatus = toggleAttendanceStatus;
 window.deleteAttendanceRecord = deleteAttendanceRecord;
+window.deleteAttendanceForEvent = deleteAttendanceForEvent;
 window.editAttendanceEvent = editAttendanceEvent;
 window.deleteAttendanceEvent = deleteAttendanceEvent;
 window.editAttendancePoints = editAttendancePoints;

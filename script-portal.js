@@ -478,9 +478,6 @@ async function loadUpcomingEvent() {
     container.innerHTML = `<p style="color:#f66;">⚠️ Error: ${escapeHtml(err.message || 'Failed to load events')}</p>`;
   }
 }
-    }).join('');
-
-    container.innerHTML = eventsHtml;
 
 async function loadMemberAttendance() {
   const container = document.getElementById('my-attendance');
