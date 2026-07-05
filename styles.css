@@ -5,9 +5,11 @@
 }
 
 body {
-  font-family: 'Courier New', Courier, monospace;
-  background: #000;
-  color: #00ff41;
+  font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(212, 175, 55, 0.16), transparent 28%),
+    linear-gradient(135deg, #030605 0%, #08110d 55%, #020403 100%);
+  color: #f1f7f1;
   min-height: 100vh;
   overflow-x: hidden;
   position: relative;
@@ -21,8 +23,8 @@ body::before {
   width: 100%;
   height: 100%;
   background-image: 
-    linear-gradient(rgba(0, 255, 65, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 255, 65, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(212, 175, 55, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(212, 175, 55, 0.04) 1px, transparent 1px);
   background-size: 50px 50px;
   pointer-events: none;
   z-index: 0;
@@ -41,15 +43,33 @@ body::before {
 }
 
 .header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
-  margin-bottom: 40px;
+  gap: 12px;
+  margin-bottom: 36px;
+}
+
+.crest-mark {
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  background: radial-gradient(circle, rgba(255, 223, 126, 0.24), rgba(94, 63, 8, 0.22));
+  color: #ffd98e;
+  font-size: 1.7rem;
+  box-shadow: 0 0 24px rgba(212, 175, 55, 0.18);
 }
 
 .header h1 {
   font-size: 3rem;
-  text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41, 0 0 30px #00ff41;
+  color: #f7e5b0;
+  text-shadow: 0 0 12px rgba(212, 175, 55, 0.2), 0 0 24px rgba(0, 255, 65, 0.08);
   letter-spacing: 4px;
-  margin-bottom: 10px;
+  margin-bottom: 4px;
   animation: none;
 }
 
@@ -72,9 +92,11 @@ body::before {
 }
 
 .subtitle {
-  font-size: 1.2rem;
-  color: #00cc33;
-  opacity: 0.8;
+  font-size: 1rem;
+  color: #b8c3bb;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  opacity: 0.9;
 }
 
 .login-container {
@@ -87,11 +109,11 @@ body::before {
 
 .login-shell {
   width: min(520px, 100%);
-  border: 2px solid rgba(0, 255, 65, 0.45);
-  box-shadow: 0 0 40px rgba(0, 255, 65, 0.18);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.35);
   overflow: hidden;
-  border-radius: 22px;
-  background: rgba(5, 15, 8, 0.92);
+  border-radius: 24px;
+  background: linear-gradient(145deg, rgba(7, 16, 12, 0.98), rgba(3, 8, 6, 0.96));
 }
 
 .login-card {
@@ -110,11 +132,12 @@ body::before {
 .panel-label {
   display: inline-block;
   padding: 6px 12px;
-  border: 1px solid rgba(0, 255, 65, 0.35);
-  color: #7dff9f;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  color: #ffd98e;
   font-size: 0.75rem;
   letter-spacing: 3px;
   border-radius: 999px;
+  background: rgba(212, 175, 55, 0.08);
 }
 
 .toggle-btn {
@@ -347,16 +370,16 @@ button {
 }
 
 .form-submit-btn {
-  color: #ff5f7a;
-  border-color: #ff5f7a;
+  color: #ffd98e;
+  border-color: #d4af37;
   width: 100%;
   margin-top: 6px;
 }
 
 .form-submit-btn:hover {
-  background: #ff4444;
+  background: linear-gradient(135deg, #d4af37, #7a5a00);
   color: #fff;
-  box-shadow: 0 0 20px rgba(255, 68, 68, 0.5);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.35);
 }
 
 .status-text {
