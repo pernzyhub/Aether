@@ -13,9 +13,9 @@ function showSettingsStatus(message, type) {
 }
 
 async function loadUser() {
-  await ensureSupabaseSession();
+  const supabaseSession = await ensureSupabaseSession();
   const { data: sessionData } = await supabase.auth.getSession();
-  const user = sessionData?.session?.user;
+  const user = supabaseSession?.user || sessionData?.session?.user;
   const memberSession = getMemberSession();
   
   if (!user && !memberSession) {
@@ -30,7 +30,7 @@ async function loadUser() {
   }
   
   // Load clan user data
-  const userId = currentUser?.id || user?.id;
+  const userId = currentUser?.id || memberSession?.id;
 
   let { data: clanUser, error: clanUserError } = await supabase
     .from("clan_users")

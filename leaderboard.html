@@ -394,8 +394,9 @@
 
     async function loadLeaderboard() {
       try {
-        await ensureSupabaseSession();
-        const { data: { user } } = await supabase.auth.getUser();
+        const supabaseSession = await ensureSupabaseSession();
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        const user = supabaseSession?.user || authUser;
         const memberSession = getMemberSession();
         if (!user && !memberSession) {
           window.location.href = '/access-gate.html';

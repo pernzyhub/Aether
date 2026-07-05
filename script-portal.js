@@ -42,9 +42,9 @@ const fallbackEvents = [
 ];
 
 async function loadUser() {
-  const session = await ensureSupabaseSession();
+  const supabaseSession = await ensureSupabaseSession();
   const { data } = await supabase.auth.getSession();
-  const user = data.session?.user;
+  const user = supabaseSession?.user || data?.session?.user || null;
   const memberSession = getMemberSession();
 
   if (!user && !memberSession) {
@@ -58,7 +58,7 @@ async function loadUser() {
     currentUser = user;
   }
 
-  const userId = currentUser?.id || user?.id;
+  const userId = currentUser?.id || memberSession?.id;
 
   // Load clan user data
   let { data: clanUser, error } = await supabase

@@ -6,9 +6,9 @@ let currentClanUser = null;
 let editingRequestId = null;
 
 async function checkAuth() {
-  await ensureSupabaseSession();
+  const supabaseSession = await ensureSupabaseSession();
   const { data } = await supabase.auth.getSession();
-  const user = data.session?.user;
+  const user = supabaseSession?.user || data.session?.user;
   const memberSession = getMemberSession();
   
   if (!user && !memberSession) {
