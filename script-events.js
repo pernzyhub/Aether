@@ -740,7 +740,7 @@ function formatEventDateTime(value) {
   if (!value) return "No date set";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "No date set";
-  return `${formatDate(date)} ${formatTime(date)}`;
+  return formatDate(date);
 }
 
 function toggleAttendanceCard(eventId) {
