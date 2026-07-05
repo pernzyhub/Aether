@@ -104,11 +104,10 @@ async function createEventType(e) {
   e.preventDefault();
   const name = document.getElementById("event-type-name").value.trim();
   const description = document.getElementById("event-type-description").value.trim();
-  const points = parseInt(document.getElementById("event-type-points").value);
   const color = document.getElementById("event-type-color").value.trim();
 
-  if (!name || isNaN(points)) {
-    showStatus("event-type-status", "Name and points are required.", "error");
+  if (!name) {
+    showStatus("event-type-status", "Name is required.", "error");
     return;
   }
 
@@ -120,7 +119,7 @@ async function createEventType(e) {
       .insert([{
         name,
         description: description || null,
-        default_points: points,
+        default_points: 10,
         color: color || "#ff6688",
         is_active: true
       }]);
@@ -270,13 +269,18 @@ async function createEvent(e) {
   const recurrenceTime = document.getElementById("recurrence-time").value;
   
   let recurrenceDays = null;
+  let recurrenceDays = null;
   if (isRecurring) {
-    const daysCheckboxes = document.querySelectorAll('input[name="recurrence-days"]:checked');
-    recurrenceDays = Array.from(daysCheckboxes).map(cb => parseInt(cb.value));
-    
-    if (recurrenceDays.length === 0) {
-      showStatus("event-status", "Select at least one day for recurring events.", "error");
-      return;
+    if (recurrenceType === 'weekly') {
+      const daySelect = document.getElementById('recurrence-day-select');
+      if (daySelect && daySelect.value !== '') {
+        recurrenceDays = [parseInt(daySelect.value)];
+      } else {
+        showStatus("event-status", "Select a day for weekly recurrence.", "error");
+        return;
+      }
+    } else {
+      recurrenceDays = null;
     }
   }
 
@@ -446,19 +450,20 @@ function renderBulkMembers(members) {
   
   if (countEl) countEl.textContent = members.length;
   
+  // Render members in a compact two-column grid so many names are visible at once
   container.innerHTML = (members || []).map(member => `
-    <label style="display: block; padding: 8px 0; cursor: pointer; color: #fff;">
-      <input type="checkbox" value="${member.id}" name="bulk-member" class="bulk-member-checkbox" />
-      ${escapeHtml(member.ign)}
+    <label style="display: inline-block; width: calc(50% - 8px); box-sizing: border-box; padding: 4px 6px; cursor: pointer; color: #fff; font-size: 12px;">
+      <input type="checkbox" value="${member.id}" name="bulk-member" class="bulk-member-checkbox" style="width:14px; height:14px; vertical-align: middle; margin-right: 8px;" />
+      <span style="vertical-align: middle;">${escapeHtml(member.ign)}</span>
     </label>
   `).join("");
 
+  // Restore previously selected checkboxes (if any)
   document.querySelectorAll(".bulk-member-checkbox").forEach(checkbox => {
+    checkbox.checked = selectedMembers.includes(checkbox.value);
     checkbox.addEventListener("change", (e) => {
       if (e.target.checked) {
-        if (!selectedMembers.includes(e.target.value)) {
-          selectedMembers.push(e.target.value);
-        }
+        if (!selectedMembers.includes(e.target.value)) selectedMembers.push(e.target.value);
       } else {
         selectedMembers = selectedMembers.filter(id => id !== e.target.value);
       }
