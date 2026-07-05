@@ -327,6 +327,148 @@ async function loadEvents() {
   }
 }
 
+// Compute next occurrence for an event record from DB
+function computeNextOccurrenceForEvent(event) {
+  try {
+    const now = new Date();
+    // If explicit event_date and it's in the future, use it
+    if (event.event_date) {
+      const d = new Date(event.event_date);
+      if (d > now) return d;
+    }
+
+    // Recurring events: use recurrence_type, recurrence_days (JSON), recurrence_time
+    if (event.is_recurring) {
+      const type = event.recurrence_type || 'weekly';
+      const time = event.recurrence_time || '00:00';
+      const [hh, mm] = (time || '00:00').split(':').map(n => parseInt(n || '0', 10));
+      const today = new Date();
+
+      if (type === 'weekly' || type === 'biweekly') {
+        let days = [];
+        try { days = event.recurrence_days ? JSON.parse(event.recurrence_days) : []; } catch { days = []; }
+        if (!Array.isArray(days) || days.length === 0) {
+          days = [today.getDay()];
+        }
+        // find nearest day in days array
+        let best = null;
+        for (const dval of days) {
+          const target = parseInt(dval, 10);
+          let daysAhead = (target - today.getDay() + 7) % 7;
+          const candidate = new Date(today);
+          candidate.setDate(today.getDate() + daysAhead);
+          candidate.setHours(hh, mm, 0, 0);
+          // if candidate is today but time already passed, move to next week's same day
+          if (daysAhead === 0 && candidate <= now) candidate.setDate(candidate.getDate() + 7);
+          if (!best || candidate < best) best = candidate;
+        }
+        // if biweekly and best is in past (shouldn't happen), add 14 days
+        if (type === 'biweekly' && best && best <= now) {
+          best.setDate(best.getDate() + 14);
+        }
+        return best;
+      }
+
+      if (type === 'monthly') {
+        const candidate = new Date(today);
+        candidate.setMonth(today.getMonth() + 1);
+        candidate.setHours(hh, mm, 0, 0);
+        return candidate;
+      }
+    }
+
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function formatTimeRemaining(ms) {
+  if (ms <= 0) return 'Starting now';
+  const s = Math.floor(ms / 1000);
+  const days = Math.floor(s / 86400); const hrs = Math.floor((s % 86400) / 3600);
+  const mins = Math.floor((s % 3600) / 60); const secs = s % 60;
+  return `${days}d ${String(hrs).padStart(2,'0')}h ${String(mins).padStart(2,'0')}m ${String(secs).padStart(2,'0')}s`;
+}
+
+let upcomingInterval = null;
+async function loadUpcomingEvent() {
+  const container = document.getElementById('upcoming-info');
+  const countdownEl = document.getElementById('upcoming-countdown');
+  if (!container || !countdownEl) return;
+  container.innerHTML = '<p style="color:#aaa;">Loading next event...</p>';
+
+  try {
+    await ensureSupabaseSession();
+    const { data: events, error } = await supabase
+      .from('events')
+      .select('id, name, description, event_date, is_recurring, recurrence_type, recurrence_days, recurrence_time, points')
+      .eq('is_active', true);
+    if (error) throw error;
+    if (!events || events.length === 0) {
+      container.innerHTML = '<p style="color:#ccc">No upcoming events.</p>';
+      countdownEl.textContent = '';
+      return;
+    }
+
+    // compute next occurrence for each and pick earliest
+    let best = null; let bestEvent = null;
+    for (const ev of events) {
+      const next = computeNextOccurrenceForEvent(ev);
+      if (!next) continue;
+      if (!best || next < best) { best = next; bestEvent = ev; }
+    }
+
+    if (!bestEvent || !best) {
+      container.innerHTML = '<p style="color:#ccc">No upcoming occurrences found.</p>';
+      countdownEl.textContent = '';
+      return;
+    }
+
+    // compute attendance for that occurrence (use month_year)
+    const monthYear = `${best.getFullYear()}-${String(best.getMonth() + 1).padStart(2,'0')}`;
+    const [membersRes, attendedRes] = await Promise.all([
+      supabase.from('clan_users').select('id', { count: 'exact' }).eq('is_active', true),
+      supabase.from('attendance').select('id', { count: 'exact' }).eq('event_id', bestEvent.id).eq('month_year', monthYear).eq('attended', true)
+    ]);
+    const totalMembers = membersRes?.count || 0;
+    const attendedCount = attendedRes?.count || 0;
+    // check current user's attendance
+    let userAttended = false;
+    try {
+      const userId = currentClanUser?.id || null;
+      if (userId) {
+        const { data: udata, error: uerr } = await supabase.from('attendance').select('id, attended').eq('event_id', bestEvent.id).eq('user_id', userId).eq('month_year', monthYear).limit(1).single();
+        if (!uerr && udata) userAttended = !!udata.attended;
+      }
+    } catch (e) { userAttended = false; }
+
+    const total = Number(totalMembers || 0);
+    const attended = Number(attendedCount || 0);
+    const percent = total > 0 ? Math.round((attended / total) * 100) : 0;
+
+    container.innerHTML = `
+      <div style="font-weight:700; color:#fff">${escapeHtml(bestEvent.name)} <span style="color:#ffaa00; font-weight:600;">${bestEvent.points} pts</span></div>
+      <div style="color:#ccc; font-size:13px; margin-top:6px;">${bestEvent.description ? escapeHtml(bestEvent.description) : ''}<br/>Occurrence: ${best.toLocaleString()}</div>
+      <div style="margin-top:8px; font-size:13px; color:${userAttended ? '#00ff88' : '#ff6688'}">Your attendance: ${userAttended ? 'Marked' : 'Not marked'}</div>
+      <div style="margin-top:6px; font-size:13px; color:#ccc">Completion: <strong style="color:#ffaa00">${percent}%</strong> (${attended}/${total})</div>
+    `;
+
+    // start countdown
+    if (upcomingInterval) clearInterval(upcomingInterval);
+    function tick() {
+      const now = new Date();
+      const ms = best - now;
+      countdownEl.textContent = formatTimeRemaining(ms);
+    }
+    tick();
+    upcomingInterval = setInterval(tick, 1000);
+  } catch (err) {
+    container.innerHTML = `<p style="color:#f66">Error loading next event: ${err.message}</p>`;
+    countdownEl.textContent = '';
+  }
+}
+
 async function logout() {
   try {
     await supabase.auth.signOut();
@@ -357,6 +499,7 @@ window.addEventListener("load", () => {
     loadAnnouncements();
     loadRules();
     loadEvents();
+    loadUpcomingEvent();
     setActiveNavLink();
   }, 80);
 });

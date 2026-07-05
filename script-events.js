@@ -309,6 +309,10 @@ function getNextOccurrenceFromUI() {
       next.setDate(today.getDate() + daysAhead);
       const [hh, mm] = time.split(':').map(n => parseInt(n || '0', 10));
       next.setHours(hh, mm, 0, 0);
+      // If it's today but time already passed, move to next interval
+      if (daysAhead === 0 && next <= new Date()) {
+        next.setDate(next.getDate() + (type === 'biweekly' ? 14 : 7));
+      }
       return next;
     }
 
