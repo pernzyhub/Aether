@@ -410,10 +410,15 @@ async function editEvent(eventId) {
     .from("events")
     .select("*")
     .eq("id", eventId)
-    .single();
+    .maybeSingle();
 
   if (error) {
     showStatus("events-status", `Error loading event: ${error.message}`, "error");
+    return;
+  }
+
+  if (!event) {
+    showStatus("events-status", "Event not found.", "error");
     return;
   }
 
@@ -594,6 +599,17 @@ function parseBulkPaste() {
   showStatus("bulk-status", `Selected ${matched.length} members from paste.`, "success");
 }
 
+function toggleAllBulkMembers(selectAll) {
+  const memberIds = allMembers.map(member => member.id);
+  selectedMembers = selectAll ? memberIds : [];
+
+  document.querySelectorAll(".bulk-member-checkbox").forEach((checkbox) => {
+    checkbox.checked = selectAll && memberIds.includes(checkbox.value);
+  });
+
+  showStatus("bulk-status", selectAll ? `Selected ${memberIds.length} members.` : "Cleared member selection.", "success");
+}
+
 async function applyBulkAttendance() {
   console.log('applyBulkAttendance() called');
   const eventId = document.getElementById("bulk-event-select").value;
@@ -622,9 +638,12 @@ async function applyBulkAttendance() {
       .from("events")
       .select("points")
       .eq("id", eventId)
-      .single();
+      .maybeSingle();
 
     if (eventError) throw eventError;
+    if (!event) {
+      throw new Error("The selected event could not be found.");
+    }
 
     const pointsToAward = customPoints ? parseInt(customPoints) : event.points;
     const selectedDate = new Date(dateInput);
@@ -642,7 +661,7 @@ async function applyBulkAttendance() {
     const { data: upsertedRows, error: upsertError } = await supabase
       .from("attendance")
       .upsert(attendanceRecords, { onConflict: "event_id,user_id" })
-      .select('id');
+      .select('id, event_id, user_id, attended, points_awarded, month_year');
 
     if (upsertError) throw upsertError;
 
@@ -947,13 +966,16 @@ async function toggleAttendance(attendanceId, attended) {
   try {
     const { data: record, error: fetchError } = await supabase
       .from("attendance")
-      .select("*, events(points)")
+      .select("id, event_id, points_awarded")
       .eq("id", attendanceId)
-      .single();
+      .maybeSingle();
 
     if (fetchError) throw fetchError;
+    if (!record) {
+      throw new Error("Attendance record not found.");
+    }
 
-    const pointsAwarded = attended ? record.events.points : 0;
+    const pointsAwarded = attended ? (record.points_awarded || 0) : 0;
 
     const { error } = await supabase
       .from("attendance")
@@ -1377,3 +1399,4 @@ window.editAttendancePoints = editAttendancePoints;
 window.deleteAttendance = deleteAttendance;
 window.loadMonthlyPoints = loadMonthlyPoints;
 window.setEventsTab = setEventsTab;
+window.toggleAllBulkMembers = toggleAllBulkMembers;

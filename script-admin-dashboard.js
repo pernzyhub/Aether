@@ -880,7 +880,7 @@ async function renderRequests(requests, container, isHistory = false) {
         <div class="list-item-actions compact">
           <button class="btn-xs btn-secondary" onclick="adjustQuantity('${req.id}', ${req.quantity}, -1)">-1</button>
           <button class="btn-xs btn-secondary" onclick="adjustQuantity('${req.id}', ${req.quantity}, 1)">+1</button>
-          <button class="btn-xs btn-success" onclick="markRequestDone('${req.id}')">APPROVE</button>
+          <button class="btn-xs btn-success" onclick="markRequestDone('${req.id}')">FULFILL</button>
           <button class="btn-xs btn-danger" onclick="rejectRequest('${req.id}')">REJECT</button>
           <button class="btn-xs btn-danger" onclick="deleteRequest('${req.id}')">DEL</button>
         </div>
@@ -913,12 +913,25 @@ async function adjustQuantity(requestId, currentQuantity, delta) {
 }
 
 async function markRequestDone(requestId) {
-  if (!confirm("Mark this request as approved?")) return;
+  if (!confirm("Mark this request as fulfilled?")) return;
 
   try {
+    const { data: request, error: fetchError } = await supabase
+      .from("item_requests")
+      .select("requested_quantity, quantity")
+      .eq("id", requestId)
+      .maybeSingle();
+
+    if (fetchError) throw fetchError;
+    if (!request) throw new Error("Request not found.");
+
+    const requestedQty = Number(request.requested_quantity ?? request.quantity ?? 1);
+
     const { error } = await supabase
       .from("item_requests")
       .update({
+        quantity: 0,
+        requested_quantity: requestedQty,
         status: "approved",
         updated_at: new Date().toISOString()
       })

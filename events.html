@@ -164,6 +164,10 @@
             <div>
               <label style="display: block; margin-bottom: 10px; font-weight: bold; color: #ff6688;">SELECT MEMBERS</label>
               <div style="border: 2px solid #ff6688; border-radius: 4px; padding: 15px; background: #0a0a0a;">
+                <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
+                  <button type="button" class="btn btn-secondary" onclick="toggleAllBulkMembers(true)" style="padding:8px 10px;">TOGGLE ALL ON</button>
+                  <button type="button" class="btn btn-secondary" onclick="toggleAllBulkMembers(false)" style="padding:8px 10px;">TOGGLE ALL OFF</button>
+                </div>
                 <div id="bulk-members-list" style="display: block; gap: 5px; column-gap: 12px;"></div>
               </div>
               <small style="color: #888; margin-top: 5px; display: block;">Showing <span id="member-count" style="color: #ff6688; font-weight: bold;">0</span> members</small>
