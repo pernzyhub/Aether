@@ -41,14 +41,14 @@ async function loadSheet() {
     const monthStartIso = `${monthStart.getFullYear()}-${String(monthStart.getMonth() + 1).padStart(2, '0')}-01`;
     const nextMonthStartIso = `${nextMonthStart.getFullYear()}-${String(nextMonthStart.getMonth() + 1).padStart(2, '0')}-01`;
 
-    const { data: attendance, error: attMonthErr } = await supabase
+    const { data: attendanceMonthRows, error: attMonthErr } = await supabase
       .from('attendance')
       .select('id, user_id, event_id, attended, points_awarded, month_year, attendance_date, created_at')
       .or(`month_year.eq.${monthYear},and(attendance_date.gte.${monthStartIso},attendance_date.lt.${nextMonthStartIso})`);
 
     if (attMonthErr) throw new Error(`Attendance query failed: ${attMonthErr.message}`);
 
-    const attendedEventIds = new Set((attendance || []).map(a => a.event_id).filter(Boolean));
+    const attendedEventIds = new Set((attendanceMonthRows || []).map(a => a.event_id).filter(Boolean));
 
     const { data: eventsInRange, error: evErr } = await supabase
       .from('events')
@@ -58,10 +58,10 @@ async function loadSheet() {
 
     if (evErr) throw new Error(`Events query failed: ${evErr.message}`);
 
-    const eventIds = new Set((eventsInRange || []).map(e => e.id));
-    attendedEventIds.forEach(id => eventIds.add(id));
+    const eventIdsSet = new Set((eventsInRange || []).map(e => e.id));
+    attendedEventIds.forEach(id => eventIdsSet.add(id));
 
-    const eventIdArray = Array.from(eventIds);
+    const eventIdArray = Array.from(eventIdsSet);
     const { data: events, error: eventsErr } = await supabase
       .from('events')
       .select('id, name, event_date')
@@ -88,20 +88,18 @@ async function loadSheet() {
       return;
     }
 
-    const eventIds = events.map(e => e.id);
-
-    const { data: attendance, error: attErr } = await supabase
+    const { data: attendanceRecords, error: attErr } = await supabase
       .from('attendance')
       .select('id, user_id, event_id, attended, points_awarded, month_year, attendance_date, created_at')
-      .in('event_id', eventIds);
+      .in('event_id', eventIdArray);
 
     if (attErr) throw new Error(`Attendance query failed: ${attErr.message}`);
 
     // Build a lookup of the latest attendance record per event+user+date (date-keyed)
     const attendanceMap = {}; // key: eventId::userId::YYYY-MM-DD -> record
-    (attendance || []).forEach(a => {
+    (attendanceRecords || []).forEach(a => {
       const dt = a.attendance_date ? new Date(a.attendance_date) : (a.created_at ? new Date(a.created_at) : null);
-      if (!dt) return;
+      if (!dt || Number.isNaN(dt.getTime())) return;
       const dateKey = dt.toISOString().slice(0,10);
       const key = `${a.event_id}::${a.user_id}::${dateKey}`;
       const existing = attendanceMap[key];
@@ -109,13 +107,12 @@ async function loadSheet() {
       const existingTs = existing ? (existing.attendance_date ? new Date(existing.attendance_date).getTime() : (existing.created_at ? new Date(existing.created_at).getTime() : 0)) : 0;
       if (!existing || aTs > existingTs) attendanceMap[key] = a;
     });
-
     // Build occurrence list: each event occurrence (event_id + dateKey)
     const occurrenceList = [];
     events.forEach(ev => {
       const dateSet = new Set();
 
-      (attendance || []).forEach(a => {
+      (attendanceRecords || []).forEach(a => {
         if (a.event_id !== ev.id) return;
         const dt = a.attendance_date ? new Date(a.attendance_date) : (a.created_at ? new Date(a.created_at) : null);
         if (!dt || Number.isNaN(dt.getTime())) return;
@@ -238,14 +235,14 @@ async function loadSheet() {
         pre.style.padding = '10px';
         pre.style.border = '1px solid #113';
         pre.style.borderRadius = '6px';
-        pre.textContent = JSON.stringify(attendance || [], null, 2);
+        pre.textContent = JSON.stringify(attendanceRecords || [], null, 2);
 
         diagContainer.appendChild(btn);
         diagContainer.appendChild(pre);
         container.appendChild(diagContainer);
       } else {
         const pre = diagContainer.querySelector('pre');
-        if (pre) pre.textContent = JSON.stringify(attendance || [], null, 2);
+        if (pre) pre.textContent = JSON.stringify(attendanceRecords || [], null, 2);
       }
     })();
   } catch (err) {

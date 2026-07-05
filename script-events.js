@@ -238,7 +238,7 @@ async function loadEvents() {
             </div>
             <div class="list-item-meta">
               ${event.description ? escapeHtml(event.description) : 'No description'}
-              ${event.event_date ? `| Date: ${new Date(event.event_date).toLocaleString()}` : ''}
+              ${event.event_date ? `| Date: ${escapeHtml(formatDateTime(event.event_date))}` : ''}
               ${event.is_recurring ? `| Recurring: ${event.recurrence_type}` : ''}
             </div>
             <div class="list-item-text">
@@ -672,7 +672,7 @@ async function applyBulkAttendance() {
     if (upsertError) throw upsertError;
 
     lastBulkInsertedIds = (upsertedRows || []).map(r => r.id).filter(Boolean);
-    showStatus("bulk-status", `✓ Successfully marked ${selectedMembers.length} members attended on ${selectedDate.toLocaleDateString()}! Points: ${pointsToAward}`, "success");
+    showStatus("bulk-status", `✓ Successfully marked ${selectedMembers.length} members attended on ${formatDate(selectedDate)}! Points: ${pointsToAward}`, "success");
     selectedMembers = [];
     document.getElementById("bulk-points").value = "";
     document.getElementById("bulk-event-select").value = "";
@@ -703,25 +703,39 @@ function getAttendanceDateKey(value) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
+function formatDate(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}/${date.getFullYear()}`;
+}
+
+function formatTime(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+
+function formatDateTime(value) {
+  if (!value) return "No date set";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "No date set";
+  return `${formatDate(date)} ${formatTime(date)}`;
+}
+
 function formatAttendanceDateKey(key) {
   if (!key) return "Unknown date";
   const date = new Date(key);
   if (Number.isNaN(date.getTime())) return "Unknown date";
-  return date.toLocaleDateString();
+  return formatDate(date);
 }
 
 function formatEventDateTime(value) {
   if (!value) return "No date set";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "No date set";
-  return date.toLocaleString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit"
-  });
+  return `${formatDate(date)} ${formatTime(date)}`;
 }
 
 function toggleAttendanceCard(eventId) {
@@ -879,7 +893,7 @@ async function loadAttendance() {
                 <div class="attendance-member-row present">
                   <div>
                     <div class="attendance-member-name">${escapeHtml(record.user?.ign || "Unknown member")}</div>
-                    <div class="attendance-member-meta">Points: ${record.points_awarded ?? 0}${record.attendance_date ? ` | Date: ${new Date(record.attendance_date).toLocaleDateString()}` : ''}</div>
+                    <div class="attendance-member-meta">Points: ${record.points_awarded ?? 0}${record.attendance_date ? ` | Date: ${formatDate(record.attendance_date)}` : ''}</div>
                   </div>
                   <div class="attendance-member-actions">
                     <span class="attendance-status-pill present">PRESENT</span>

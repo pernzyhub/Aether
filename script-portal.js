@@ -133,6 +133,27 @@ function saveCachedItems(cacheKey, value) {
   localStorage.setItem(cacheKey, JSON.stringify(value));
 }
 
+function formatDate(dateValue) {
+  if (!dateValue) return '';
+  const d = new Date(dateValue);
+  if (Number.isNaN(d.getTime())) return '';
+  return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
+}
+
+function formatTime(dateValue) {
+  if (!dateValue) return '';
+  const d = new Date(dateValue);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+
+function formatDateTime(dateValue) {
+  if (!dateValue) return '';
+  const d = new Date(dateValue);
+  if (Number.isNaN(d.getTime())) return '';
+  return `${formatDate(d)} ${formatTime(d)}`;
+}
+
 function renderAnnouncements(items, container) {
   if (!items || items.length === 0) {
     container.innerHTML = "<p>No announcements yet.</p>";
@@ -142,7 +163,7 @@ function renderAnnouncements(items, container) {
   container.innerHTML = items.map(ann => `
     <div class="announcement-item">
       <div class="announcement-title">${escapeHtml(ann.title)}</div>
-      <div class="announcement-date">${new Date(ann.created_at).toLocaleDateString()}</div>
+      <div class="announcement-date">${escapeHtml(formatDate(ann.created_at))}</div>
       <div class="announcement-content">${ann.content || ''}</div>
     </div>
   `).join("");
@@ -175,7 +196,7 @@ function renderEvents(items, container) {
       <div class="event-title">${escapeHtml(event.name)} <span class="event-points">${event.points} pts</span></div>
       <div class="event-meta">
         ${event.description ? escapeHtml(event.description) : 'No description'}
-        ${event.event_date ? `| ${new Date(event.event_date).toLocaleString()}` : ''}
+        ${event.event_date ? `| ${escapeHtml(formatDateTime(event.event_date))}` : ''}
       </div>
       <div class="event-status">
         Status: <strong style="color: ${event.is_active ? '#00ff88' : '#ff4444'};">
@@ -422,7 +443,7 @@ async function loadUpcomingEvent() {
       return `
         <div style="background:${highlightColor}; border:1px solid ${borderColor}; border-radius:8px; padding:10px 12px; margin-bottom:8px;">
           <div style="font-size:12px; color:${isClosest ? '#00ff88' : '#ccc'}; font-weight:600; margin-bottom:2px;">${isClosest ? '⭐ NEXT' : ''} ${escapeHtml(event.name)}</div>
-          <div style="font-size:10px; color:#999;">${date.toLocaleString()}</div>
+          <div style="font-size:10px; color:#999;">${escapeHtml(formatDateTime(date))}</div>
           <div style="font-size:10px; color:#ffaa00; margin-top:2px;">${event.points} pts</div>
           ${event.description ? `<div style="font-size:10px; color:#bbb; margin-top:4px;">${escapeHtml(event.description)}</div>` : ''}
         </div>
@@ -472,7 +493,7 @@ async function loadMemberAttendance() {
 
     const recentHtml = (attendedList || []).map(r => {
       const ev = r.events || {};
-      return `<div style="padding:6px 0; border-bottom:1px solid #222; font-size:13px; color:#ccc">${escapeHtml(ev.name || 'Event')} · ${r.month_year || (ev.event_date ? new Date(ev.event_date).toLocaleDateString() : '')} · ${r.attended ? '<span style="color:#00ff88">Attended</span>' : '<span style="color:#ffcc66">RSVP/Not marked</span>'} · ${r.points_awarded || 0} pts</div>`;
+      return `<div style="padding:6px 0; border-bottom:1px solid #222; font-size:13px; color:#ccc">${escapeHtml(ev.name || 'Event')} · ${r.month_year || (ev.event_date ? escapeHtml(formatDate(ev.event_date)) : '')} · ${r.attended ? '<span style="color:#00ff88">Attended</span>' : '<span style="color:#ffcc66">RSVP/Not marked</span>'} · ${r.points_awarded || 0} pts</div>`;
     }).join('');
 
     container.innerHTML = `
