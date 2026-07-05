@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Member Leaderboard - Aether Clan</title>
+  <link rel="stylesheet" href="styles-portal.css" />
+  <style>
+    .leaderboard-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .leaderboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .leaderboard-title {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #00ff88 0%, #ffffff 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 1px;
+    }
+
+    .leaderboard-period-selector {
+      display: flex;
+      gap: 12px;
+      background: rgba(0, 255, 136, 0.06);
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(0, 255, 136, 0.15);
+    }
+
+    .period-btn {
+      padding: 6px 14px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: #b8c4c0;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      letter-spacing: 0.5px;
+    }
+
+    .period-btn.active {
+      background: rgba(0, 255, 136, 0.2);
+      border-color: rgba(0, 255, 136, 0.3);
+      color: #00ff88;
+      box-shadow: 0 0 12px rgba(0, 255, 136, 0.1);
+    }
+
+    .period-btn:hover {
+      color: #00ff88;
+      border-color: rgba(0, 255, 136, 0.2);
+    }
+
+    .leaderboard-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(8, 16, 12, 0.88);
+      border: 1px solid rgba(0, 255, 136, 0.12);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
+    }
+
+    .leaderboard-table thead {
+      background: rgba(0, 255, 136, 0.08);
+      border-bottom: 2px solid rgba(0, 255, 136, 0.15);
+    }
+
+    .leaderboard-table th {
+      padding: 16px 14px;
+      text-align: left;
+      font-weight: 600;
+      color: #00ff88;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+      border-right: 1px solid rgba(0, 255, 136, 0.1);
+    }
+
+    .leaderboard-table th:last-child {
+      border-right: none;
+    }
+
+    .leaderboard-table tbody tr {
+      border-bottom: 1px solid rgba(0, 255, 136, 0.08);
+      transition: all 0.2s ease;
+    }
+
+    .leaderboard-table tbody tr:hover {
+      background: rgba(0, 255, 136, 0.04);
+    }
+
+    .leaderboard-table tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    .leaderboard-table td {
+      padding: 14px;
+      color: #e4eae6;
+      border-right: 1px solid rgba(0, 255, 136, 0.08);
+    }
+
+    .leaderboard-table td:last-child {
+      border-right: none;
+    }
+
+    .rank-cell {
+      font-weight: 700;
+      color: #ffffff;
+      min-width: 50px;
+      text-align: center;
+    }
+
+    .rank-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-weight: 700;
+      font-size: 1rem;
+      background: rgba(0, 255, 136, 0.1);
+      border: 2px solid rgba(0, 255, 136, 0.2);
+      color: #00ff88;
+    }
+
+    .rank-badge.rank-1 {
+      background: rgba(255, 215, 0, 0.15);
+      border-color: rgba(255, 215, 0, 0.4);
+      color: #ffd700;
+      box-shadow: 0 0 12px rgba(255, 215, 0, 0.2);
+    }
+
+    .rank-badge.rank-2 {
+      background: rgba(192, 192, 192, 0.15);
+      border-color: rgba(192, 192, 192, 0.4);
+      color: #c0c0c0;
+      box-shadow: 0 0 12px rgba(192, 192, 192, 0.15);
+    }
+
+    .rank-badge.rank-3 {
+      background: rgba(205, 127, 50, 0.15);
+      border-color: rgba(205, 127, 50, 0.4);
+      color: #cd7f32;
+      box-shadow: 0 0 12px rgba(205, 127, 50, 0.15);
+    }
+
+    .member-cell {
+      font-weight: 500;
+      min-width: 150px;
+    }
+
+    .member-status {
+      display: inline-block;
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-left: 8px;
+      opacity: 0.7;
+    }
+
+    .member-status.active {
+      background: rgba(0, 255, 136, 0.15);
+      color: #00ff88;
+    }
+
+    .points-cell {
+      text-align: center;
+      font-weight: 600;
+      color: #ffaa00;
+      min-width: 100px;
+    }
+
+    .points-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .attendance-cell {
+      text-align: center;
+      min-width: 120px;
+    }
+
+    .attendance-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .attendance-percent {
+      font-weight: 600;
+      color: #00ff88;
+      min-width: 45px;
+    }
+
+    .bar-container {
+      width: 80px;
+      height: 6px;
+      background: rgba(0, 255, 136, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+      border: 1px solid rgba(0, 255, 136, 0.15);
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #00ff88, #00cc66);
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #b8c4c0;
+    }
+
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 16px;
+      opacity: 0.3;
+    }
+
+    .leaderboard-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: rgba(0, 255, 136, 0.06);
+      border: 1px solid rgba(0, 255, 136, 0.15);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: #00cc66;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    @media (max-width: 900px) {
+      .leaderboard-table {
+        font-size: 0.9rem;
+      }
+
+      .leaderboard-table th,
+      .leaderboard-table td {
+        padding: 10px 8px;
+      }
+
+      .rank-badge {
+        width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
+      }
+
+      .bar-container {
+        width: 60px;
+      }
+
+      .leaderboard-title {
+        font-size: 1.5rem;
+      }
+
+      .leaderboard-period-selector {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .leaderboard-container {
+        padding: 16px;
+      }
+
+      .leaderboard-table {
+        font-size: 0.8rem;
+      }
+
+      .member-cell {
+        min-width: 100px;
+      }
+
+      .points-cell,
+      .attendance-cell {
+        min-width: auto;
+      }
+
+      .bar-container {
+        display: none;
+      }
+
+      .member-status {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="logo">⚔ AETHER</div>
+    <div class="nav-links">
+      <a href="portal.html" class="nav-link">Portal</a>
+      <a href="member-attendance.html" class="nav-link">Attendance</a>
+      <a href="leaderboard.html" class="nav-link active">Leaderboard</a>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="leaderboard-container">
+      <div class="leaderboard-header">
+        <h1 class="leaderboard-title">📊 Member Leaderboard</h1>
+        <div class="leaderboard-period-selector">
+          <button class="period-btn active" data-period="month">This Month</button>
+          <button class="period-btn" data-period="all">All Time</button>
+        </div>
+      </div>
+
+      <div class="leaderboard-stats" id="leaderboardStats">
+        <!-- Stats will be populated here -->
+      </div>
+
+      <table class="leaderboard-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Member</th>
+            <th>Points</th>
+            <th>Attendance %</th>
+            <th>Events</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboardBody">
+          <!-- Leaderboard rows will be populated here -->
+        </tbody>
+      </table>
+
+      <div id="emptyState" class="empty-state" style="display: none;">
+        <div class="empty-state-icon">📭</div>
+        <p>No leaderboard data available yet.</p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { supabase } from './lib/supabaseClient.js';
+
+    let currentPeriod = 'month';
+    let currentUserId = null;
+
+    // Setup period selector
+    document.querySelectorAll('.period-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        currentPeriod = e.target.dataset.period;
+        loadLeaderboard();
+      });
+    });
+
+    async function loadLeaderboard() {
+      try {
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          window.location.href = 'index.html';
+          return;
+        }
+        currentUserId = user.id;
+
+        // Get user's clan
+        const { data: userData } = await supabase
+          .from('clan_users')
+          .select('clan_id')
+          .eq('id', currentUserId)
+          .single();
+
+        if (!userData) return;
+
+        let query = supabase
+          .from('monthly_points_summary')
+          .select(`
+            user_id,
+            total_points,
+            events_attended,
+            clan_users:user_id (
+              username,
+              is_active
+            )
+          `)
+          .eq('clan_users.clan_id', userData.clan_id);
+
+        if (currentPeriod === 'month') {
+          const now = new Date();
+          const monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+          query = query.eq('month_year', monthYear);
+        }
+
+        const { data: leaderboardData } = await query.order('total_points', { ascending: false });
+
+        // Calculate attendance stats for all-time view
+        if (currentPeriod === 'all') {
+          const { data: allAttendance } = await supabase
+            .from('attendance')
+            .select(`
+              user_id,
+              attended,
+              points_awarded,
+              clan_users:user_id (
+                username,
+                is_active
+              )
+            `)
+            .eq('clan_users.clan_id', userData.clan_id);
+
+          // Aggregate data
+          const aggregated = {};
+          allAttendance?.forEach(record => {
+            const userId = record.user_id;
+            if (!aggregated[userId]) {
+              aggregated[userId] = {
+                user_id: userId,
+                total_points: 0,
+                events_attended: 0,
+                username: record.clan_users?.[0]?.username,
+                is_active: record.clan_users?.[0]?.is_active
+              };
+            }
+            if (record.attended) {
+              aggregated[userId].total_points += record.points_awarded || 0;
+              aggregated[userId].events_attended += 1;
+            }
+          });
+
+          renderLeaderboard(Object.values(aggregated).sort((a, b) => b.total_points - a.total_points));
+        } else {
+          renderLeaderboard(leaderboardData || []);
+        }
+      } catch (error) {
+        console.error('Error loading leaderboard:', error);
+      }
+    }
+
+    function renderLeaderboard(data) {
+      const tbody = document.getElementById('leaderboardBody');
+      const emptyState = document.getElementById('emptyState');
+      const statsContainer = document.getElementById('leaderboardStats');
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '';
+        emptyState.style.display = 'block';
+        statsContainer.innerHTML = '';
+        return;
+      }
+
+      emptyState.style.display = 'none';
+
+      // Calculate stats
+      const totalMembers = data.length;
+      const topPoints = data[0]?.total_points || 0;
+      const avgPoints = Math.round(data.reduce((sum, m) => sum + (m.total_points || 0), 0) / data.length);
+
+      statsContainer.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-label">Total Members</div>
+          <div class="stat-value">${totalMembers}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Top Score</div>
+          <div class="stat-value">${topPoints}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Average Points</div>
+          <div class="stat-value">${avgPoints}</div>
+        </div>
+      `;
+
+      // Render leaderboard rows
+      tbody.innerHTML = data.map((member, index) => {
+        const rank = index + 1;
+        const attendancePercent = member.events_attended > 0 ? 
+          Math.round((member.events_attended / Math.max(5, member.events_attended)) * 100) : 0;
+
+        let rankClass = '';
+        if (rank === 1) rankClass = 'rank-1';
+        else if (rank === 2) rankClass = 'rank-2';
+        else if (rank === 3) rankClass = 'rank-3';
+
+        return `
+          <tr>
+            <td class="rank-cell">
+              <span class="rank-badge ${rankClass}">${rank}</span>
+            </td>
+            <td class="member-cell">
+              ${member.clan_users?.[0]?.username || 'Unknown'}
+              ${member.clan_users?.[0]?.is_active ? '<span class="member-status active">Active</span>' : ''}
+            </td>
+            <td class="points-cell">
+              <span class="points-value">${member.total_points || 0}</span>
+            </td>
+            <td class="attendance-cell">
+              <div class="attendance-bar">
+                <span class="attendance-percent">${attendancePercent}%</span>
+                <div class="bar-container">
+                  <div class="bar-fill" style="width: ${attendancePercent}%"></div>
+                </div>
+              </div>
+            </td>
+            <td>${member.events_attended || 0}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function logout() {
+      await supabase.auth.signOut();
+      window.location.href = 'index.html';
+    }
+
+    // Load leaderboard on page load
+    loadLeaderboard();
+  </script>
+</body>
+</html>

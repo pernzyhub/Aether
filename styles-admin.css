@@ -182,13 +182,6 @@ body::before {
   color: #ffb3c0;
   background: rgba(255, 68, 102, 0.12);
   transform: translateX(2px);
-}
-
-.module-card:hover,
-.module-card.is-active {
-  border-color: #ff4466;
-  color: #ffb3c0;
-  background: rgba(255, 68, 102, 0.12);
   box-shadow: 0 0 16px rgba(255, 68, 102, 0.16);
 }
 
@@ -405,20 +398,6 @@ body::before {
 .rich-editor:empty:before {
   content: attr(data-placeholder);
   color: #7f7f7f;
-}
-
-.btn {
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 1rem;
-  padding: 12px 28px;
-  border: 2px solid;
-  background: transparent;
-  cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  font-weight: bold;
-  transition: all 0.3s ease;
-  display: inline-block;
 }
 
 .btn-primary {
