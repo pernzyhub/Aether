@@ -551,14 +551,21 @@ async function loadMemberAttendance() {
     const totalPoints = (attendedList || []).reduce((s, r) => s + (r.points_awarded || 0), 0);
     const totalAttended = (attendedList || []).filter(r => r.attended).length;
 
-    // compute weeks in month of latest attendance or current month
+    // Calculate current month stats for better accuracy
     const now = new Date();
-    const sampleDate = attendedList && attendedList[0] && attendedList[0].created_at ? new Date(attendedList[0].created_at) : now;
-    const year = sampleDate.getFullYear();
-    const month = sampleDate.getMonth();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const weeksInMonth = Math.ceil(daysInMonth / 7);
-    const monthlyPercent = weeksInMonth > 0 ? Math.round((totalPoints / (weeksInMonth * 100)) * 100) : 0;
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    
+    // Get all attendance records for the current month
+    const { data: monthlyAttendance } = await supabase
+      .from('attendance')
+      .select('attended, points_awarded')
+      .eq('user_id', userId)
+      .eq('month_year', currentMonth);
+    
+    // Calculate monthly stats
+    const monthlyAttended = (monthlyAttendance || []).filter(r => r.attended).length;
+    const monthlyTotal = monthlyAttendance ? monthlyAttendance.length : 0;
+    const monthlyPercent = monthlyTotal > 0 ? Math.round((monthlyAttended / monthlyTotal) * 100) : 0;
 
     const recentHtml = (attendedList || []).map(r => {
       const ev = r.events || {};
@@ -566,10 +573,10 @@ async function loadMemberAttendance() {
     }).join('');
 
     container.innerHTML = `
-      <div style="display:flex; gap:12px; align-items:center;">
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
         <div style="font-weight:700; color:#fff; font-size:14px">Total Points: <span style="color:#ffaa00">${totalPoints}</span></div>
         <div style="font-weight:700; color:#fff; font-size:14px">Events: <span style="color:#00ff88">${totalAttended}</span></div>
-        <div style="font-weight:700; color:#fff; font-size:14px">Month %: <span style="color:#ffaa00">${monthlyPercent}%</span></div>
+        <div style="font-weight:700; color:#fff; font-size:14px">This Month: <span style="color:#ffaa00">${monthlyPercent}%</span> <span style="color:#888;">(${monthlyAttended}/${monthlyTotal})</span></div>
       </div>
       <div style="margin-top:8px; max-height:260px; overflow:auto;">${recentHtml || '<div style="color:#888">No recent attendance.</div>'}</div>
     `;
