@@ -828,8 +828,6 @@ async function loadAttendance() {
             <div class="attendance-event-actions">
               <button type="button" class="btn btn-secondary" onclick="editAttendanceEvent('${event.id}')">EDIT EVENT</button>
               <button type="button" class="btn btn-secondary" onclick="deleteAttendanceForEvent('${event.id}')">CLEAR ATTENDANCE LOG</button>
-              <button type="button" class="btn btn-secondary" onclick="archiveEvent('${event.id}')">ARCHIVE EVENT</button>
-              <button type="button" class="btn btn-danger" onclick="deleteAttendanceEvent('${event.id}')">DELETE EVENT + ATTENDANCE</button>
             </div>
 
             ${hasDateTabs ? `
@@ -1001,39 +999,6 @@ async function editAttendanceEvent(eventId) {
   }
 }
 
-async function archiveEvent(eventId) {
-  if (!confirm("Archive this event? This will hide it from the active event list but keep all attendance records intact.")) return;
-
-  try {
-    const { error } = await supabase
-      .from("events")
-      .update({ is_active: false, updated_at: new Date().toISOString() })
-      .eq("id", eventId);
-
-    if (error) throw error;
-    showStatus("attendance-status", "Event archived successfully.", "success");
-    await loadAttendance();
-  } catch (err) {
-    showStatus("attendance-status", `Error archiving event: ${err.message}`, "error");
-  }
-}
-
-async function deleteAttendanceEvent(eventId) {
-  if (!confirm("Delete this event and its attendance log? This will remove the event and all associated attendance records.")) return;
-
-  try {
-    const { error } = await supabase
-      .from("events")
-      .delete()
-      .eq("id", eventId);
-
-    if (error) throw error;
-    showStatus("attendance-status", "Event deleted successfully.", "success");
-    await loadAttendance();
-  } catch (err) {
-    showStatus("attendance-status", `Error deleting event: ${err.message}`, "error");
-  }
-}
 
 async function undoLastBulk() {
   if (!lastBulkInsertedIds || lastBulkInsertedIds.length === 0) {
@@ -1486,11 +1451,11 @@ window.applyBulkAttendance = applyBulkAttendance;
 window.loadAttendance = loadAttendance;
 window.toggleAttendance = toggleAttendance;
 window.toggleAttendanceCard = toggleAttendanceCard;
+window.selectAttendanceDate = selectAttendanceDate;
 window.toggleAttendanceStatus = toggleAttendanceStatus;
 window.deleteAttendanceRecord = deleteAttendanceRecord;
 window.deleteAttendanceForEvent = deleteAttendanceForEvent;
 window.editAttendanceEvent = editAttendanceEvent;
-window.deleteAttendanceEvent = deleteAttendanceEvent;
 window.editAttendancePoints = editAttendancePoints;
 window.deleteAttendance = deleteAttendance;
 window.loadMonthlyPoints = loadMonthlyPoints;
