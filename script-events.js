@@ -627,7 +627,6 @@ async function applyBulkAttendance() {
     if (eventError) throw eventError;
 
     const pointsToAward = customPoints ? parseInt(customPoints) : event.points;
-    // Extract month-year from the selected date
     const selectedDate = new Date(dateInput);
     const monthYear = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}`;
 
@@ -636,18 +635,18 @@ async function applyBulkAttendance() {
       user_id: userId,
       attended: true,
       points_awarded: pointsToAward,
-      month_year: monthYear
+      month_year: monthYear,
+      updated_at: new Date().toISOString()
     }));
 
-    const { data: insertedRows, error: insertError } = await supabase
+    const { data: upsertedRows, error: upsertError } = await supabase
       .from("attendance")
-      .insert(attendanceRecords)
+      .upsert(attendanceRecords, { onConflict: "event_id,user_id" })
       .select('id');
 
-    if (insertError) throw insertError;
+    if (upsertError) throw upsertError;
 
-    // store inserted IDs so admin can undo if they misclicked
-    lastBulkInsertedIds = (insertedRows || []).map(r => r.id).filter(Boolean);
+    lastBulkInsertedIds = (upsertedRows || []).map(r => r.id).filter(Boolean);
     showStatus("bulk-status", `✓ Successfully marked ${selectedMembers.length} members attended on ${selectedDate.toLocaleDateString()}! Points: ${pointsToAward}`, "success");
     selectedMembers = [];
     document.getElementById("bulk-points").value = "";
@@ -817,13 +816,14 @@ async function toggleAttendanceStatus(eventId, userId, currentlyPresent) {
     } else if (nextAttended) {
       const { error } = await supabase
         .from("attendance")
-        .insert([{
+        .upsert([{
           event_id: eventId,
           user_id: userId,
           attended: true,
           points_awarded: event?.points || 0,
-          month_year: event?.month_year || getAttendanceMonthYear(event?.event_date)
-        }]);
+          month_year: event?.month_year || getAttendanceMonthYear(event?.event_date),
+          updated_at: new Date().toISOString()
+        }], { onConflict: "event_id,user_id" });
 
       if (error) throw error;
     }
