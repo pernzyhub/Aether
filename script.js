@@ -168,18 +168,21 @@ async function memberLogin() {
   }
 }
 
-supabase.auth.onAuthStateChange((_event, session) => {
-  console.debug('[auth] onAuthStateChange', { skip: shouldSkipAuthRedirect(), hasSession: !!session?.user });
-  if (shouldSkipAuthRedirect() || !session?.user) return;
-  if (window.location.pathname.toLowerCase().endsWith('/index.html') || window.location.pathname === '/') {
-    console.debug('[auth] onAuthStateChange: landing page - skipping redirect');
+supabase.auth.onAuthStateChange((event, session) => {
+  console.debug('[auth] onAuthStateChange', { event, skip: shouldSkipAuthRedirect(), hasSession: !!session?.user });
+
+  // Prevent cross-tab broadcasts from causing navigation in other tabs.
+  // Only react to explicit sign-out events here; successful sign-ins are handled
+  // by the login flows themselves which already redirect the user.
+  if (event === 'SIGNED_OUT') {
+    if (!shouldSkipAuthRedirect()) {
+      window.location.replace('/index.html');
+    }
     return;
   }
-  if (isAdminUser(session.user)) {
-    window.location.replace("/admin-dashboard.html");
-  } else {
-    window.location.replace("/portal.html");
-  }
+
+  // Ignore other auth events (SIGNED_IN, INITIAL_SESSION) to avoid replacing
+  // the current page's navigation due to cross-tab auth broadcasts.
 });
 
 window.addEventListener("load", () => {
