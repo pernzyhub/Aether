@@ -1122,8 +1122,9 @@ function navigateToFrontPage(event) {
   if (event) {
     event.preventDefault();
   }
-  console.debug('[admin] navigateToFrontPage invoked');
-  window.location.assign("/index.html?view=public");
+  console.debug('[admin] navigateToFrontPage invoked - opening public front page in new tab');
+  // open in a new tab to preserve the current admin session in this window
+  window.open('/index.html?view=public', '_blank', 'noopener');
 }
 
 function showStatus(elementId, message, type = 'success') {
