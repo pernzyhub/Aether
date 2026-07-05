@@ -1074,95 +1074,6 @@ async function updateRequestStatus(requestId, status) {
   }
 }
 
-function getAccessCode() {
-  return localStorage.getItem("aether_access_code") || "AETHER2026";
-}
-
-function loadAccessCode() {
-  const input = document.getElementById("current-access-code");
-  if (input) input.value = getAccessCode();
-}
-
-async function updateAccessCode(event) {
-  event.preventDefault();
-  const statusEl = document.getElementById("access-code-status");
-  const newCode = document.getElementById("new-access-code")?.value.trim();
-
-  if (!newCode) {
-    showStatus("access-code-status", "Please enter a valid access code.", "error");
-    return;
-  }
-
-  localStorage.setItem("aether_access_code", newCode);
-  loadAccessCode();
-  document.getElementById("new-access-code").value = "";
-  showStatus("access-code-status", "Access code updated.", "success");
-}
-
-// Site-wide access gate settings stored in `site_settings` (key: 'access_gate')
-async function getAccessGateSetting() {
-  try {
-    const { data, error } = await supabase
-      .from('site_settings')
-      .select('value')
-      .eq('key', 'access_gate')
-      .single();
-    if (error) return null;
-    return data?.value || null;
-  } catch (err) {
-    return null;
-  }
-}
-
-async function loadAccessGate() {
-  const btn = document.getElementById('toggle-access-gate-btn');
-  const status = document.getElementById('access-gate-status');
-  if (!btn) return;
-  btn.disabled = true;
-  btn.textContent = 'Loading...';
-  try {
-    const setting = await getAccessGateSetting();
-    const enabled = setting ? (setting.enabled === true) : (localStorage.getItem('aether_access_gate_enabled') === 'true');
-    btn.textContent = enabled ? 'Disable Access Gate' : 'Enable Access Gate';
-    status.textContent = enabled ? 'Enabled' : 'Disabled';
-    btn.classList.toggle('btn-danger', enabled);
-    btn.classList.toggle('btn-success', !enabled);
-  } catch (err) {
-    btn.textContent = 'Error';
-    if (status) status.textContent = err.message || 'Error';
-  } finally {
-    btn.disabled = false;
-  }
-}
-
-async function toggleAccessGate() {
-  const btn = document.getElementById('toggle-access-gate-btn');
-  const status = document.getElementById('access-gate-status');
-  if (!btn) return;
-  btn.disabled = true;
-  try {
-    const setting = await getAccessGateSetting();
-    const current = setting?.enabled === true || localStorage.getItem('aether_access_gate_enabled') === 'true';
-    const newVal = !current;
-    const accessCode = localStorage.getItem('aether_access_code') || getAccessCode();
-
-    const { error } = await supabase
-      .rpc('set_access_gate', { enabled: newVal, access_code: accessCode });
-
-    if (error) throw error;
-
-    localStorage.setItem('aether_access_gate_enabled', newVal ? 'true' : 'false');
-    if (!newVal) {
-      localStorage.removeItem('aether_access_granted');
-    }
-    loadAccessGate();
-    showStatus('access-code-status', `Access gate ${newVal ? 'enabled' : 'disabled'}.`, 'success');
-  } catch (err) {
-    showStatus('access-code-status', `Error toggling access gate: ${err.message}`, 'error');
-    btn.disabled = false;
-  }
-}
-
 function setAccountsTab(tabName) {
   const tabs = document.querySelectorAll('.account-tab');
   tabs.forEach(tab => {
@@ -1182,8 +1093,7 @@ async function logout() {
     console.warn("Logout warning:", err);
   }
   localStorage.removeItem("aether_member_session");
-  localStorage.removeItem("aether_access_granted");
-  window.location.replace("/access-gate.html");
+  window.location.replace("/index.html");
 }
 
 function showStatus(elementId, message, type = 'success') {
@@ -1221,8 +1131,6 @@ window.addEventListener("load", () => {
       loadItems();
       loadUsers();
       loadRequests();
-      loadAccessCode();
-      loadAccessGate();
       attachEditorUploadHandlers();
       setAccountsTab('register');
     }
@@ -1243,10 +1151,6 @@ window.editAnnouncement = editAnnouncement;
 window.editRule = editRule;
 window.toggleAnnouncement = toggleAnnouncement;
 window.toggleRule = toggleRule;
-window.updateAccessCode = updateAccessCode;
-window.loadAccessCode = loadAccessCode;
-window.toggleAccessGate = toggleAccessGate;
-window.loadAccessGate = loadAccessGate;
 window.postAnnouncement = postAnnouncement;
 window.deleteAnnouncement = deleteAnnouncement;
 window.postRule = postRule;

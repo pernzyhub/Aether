@@ -19,7 +19,7 @@ async function loadUser() {
   const memberSession = getMemberSession();
   
   if (!user && !memberSession) {
-    window.location.replace("/access-gate.html");
+    window.location.replace("/index.html");
     return;
   }
   

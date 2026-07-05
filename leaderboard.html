@@ -399,7 +399,7 @@
         const user = supabaseSession?.user || authUser;
         const memberSession = getMemberSession();
         if (!user && !memberSession) {
-          window.location.href = '/access-gate.html';
+          window.location.href = '/index.html';
           return;
         }
 

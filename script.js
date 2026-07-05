@@ -170,28 +170,6 @@ supabase.auth.onAuthStateChange((_event, session) => {
   }
 });
 
-function hasAccessGate() {
-  return localStorage.getItem("aether_access_granted") === "true";
-}
-
-async function isAccessGateEnabled() {
-  if (hasAccessGate()) {
-    return false;
-  }
-
-  try {
-    const { data, error } = await supabase.rpc('validate_access_code', { input_code: null });
-    if (error) throw error;
-    if (data === true) {
-      localStorage.setItem('aether_access_granted', 'true');
-      return false;
-    }
-    return true;
-  } catch (err) {
-    return !hasAccessGate();
-  }
-}
-
 window.addEventListener("load", () => {
   window.setTimeout(async () => {
     const memberSession = getMemberSession();
@@ -209,12 +187,6 @@ window.addEventListener("load", () => {
         return;
       }
       window.location.replace("/portal.html");
-      return;
-    }
-
-    const accessGateRequired = await isAccessGateEnabled();
-    if (accessGateRequired) {
-      window.location.replace("/access-gate.html");
       return;
     }
 

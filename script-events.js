@@ -1337,7 +1337,7 @@ async function logout() {
   } catch (err) {
     console.warn("Logout warning:", err);
   }
-  window.location.replace("/access-gate.html");
+  window.location.replace("/index.html");
 }
 
 /* INITIALIZATION */
