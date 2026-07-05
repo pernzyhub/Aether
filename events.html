@@ -128,6 +128,15 @@
       <!-- Members Sheet Tab -->
       <div id="events-tab-members" class="events-tab-content">
         <p id="members-status" class="status-text"></p>
+        <div style="display:flex; gap:12px; align-items:center; margin-bottom:10px;">
+          <label style="color:#ccc;">Show months:</label>
+          <select id="members-months-range" class="input" style="width:120px;">
+            <option value="3">Last 3 months</option>
+            <option value="6" selected>Last 6 months</option>
+            <option value="12">Last 12 months</option>
+          </select>
+          <button class="btn btn-secondary" id="members-refresh" style="background:#00ff88; color:#000; font-weight:bold;">REFRESH</button>
+        </div>
         <div id="members-sheet" style="overflow-x:auto;"></div>
       </div>
 

@@ -50,6 +50,7 @@ function escapeHtml(text) {
 
 /* EVENT TYPES MANAGEMENT */
 async function loadEventTypes() {
+  console.log('loadEventTypes() called');
   try {
     const { data: types, error } = await supabase
       .from("event_types")
@@ -205,6 +206,7 @@ async function deleteEventType(typeId) {
 
 /* EVENT MANAGEMENT */
 async function loadEvents() {
+  console.log('loadEvents() called');
   const container = document.getElementById("events-list");
   if (!container) return;
   container.innerHTML = "<p>Loading events...</p>";
@@ -299,6 +301,7 @@ function getNextOccurrenceFromUI() {
 }
 
 async function createEvent(e) {
+  console.log('createEvent() called');
   e.preventDefault();
   const typeId = document.getElementById("event-type-select").value;
   const name = document.getElementById("event-name").value.trim();
@@ -309,7 +312,6 @@ async function createEvent(e) {
   const recurrenceType = document.getElementById("recurrence-type").value;
   const recurrenceTime = document.getElementById("recurrence-time").value;
   
-  let recurrenceDays = null;
   let recurrenceDays = null;
   if (isRecurring) {
     if (recurrenceType === 'weekly') {
@@ -456,6 +458,7 @@ async function deleteEvent(eventId) {
 let allMembers = [];
 
 async function loadBulkEventSelect() {
+  console.log('loadBulkEventSelect() called');
   try {
     const { data: events, error } = await supabase
       .from("events")
@@ -476,6 +479,7 @@ async function loadBulkEventSelect() {
 }
 
 async function loadBulkMembers() {
+  console.log('loadBulkMembers() called');
   const container = document.getElementById("bulk-members-list");
   if (!container) return;
   container.innerHTML = "<p>Loading members...</p>";
@@ -575,6 +579,7 @@ function parseBulkPaste() {
 }
 
 async function applyBulkAttendance() {
+  console.log('applyBulkAttendance() called');
   const eventId = document.getElementById("bulk-event-select").value;
   const customPoints = document.getElementById("bulk-points").value;
 
@@ -632,6 +637,7 @@ async function applyBulkAttendance() {
 
 /* ATTENDANCE MANAGEMENT */
 async function loadAttendance() {
+  console.log('loadAttendance() called');
   const container = document.getElementById("attendance-list");
   if (!container) return;
   container.innerHTML = "<p>Loading attendance...</p>";
@@ -762,6 +768,7 @@ async function deleteAttendance(attendanceId) {
 
 /* MONTHLY POINTS TRACKING */
 async function loadMonthlyPoints() {
+  console.log('loadMonthlyPoints() called');
   const container = document.getElementById("monthly-points-table");
   const monthFilter = document.getElementById("monthly-points-filter").value;
 
@@ -829,14 +836,22 @@ function setEventsTab(tabName) {
   document.querySelector(`.events-tab[data-tab="${tabName}"]`).classList.add('is-active');
   document.getElementById(`events-tab-${tabName}`).classList.add('is-active');
 
-  if (tabName === "manage") loadEvents();
-  if (tabName === "attendance") loadAttendance();
-  if (tabName === "bulk-attendance") loadBulkMembers();
-  if (tabName === "members") loadMembersSheet();
+  try {
+    console.log('Switching events tab to', tabName);
+    if (tabName === "manage") loadEvents();
+    if (tabName === "attendance") loadAttendance();
+    if (tabName === "bulk-attendance") loadBulkMembers();
+    if (tabName === "members") loadMembersSheet();
+  } catch (err) {
+    console.error('Error switching tab', err);
+    const generalStatus = document.getElementById('events-status');
+    if (generalStatus) showStatus('events-status', `Tab switch error: ${err.message}`, 'error');
+  }
 }
 
 /* MEMBERS SHEET */
 async function loadMembersSheet() {
+  console.log('loadMembersSheet() called');
   const statusEl = document.getElementById('members-status');
   const container = document.getElementById('members-sheet');
   if (!container) return;
@@ -848,43 +863,79 @@ async function loadMembersSheet() {
       .select('id, ign, is_active')
       .order('ign');
     if (usersErr) throw usersErr;
+    // Determine months range from UI
+    const monthsSelect = document.getElementById('members-months-range');
+    const monthsCount = monthsSelect ? parseInt(monthsSelect.value, 10) : 6;
+    const months = [];
+    const now = new Date();
+    for (let i = 0; i < monthsCount; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+    }
 
+    // Fetch attendance for those months
     const { data: attendance, error: attErr } = await supabase
       .from('attendance')
-      .select('user_id, points_awarded, attended, created_at')
+      .select('user_id, points_awarded, attended, month_year, created_at')
+      .in('month_year', months)
       .order('created_at', { ascending: false });
     if (attErr) throw attErr;
 
-    // Aggregate attendance per user
+    // Aggregate per user and per month
     const map = {};
-    users.forEach(u => map[u.id] = { ign: u.ign, is_active: u.is_active, total_points: 0, total_attended: 0, last_attended: null });
+    users.forEach(u => map[u.id] = { ign: u.ign, is_active: u.is_active, total_points: 0, total_attended: 0, last_attended: null, months: {} });
     (attendance || []).forEach(a => {
       if (!map[a.user_id]) return;
       map[a.user_id].total_points += a.points_awarded || 0;
       if (a.attended) map[a.user_id].total_attended += 1;
       const dt = a.created_at ? new Date(a.created_at) : null;
       if (dt && (!map[a.user_id].last_attended || dt > map[a.user_id].last_attended)) map[a.user_id].last_attended = dt;
+      const my = a.month_year || (a.created_at ? a.created_at.slice(0,7) : null);
+      if (my) {
+        if (!map[a.user_id].months[my]) map[a.user_id].months[my] = { attended: 0, points: 0 };
+        if (a.attended) map[a.user_id].months[my].attended += 1;
+        map[a.user_id].months[my].points += a.points_awarded || 0;
+      }
     });
 
-    const rows = users.map(u => map[u.id]);
-
+    // Build table with month columns
     const table = document.createElement('table');
     table.style.width = '100%'; table.style.borderCollapse = 'collapse';
     const thead = document.createElement('thead');
-    thead.innerHTML = `<tr style="background:#222;color:#fff"><th style="padding:8px">Member</th><th style="padding:8px;text-align:center">Active</th><th style="padding:8px;text-align:center">Total Attended</th><th style="padding:8px;text-align:center">Total Points</th><th style="padding:8px">Last Attended</th></tr>`;
+    let headerHtml = `<tr style="background:#222;color:#fff"><th style="padding:8px">Member</th><th style="padding:8px;text-align:center">Active</th><th style="padding:8px;text-align:center">Total Attended</th><th style="padding:8px;text-align:center">Total Points</th>`;
+    months.forEach(m => {
+      const d = new Date(m + '-01');
+      const label = d.toLocaleString(undefined, { month: 'short', year: 'numeric' });
+      headerHtml += `<th style="padding:8px;text-align:center">${label}</th>`;
+    });
+    headerHtml += `<th style="padding:8px">Last Attended</th></tr>`;
+    thead.innerHTML = headerHtml;
     table.appendChild(thead);
     const tbody = document.createElement('tbody');
-    rows.forEach(r => {
+    users.forEach(u => {
+      const r = map[u.id];
       const tr = document.createElement('tr');
       tr.style.borderBottom = '1px solid #333';
-      tr.innerHTML = `<td style="padding:8px"><strong>${escapeHtml(r.ign)}</strong></td><td style="padding:8px;text-align:center">${r.is_active ? 'Yes' : 'No'}</td><td style="padding:8px;text-align:center">${r.total_attended}</td><td style="padding:8px;text-align:center;color:#ffaa00">${r.total_points}</td><td style="padding:8px">${r.last_attended ? r.last_attended.toLocaleString() : '—'}</td>`;
+      let rowHtml = `<td style="padding:8px"><strong>${escapeHtml(r.ign)}</strong></td><td style="padding:8px;text-align:center">${r.is_active ? 'Yes' : 'No'}</td><td style="padding:8px;text-align:center">${r.total_attended}</td><td style="padding:8px;text-align:center;color:#ffaa00">${r.total_points}</td>`;
+      months.forEach(m => {
+        const cell = r.months[m] || { attended: 0, points: 0 };
+        rowHtml += `<td style="padding:8px;text-align:center">${cell.attended}/${cell.points}</td>`;
+      });
+      rowHtml += `<td style="padding:8px">${r.last_attended ? r.last_attended.toLocaleString() : '—'}</td>`;
+      tr.innerHTML = rowHtml;
       tbody.appendChild(tr);
     });
     table.appendChild(tbody);
 
     container.innerHTML = '';
     container.appendChild(table);
-    statusEl.textContent = `Showing ${users.length} members`;
+    statusEl.textContent = `Showing ${users.length} members (last ${monthsCount} months)`;
+
+    // Wire refresh button
+    const refreshBtn = document.getElementById('members-refresh');
+    const monthsSelectEl = document.getElementById('members-months-range');
+    if (refreshBtn) refreshBtn.onclick = loadMembersSheet;
+    if (monthsSelectEl) monthsSelectEl.onchange = loadMembersSheet;
   } catch (err) {
     statusEl.textContent = `Error loading members: ${err.message}`;
   }
