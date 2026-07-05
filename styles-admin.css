@@ -1111,3 +1111,52 @@ body::before {
   display: block;
 }
 
+.events-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 12px;
+}
+
+.events-tab {
+  flex: 1 1 160px;
+  min-width: 130px;
+}
+
+.bulk-attendance-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 900px) {
+  .events-tab {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .bulk-attendance-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .attendance-event-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .attendance-event-badges,
+  .attendance-event-actions,
+  .attendance-member-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .attendance-member-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+

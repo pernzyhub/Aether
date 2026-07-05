@@ -522,6 +522,99 @@ body::before {
   main.container > div[style*="grid-template-columns"] {
     grid-template-columns: 1fr !important;
   }
+
+  .header {
+    padding: 16px 14px;
+  }
+
+  .nav-links {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .header-menu,
+  .nav-actions {
+    width: 100%;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .nav-link,
+  .logout-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .nav-link {
+    padding: 10px 12px;
+    font-size: 0.95rem;
+  }
+
+  .welcome-text {
+    width: 100%;
+    text-align: left;
+  }
+}
+
+@media (max-width: 600px) {
+  .header {
+    padding: 14px 12px;
+  }
+
+  .logo {
+    font-size: 1.15rem;
+    min-width: auto;
+  }
+
+  .nav-links {
+    gap: 12px;
+  }
+
+  .header-menu,
+  .nav-actions {
+    width: 100%;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .nav-link,
+  .logout-btn {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 0.92rem;
+  }
+
+  .request-page {
+    gap: 16px;
+  }
+
+  .card {
+    padding: 14px;
+  }
+
+  .card h2 {
+    font-size: 1rem;
+  }
+
+  .request-form-card .form-group input,
+  .request-form-card .form-group select,
+  .request-form-card .form-group textarea,
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-size: 0.95rem;
+  }
+
+  .footer {
+    padding: 20px 14px;
+    font-size: 0.88rem;
+  }
+
+  #attendance-sheet {
+    min-height: 220px;
+  }
 }
 
 .card {

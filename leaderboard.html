@@ -66,8 +66,14 @@
       border-color: rgba(0, 255, 136, 0.2);
     }
 
+    .leaderboard-table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+    }
+
     .leaderboard-table {
       width: 100%;
+      min-width: 620px;
       border-collapse: collapse;
       background: rgba(8, 16, 12, 0.88);
       border: 1px solid rgba(0, 255, 136, 0.12);
@@ -117,13 +123,6 @@
 
     .leaderboard-table td:last-child {
       border-right: none;
-    }
-
-    .rank-cell {
-      font-weight: 700;
-      color: #ffffff;
-      min-width: 50px;
-      text-align: center;
     }
 
     .rank-badge {
@@ -352,20 +351,22 @@
         <!-- Stats will be populated here -->
       </div>
 
-      <table class="leaderboard-table">
-        <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Member</th>
-            <th>Points</th>
-            <th>Attendance %</th>
-            <th>Events</th>
-          </tr>
-        </thead>
-        <tbody id="leaderboardBody">
-          <!-- Leaderboard rows will be populated here -->
-        </tbody>
-      </table>
+      <div class="leaderboard-table-wrapper">
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Member</th>
+              <th>Points</th>
+              <th>Attendance %</th>
+              <th>Events</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboardBody">
+            <!-- Leaderboard rows will be populated here -->
+          </tbody>
+        </table>
+      </div>
 
       <div id="emptyState" class="empty-state" style="display: none;">
         <div class="empty-state-icon">📭</div>
