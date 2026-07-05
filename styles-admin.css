@@ -607,6 +607,31 @@ body::before {
   font-size: 0.8rem;
 }
 
+.request-state-badge {
+  margin-left: 6px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.request-state-badge.approved {
+  background: rgba(0, 255, 136, 0.16);
+  color: #00ff88;
+}
+
+.request-state-badge.partial {
+  background: rgba(255, 170, 0, 0.16);
+  color: #ffaa00;
+}
+
+.request-state-badge.pending {
+  background: rgba(255, 102, 136, 0.16);
+  color: #ff6688;
+}
+
 .toggle-badge {
   padding: 2px 8px;
   border-radius: 4px;
@@ -875,6 +900,124 @@ body::before {
   font-weight: 700;
 }
 
+.attendance-event-card {
+  background: rgba(16, 16, 16, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.attendance-event-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.attendance-event-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #00ff88;
+}
+
+.attendance-event-meta {
+  font-size: 0.85rem;
+  color: #bbbbbb;
+  margin-top: 4px;
+}
+
+.attendance-event-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.attendance-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.attendance-pill.present {
+  background: rgba(0, 255, 136, 0.16);
+  color: #00ff88;
+}
+
+.attendance-pill.absent {
+  background: rgba(255, 102, 136, 0.16);
+  color: #ff6688;
+}
+
+.attendance-event-body {
+  margin-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 12px;
+}
+
+.attendance-event-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.attendance-section {
+  margin-top: 10px;
+}
+
+.attendance-section-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #ff6688;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 8px;
+}
+
+.attendance-member-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.attendance-member-name {
+  font-weight: 600;
+  color: #f2f2f2;
+}
+
+.attendance-member-meta {
+  font-size: 0.78rem;
+  color: #888;
+  margin-top: 2px;
+}
+
+.attendance-member-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.attendance-empty-state {
+  color: #888;
+  font-size: 0.9rem;
+  padding: 6px 0 2px;
+}
 
 .dashboard-grid.events-grid {
   grid-template-columns: repeat(3, 1fr);

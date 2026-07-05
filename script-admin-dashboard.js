@@ -856,12 +856,15 @@ async function renderRequests(requests, container, isHistory = false) {
     const remainingQty = Math.max(0, Number(req.quantity ?? 0));
     const fulfilledQty = Math.max(0, requestedQty - remainingQty);
     const isDone = remainingQty === 0;
+    const stateBadgeClass = isDone ? "approved" : (fulfilledQty > 0 ? "partial" : "pending");
+    const stateLabel = isDone ? "FULFILLED" : (fulfilledQty > 0 ? "PARTIAL" : "PENDING");
     return `
       <div class="list-item compact ${isDone ? 'completed' : ''}" data-id="${req.id}">
         <div class="list-item-content compact">
           <div class="list-item-title compact">
             ${escapeHtml(ign)} → ${escapeHtml(req.items.name)} <span class="qty-badge">${remainingQty}/${requestedQty}</span>
             <span class="status-badge ${req.status}">${req.status.toUpperCase()}</span>
+            <span class="request-state-badge ${stateBadgeClass}">${stateLabel}</span>
           </div>
           <div class="request-progress-inline">${fulfilledQty} fulfilled • ${remainingQty} remaining</div>
           ${req.proof_image ? `

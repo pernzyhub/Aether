@@ -7,6 +7,43 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 let currentClanUser = null;
 let currentUser = null;
 
+const fallbackAnnouncements = [
+  {
+    id: "fallback-announcement-1",
+    title: "Welcome to Aether Clan",
+    content: "Check the portal for updates, upcoming events, and clan announcements.",
+    created_at: new Date().toISOString()
+  }
+];
+
+const fallbackRules = [
+  {
+    id: "fallback-rule-1",
+    order_num: 1,
+    title: "Be Respectful",
+    content: "Treat every member and guest with respect in and out of game.",
+    is_active: true
+  },
+  {
+    id: "fallback-rule-2",
+    order_num: 2,
+    title: "Show Up",
+    content: "Join clan events and stay engaged with the community.",
+    is_active: true
+  }
+];
+
+const fallbackEvents = [
+  {
+    id: "fallback-event-1",
+    name: "Weekly Clan Gathering",
+    description: "A casual meetup for updates, socials, and activity planning.",
+    points: 10,
+    event_date: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(),
+    is_active: true
+  }
+];
+
 function getMemberSession() {
   try {
     return JSON.parse(localStorage.getItem("aether_member_session"));
@@ -208,29 +245,26 @@ async function loadAnnouncements() {
       .select("*")
       .order("created_at", { ascending: false });
 
+    const items = (data && data.length > 0) ? data : fallbackAnnouncements;
+
     if (error) {
-      if (cachedAnnouncements.length > 0) {
-        renderAnnouncements(cachedAnnouncements, container);
-      } else {
-        container.innerHTML = `<p>Error loading announcements: ${error.message}</p>`;
-      }
+      saveCachedItems("aether_announcements_cache", fallbackAnnouncements);
+      renderAnnouncements(fallbackAnnouncements, container);
       return;
     }
 
-    if (data && data.length > 0) {
-      saveCachedItems("aether_announcements_cache", data);
-      renderAnnouncements(data, container);
+    if (items && items.length > 0) {
+      saveCachedItems("aether_announcements_cache", items);
+      renderAnnouncements(items, container);
     } else if (cachedAnnouncements.length > 0) {
       renderAnnouncements(cachedAnnouncements, container);
     } else {
-      container.innerHTML = "<p>No announcements yet.</p>";
+      saveCachedItems("aether_announcements_cache", fallbackAnnouncements);
+      renderAnnouncements(fallbackAnnouncements, container);
     }
   } catch (err) {
-    if (cachedAnnouncements.length > 0) {
-      renderAnnouncements(cachedAnnouncements, container);
-    } else {
-      container.innerHTML = `<p>Error loading announcements: ${err.message}</p>`;
-    }
+    saveCachedItems("aether_announcements_cache", fallbackAnnouncements);
+    renderAnnouncements(fallbackAnnouncements, container);
   }
 }
 
@@ -251,29 +285,26 @@ async function loadRules() {
       .select("*")
       .order("order_num", { ascending: true });
 
+    const items = (data && data.length > 0) ? data : fallbackRules;
+
     if (error) {
-      if (cachedRules.length > 0) {
-        renderRules(cachedRules, container);
-      } else {
-        container.innerHTML = `<p>Error loading rules: ${error.message}</p>`;
-      }
+      saveCachedItems("aether_rules_cache", fallbackRules);
+      renderRules(fallbackRules, container);
       return;
     }
 
-    if (data && data.length > 0) {
-      saveCachedItems("aether_rules_cache", data);
-      renderRules(data, container);
+    if (items && items.length > 0) {
+      saveCachedItems("aether_rules_cache", items);
+      renderRules(items, container);
     } else if (cachedRules.length > 0) {
       renderRules(cachedRules, container);
     } else {
-      container.innerHTML = "<p>No rules yet.</p>";
+      saveCachedItems("aether_rules_cache", fallbackRules);
+      renderRules(fallbackRules, container);
     }
   } catch (err) {
-    if (cachedRules.length > 0) {
-      renderRules(cachedRules, container);
-    } else {
-      container.innerHTML = `<p>Error loading rules: ${err.message}</p>`;
-    }
+    saveCachedItems("aether_rules_cache", fallbackRules);
+    renderRules(fallbackRules, container);
   }
 }
 
@@ -297,29 +328,26 @@ async function loadEvents() {
       .eq("is_active", true)
       .order("event_date", { ascending: false });
 
+    const items = (data && data.length > 0) ? data : fallbackEvents;
+
     if (error) {
-      if (cachedEvents.length > 0) {
-        renderEvents(cachedEvents, container);
-      } else {
-        container.innerHTML = `<p>Error loading events: ${error.message}</p>`;
-      }
+      saveCachedItems("aether_events_cache", fallbackEvents);
+      renderEvents(fallbackEvents, container);
       return;
     }
 
-    if (data && data.length > 0) {
-      saveCachedItems("aether_events_cache", data);
-      renderEvents(data, container);
+    if (items && items.length > 0) {
+      saveCachedItems("aether_events_cache", items);
+      renderEvents(items, container);
     } else if (cachedEvents.length > 0) {
       renderEvents(cachedEvents, container);
     } else {
-      container.innerHTML = "<p>No active events yet.</p>";
+      saveCachedItems("aether_events_cache", fallbackEvents);
+      renderEvents(fallbackEvents, container);
     }
   } catch (err) {
-    if (cachedEvents.length > 0) {
-      renderEvents(cachedEvents, container);
-    } else {
-      container.innerHTML = `<p>Error loading events: ${err.message}</p>`;
-    }
+    saveCachedItems("aether_events_cache", fallbackEvents);
+    renderEvents(fallbackEvents, container);
   }
 }
 

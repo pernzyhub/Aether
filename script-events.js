@@ -663,6 +663,35 @@ async function applyBulkAttendance() {
 }
 
 /* ATTENDANCE MANAGEMENT */
+let attendanceLogState = { events: [], attendance: [], users: [] };
+
+function getAttendanceMonthYear(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function formatEventDateTime(value) {
+  if (!value) return "No date set";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "No date set";
+  return date.toLocaleString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  });
+}
+
+function toggleAttendanceCard(eventId) {
+  const body = document.getElementById(`attendance-event-body-${eventId}`);
+  if (!body) return;
+  body.style.display = body.style.display === "block" ? "none" : "block";
+}
+
 async function loadAttendance() {
   console.log('loadAttendance() called');
   const container = document.getElementById("attendance-list");
@@ -670,31 +699,204 @@ async function loadAttendance() {
   container.innerHTML = "<p>Loading attendance...</p>";
 
   try {
-    const { data: attendance, error } = await supabase
+    const { data: events, error: eventsError } = await supabase
+      .from("events")
+      .select("id, name, description, points, event_date, month_year, is_active")
+      .order("event_date", { ascending: false });
+
+    if (eventsError) throw eventsError;
+
+    const { data: attendance, error: attendanceError } = await supabase
       .from("attendance")
-      .select("*, events(name, points), clan_users(ign)")
-      .order("created_at", { ascending: false })
-      .limit(100);
+      .select("id, event_id, user_id, attended, points_awarded, month_year, created_at, updated_at")
+      .order("created_at", { ascending: false });
 
-    if (error) throw error;
+    if (attendanceError) throw attendanceError;
 
-    if (!attendance || attendance.length === 0) {
-      container.innerHTML = "<p>No attendance records yet.</p>";
+    const { data: users, error: usersError } = await supabase
+      .from("clan_users")
+      .select("id, ign, is_active")
+      .order("ign", { ascending: true });
+
+    if (usersError) throw usersError;
+
+    attendanceLogState = {
+      events: events || [],
+      attendance: attendance || [],
+      users: users || []
+    };
+
+    if (!events || events.length === 0) {
+      container.innerHTML = "<p>No events yet.</p>";
       return;
     }
 
-    container.innerHTML = attendance.map(record => `
-      <div class="list-item compact ${record.attended ? '' : 'not-attended'}" data-id="${record.id}" style="display:flex; align-items:center; gap:10px; padding:8px;">
-        <div style="width:160px; font-weight:700;">${escapeHtml(record.clan_users.ign)}</div>
-        <div style="flex:1; font-size:13px; color:#ddd;">${escapeHtml(record.events.name)}</div>
-        <div style="width:110px; text-align:center; font-size:13px;">${record.month_year || 'N/A'}</div>
-        <div style="width:120px; text-align:center;">
-          <button class="btn small ${record.attended ? 'btn-danger' : 'btn-success'}" onclick="toggleAttendance('${record.id}', ${!record.attended})" style="padding:6px 8px; font-size:12px;">${record.attended ? 'MARK ABSENT' : 'MARK ATTENDED'}</button>
+    const memberMap = Object.fromEntries((users || []).map(user => [user.id, user]));
+
+    container.innerHTML = events.map(event => {
+      const presentRecords = (attendance || []).filter(record => record.event_id === event.id && record.attended);
+      const presentUserIds = new Set(presentRecords.map(record => record.user_id));
+      const absentUsers = (users || []).filter(user => user.is_active !== false && !presentUserIds.has(user.id));
+      const presentMembers = presentRecords.map(record => ({
+        ...record,
+        user: memberMap[record.user_id] || null
+      }));
+
+      return `
+        <div class="attendance-event-card">
+          <button type="button" class="attendance-event-header" onclick="toggleAttendanceCard('${event.id}')">
+            <div>
+              <div class="attendance-event-title">${escapeHtml(event.name || "Unnamed event")}</div>
+              <div class="attendance-event-meta">${escapeHtml(formatEventDateTime(event.event_date))}</div>
+            </div>
+            <div class="attendance-event-badges">
+              <span class="attendance-pill present">${presentMembers.length} present</span>
+              <span class="attendance-pill absent">${absentUsers.length} absent</span>
+            </div>
+          </button>
+          <div id="attendance-event-body-${event.id}" class="attendance-event-body" style="display: none;">
+            <div class="attendance-event-actions">
+              <button type="button" class="btn btn-secondary" onclick="editAttendanceEvent('${event.id}')">EDIT EVENT</button>
+              <button type="button" class="btn btn-danger" onclick="deleteAttendanceEvent('${event.id}')">DELETE EVENT</button>
+            </div>
+
+            <div class="attendance-section">
+              <div class="attendance-section-title">Present members</div>
+              ${presentMembers.length > 0 ? presentMembers.map(record => `
+                <div class="attendance-member-row">
+                  <div>
+                    <div class="attendance-member-name">${escapeHtml(record.user?.ign || "Unknown member")}</div>
+                    <div class="attendance-member-meta">Points: ${record.points_awarded ?? 0}</div>
+                  </div>
+                  <div class="attendance-member-actions">
+                    <button type="button" class="btn-xs btn-danger" onclick="toggleAttendanceStatus('${event.id}', '${record.user_id}', true)">MARK ABSENT</button>
+                    <button type="button" class="btn-xs btn-secondary" onclick="editAttendancePoints('${record.id}', ${record.points_awarded || 0})">EDIT POINTS</button>
+                    <button type="button" class="btn-xs btn-danger" onclick="deleteAttendanceRecord('${record.id}')">DELETE</button>
+                  </div>
+                </div>
+              `).join("") : `<div class="attendance-empty-state">No members marked present yet.</div>`}
+            </div>
+
+            <div class="attendance-section">
+              <div class="attendance-section-title">Absent members</div>
+              ${absentUsers.length > 0 ? absentUsers.map(user => `
+                <div class="attendance-member-row">
+                  <div class="attendance-member-name">${escapeHtml(user.ign || "Unknown member")}</div>
+                  <div class="attendance-member-actions">
+                    <button type="button" class="btn-xs btn-success" onclick="toggleAttendanceStatus('${event.id}', '${user.id}', false)">MARK PRESENT</button>
+                  </div>
+                </div>
+              `).join("") : `<div class="attendance-empty-state">Everyone is marked present.</div>`}
+            </div>
+          </div>
         </div>
-      </div>
-    `).join("");
+      `;
+    }).join("");
   } catch (err) {
     container.innerHTML = `<p class="status-text error">Error loading attendance: ${err.message}</p>`;
+  }
+}
+
+async function toggleAttendanceStatus(eventId, userId, currentlyPresent) {
+  const event = attendanceLogState.events.find(item => item.id === eventId);
+  const existing = attendanceLogState.attendance.find(record => record.event_id === eventId && record.user_id === userId);
+  const nextAttended = !currentlyPresent;
+
+  try {
+    if (existing) {
+      const { error } = await supabase
+        .from("attendance")
+        .update({
+          attended: nextAttended,
+          points_awarded: nextAttended ? (event?.points || 0) : 0,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", existing.id);
+
+      if (error) throw error;
+    } else if (nextAttended) {
+      const { error } = await supabase
+        .from("attendance")
+        .insert([{
+          event_id: eventId,
+          user_id: userId,
+          attended: true,
+          points_awarded: event?.points || 0,
+          month_year: event?.month_year || getAttendanceMonthYear(event?.event_date)
+        }]);
+
+      if (error) throw error;
+    }
+
+    showStatus("attendance-status", nextAttended ? "Member marked present." : "Member marked absent.", "success");
+    await loadAttendance();
+  } catch (err) {
+    showStatus("attendance-status", `Error updating attendance: ${err.message}`, "error");
+  }
+}
+
+async function deleteAttendanceRecord(attendanceId) {
+  if (!confirm("Delete this attendance record?")) return;
+
+  try {
+    const { error } = await supabase
+      .from("attendance")
+      .delete()
+      .eq("id", attendanceId);
+
+    if (error) throw error;
+    showStatus("attendance-status", "Attendance record deleted.", "success");
+    await loadAttendance();
+  } catch (err) {
+    showStatus("attendance-status", `Error deleting attendance: ${err.message}`, "error");
+  }
+}
+
+async function editAttendanceEvent(eventId) {
+  const event = attendanceLogState.events.find(item => item.id === eventId);
+  if (!event) return;
+
+  const newName = prompt("Enter event name:", event.name || "");
+  if (newName === null) return;
+
+  const newDescription = prompt("Enter description:", event.description || "");
+  const newPoints = prompt("Enter points:", event.points || 0);
+  const newDate = prompt("Enter event date/time (YYYY-MM-DDTHH:mm):", event.event_date ? new Date(event.event_date).toISOString().slice(0, 16) : "");
+
+  try {
+    const { error } = await supabase
+      .from("events")
+      .update({
+        name: newName.trim() || event.name,
+        description: newDescription || null,
+        points: parseInt(newPoints, 10) || 0,
+        event_date: newDate || null,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", eventId);
+
+    if (error) throw error;
+    showStatus("attendance-status", "Event updated successfully.", "success");
+    await loadAttendance();
+  } catch (err) {
+    showStatus("attendance-status", `Error updating event: ${err.message}`, "error");
+  }
+}
+
+async function deleteAttendanceEvent(eventId) {
+  if (!confirm("Delete this event and its attendance log?")) return;
+
+  try {
+    const { error } = await supabase
+      .from("events")
+      .delete()
+      .eq("id", eventId);
+
+    if (error) throw error;
+    showStatus("attendance-status", "Event deleted successfully.", "success");
+    await loadAttendance();
+  } catch (err) {
+    showStatus("attendance-status", `Error deleting event: ${err.message}`, "error");
   }
 }
 
@@ -1145,6 +1347,11 @@ window.parseBulkPaste = parseBulkPaste;
 window.applyBulkAttendance = applyBulkAttendance;
 window.loadAttendance = loadAttendance;
 window.toggleAttendance = toggleAttendance;
+window.toggleAttendanceCard = toggleAttendanceCard;
+window.toggleAttendanceStatus = toggleAttendanceStatus;
+window.deleteAttendanceRecord = deleteAttendanceRecord;
+window.editAttendanceEvent = editAttendanceEvent;
+window.deleteAttendanceEvent = deleteAttendanceEvent;
 window.editAttendancePoints = editAttendancePoints;
 window.deleteAttendance = deleteAttendance;
 window.loadMonthlyPoints = loadMonthlyPoints;
