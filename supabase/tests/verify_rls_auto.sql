@@ -10,8 +10,16 @@ DECLARE
   _aid uuid;
 BEGIN
   -- Create test event
-  INSERT INTO public.events (id, title, is_active, created_at)
-    VALUES (event_id, 'RLS auto test event', true, now());
+  INSERT INTO public.events (id, name, description, points, event_date, is_active, created_at)
+    VALUES (
+      event_id,
+      'RLS auto test event',
+      'Temporary event for RLS verification',
+      0,
+      now(),
+      true,
+      now()
+    );
   RAISE NOTICE 'Created test event %', event_id;
   RAISE NOTICE 'Member id: %', member_id;
   RAISE NOTICE 'Admin id: % (note: public.is_admin() may not treat this as admin)', admin_id;
