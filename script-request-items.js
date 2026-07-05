@@ -449,6 +449,12 @@ async function loadMyRequests() {
       const remainingQty = Math.max(0, Number(req.quantity ?? 0));
       const fulfilledQty = Math.max(0, originalQty - remainingQty);
       const progressText = originalQty > 0 ? `${fulfilledQty}/${originalQty} fulfilled` : "Pending";
+
+      // Display 'approved' when remaining quantity is zero even if stored status is stale
+      const storedStatus = (req.status || "pending");
+      const displayStatus = remainingQty === 0 ? 'approved' : storedStatus;
+      const isPendingForOwner = isOwner && displayStatus === 'pending';
+
       return `
         <div class="request-entry" data-id="${req.id}">
           <div class="request-entry-main">
@@ -471,8 +477,8 @@ async function loadMyRequests() {
             ` : ""}
           </div>
           <div class="request-entry-actions">
-            <span class="request-status ${req.status || "pending"}">${(req.status || "pending").toUpperCase()}</span>
-            ${isOwner && (req.status || "pending") === "pending" ? `
+            <span class="request-status ${displayStatus}">${displayStatus.toUpperCase()}</span>
+            ${isPendingForOwner ? `
               <div class="request-action-row">
                 <button class="btn request-action request-action-edit" onclick="startEditRequest('${req.id}')">Edit</button>
                 <button class="btn request-action request-action-cancel" onclick="cancelRequest('${req.id}')">Cancel</button>
