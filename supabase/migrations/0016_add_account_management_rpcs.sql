@@ -1,4 +1,5 @@
 -- Create RPC function for admin to create clan users
+DROP FUNCTION IF EXISTS public.admin_create_clan_user(UUID, TEXT, TEXT);
 CREATE OR REPLACE FUNCTION public.admin_create_clan_user(
   user_id UUID,
   ign TEXT,
