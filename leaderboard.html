@@ -454,10 +454,9 @@
 
         const { data: leaderboardData, error: leaderboardError } = await supabase
           .from('monthly_points_summary')
-          .select('user_id, total_points, events_attended')
-          .eq('user_id', currentUserId)
+          .select('user_id, total_points, events_attended, clan_users(ign, is_active)')
           .eq('month_year', monthYear)
-          .maybeSingle();
+          .order('total_points', { ascending: false });
 
         if (leaderboardError && leaderboardError.code !== 'PGRST116') {
           console.warn('Unable to load leaderboard:', leaderboardError.message);
@@ -465,13 +464,12 @@
           return;
         }
 
-        const enriched = leaderboardData ? [{
-          ...leaderboardData,
-          clan_users: [{
-            username: clanUser?.ign || 'You',
-            is_active: clanUser?.is_active
-          }]
-        }] : [];
+        const enriched = (leaderboardData || []).map(row => ({
+          user_id: row.user_id,
+          total_points: row.total_points || 0,
+          events_attended: row.events_attended || 0,
+          clan_users: [{ username: row.clan_users?.ign || 'Unknown member', is_active: row.clan_users?.is_active }]
+        }));
 
         renderLeaderboard(enriched);
       } catch (error) {
