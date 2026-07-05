@@ -430,99 +430,33 @@ async function loadUpcomingEvent() {
     upcomingOccurrences.sort((a, b) => a.date - b.date);
     const top3 = upcomingOccurrences.slice(0, 3);
 
-    // render all 3 events
+    // render all 3 events without RSVP buttons
     const eventsHtml = top3.map((item, idx) => {
       const { date, event } = item;
-      const now = new Date();
       const isClosest = idx === 0;
       const highlightColor = isClosest ? 'rgba(0, 255, 136, 0.15)' : 'rgba(0, 255, 136, 0.05)';
       const borderColor = isClosest ? '#00ff88' : 'rgba(0, 255, 136, 0.1)';
       
       return `
-        <div style="background:${highlightColor}; border:1px solid ${borderColor}; border-radius:8px; padding:10px 12px; margin-bottom:8px; cursor:pointer; transition:all 0.2s ease; display:flex; justify-content:space-between; align-items:center;">
-          <div style="flex:1;">
-            <div style="font-size:12px; color:${isClosest ? '#00ff88' : '#ccc'}; font-weight:600; margin-bottom:2px;">${isClosest ? '⭐ NEXT' : ''} ${escapeHtml(event.name)}</div>
-            <div style="font-size:10px; color:#999;">${date.toLocaleString()}</div>
-            <div style="font-size:10px; color:#ffaa00; margin-top:2px;">${event.points} pts</div>
-          </div>
-          <button class="upcoming-rsvp" data-event-id="${event.id}" data-event-name="${event.name}" data-date="${date.toISOString()}" style="padding:4px 8px; font-size:10px; background:#333; color:#ff6688; border:1px solid #ff6688; border-radius:4px; cursor:pointer; white-space:nowrap;">RSVP</button>
+        <div style="background:${highlightColor}; border:1px solid ${borderColor}; border-radius:8px; padding:10px 12px; margin-bottom:8px;">
+          <div style="font-size:12px; color:${isClosest ? '#00ff88' : '#ccc'}; font-weight:600; margin-bottom:2px;">${isClosest ? '⭐ NEXT' : ''} ${escapeHtml(event.name)}</div>
+          <div style="font-size:10px; color:#999;">${date.toLocaleString()}</div>
+          <div style="font-size:10px; color:#ffaa00; margin-top:2px;">${event.points} pts</div>
+          ${event.description ? `<div style="font-size:10px; color:#bbb; margin-top:4px;">${escapeHtml(event.description)}</div>` : ''}
         </div>
       `;
     }).join('');
 
     container.innerHTML = eventsHtml;
 
-    // attach RSVP handlers
-    container.querySelectorAll('.upcoming-rsvp').forEach(btn => {
-      btn.onclick = async (e) => {
-        e.stopPropagation();
-        await handleRsvp(btn);
-      };
-    });
-
   } catch (err) {
     console.error('Error in loadUpcomingEvent:', err);
     container.innerHTML = `<p style="color:#f66;">⚠️ Error: ${escapeHtml(err.message || 'Failed to load events')}</p>`;
   }
 }
+    }).join('');
 
-async function handleRsvp(btn) {
-  try {
-    const userId = currentClanUser?.id || null;
-    if (!userId) {
-      alert('Please login to RSVP.');
-      return;
-    }
-
-    const eventId = btn.dataset.eventId;
-    const eventName = btn.dataset.eventName;
-    const eventDate = new Date(btn.dataset.date);
-    const monthYear = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}`;
-
-    // check existing attendance
-    const { data: existing, error: checkErr } = await supabase
-      .from('attendance')
-      .select('id, attended')
-      .eq('event_id', eventId)
-      .eq('user_id', userId)
-      .eq('month_year', monthYear)
-      .maybeSingle();
-
-    if (checkErr && checkErr.code !== 'PGRST116') {
-      throw new Error(`Failed to check attendance: ${checkErr.message}`);
-    }
-
-    if (existing && existing.id) {
-      if (!existing.attended) {
-        if (!confirm('Remove your RSVP for ' + eventName + '?')) return;
-        const { error: delErr } = await supabase.from('attendance').delete().eq('id', existing.id);
-        if (delErr) throw new Error(`Failed to remove RSVP: ${delErr.message}`);
-        btn.textContent = 'RSVP';
-        btn.style.background = '#333';
-        btn.style.color = '#ff6688';
-      } else {
-        alert('Your attendance has already been marked by admin.');
-        return;
-      }
-    } else {
-      const { error: insErr } = await supabase.from('attendance').insert([{
-        event_id: eventId,
-        user_id: userId,
-        attended: false,
-        points_awarded: 0,
-        month_year: monthYear
-      }]);
-      if (insErr) throw new Error(`RLS/Insert error: ${insErr.message}`);
-      btn.textContent = 'CANCEL';
-      btn.style.background = '#ff4444';
-      btn.style.color = '#fff';
-    }
-    loadUpcomingEvent();
-  } catch (err) {
-    console.error('RSVP error:', err);
-    alert('RSVP error: ' + (err.message || 'Unknown error'));
-  }
-}
+    container.innerHTML = eventsHtml;
 
 async function loadMemberAttendance() {
   const container = document.getElementById('my-attendance');

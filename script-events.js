@@ -558,21 +558,6 @@ function renderBulkMembers(members) {
   });
 }
 
-function filterBulkMembers() {
-  const searchTerm = document.getElementById("bulk-search").value.trim().toLowerCase();
-  
-  if (!searchTerm) {
-    renderBulkMembers(allMembers);
-    return;
-  }
-  
-  const filtered = allMembers.filter(member => 
-    member.ign.toLowerCase().includes(searchTerm)
-  );
-  
-  renderBulkMembers(filtered);
-}
-
 function parseBulkPaste() {
   const pasteText = document.getElementById("bulk-paste-input").value.trim();
   
@@ -613,9 +598,15 @@ async function applyBulkAttendance() {
   console.log('applyBulkAttendance() called');
   const eventId = document.getElementById("bulk-event-select").value;
   const customPoints = document.getElementById("bulk-points").value;
+  const dateInput = document.getElementById("bulk-attendance-date").value;
 
   if (!eventId) {
     showStatus("bulk-status", "Please select an event.", "error");
+    return;
+  }
+
+  if (!dateInput) {
+    showStatus("bulk-status", "Please select a date.", "error");
     return;
   }
 
@@ -636,7 +627,9 @@ async function applyBulkAttendance() {
     if (eventError) throw eventError;
 
     const pointsToAward = customPoints ? parseInt(customPoints) : event.points;
-    const monthYear = new Date().toISOString().slice(0, 7);
+    // Extract month-year from the selected date
+    const selectedDate = new Date(dateInput);
+    const monthYear = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}`;
 
     const attendanceRecords = selectedMembers.map(userId => ({
       event_id: eventId,
@@ -655,12 +648,11 @@ async function applyBulkAttendance() {
 
     // store inserted IDs so admin can undo if they misclicked
     lastBulkInsertedIds = (insertedRows || []).map(r => r.id).filter(Boolean);
-    showStatus("bulk-status", `✓ Successfully marked ${selectedMembers.length} members attended! Points: ${pointsToAward}`, "success");
+    showStatus("bulk-status", `✓ Successfully marked ${selectedMembers.length} members attended on ${selectedDate.toLocaleDateString()}! Points: ${pointsToAward}`, "success");
     selectedMembers = [];
     document.getElementById("bulk-points").value = "";
     document.getElementById("bulk-event-select").value = "";
-    // clear optional inputs
-    const bulkSearchEl = document.getElementById("bulk-search"); if (bulkSearchEl) bulkSearchEl.value = "";
+    document.getElementById("bulk-attendance-date").value = "";
     document.getElementById("bulk-paste-input").value = "";
     document.querySelectorAll(".bulk-member-checkbox").forEach(cb => cb.checked = false);
     loadBulkMembers();
@@ -1124,6 +1116,13 @@ window.addEventListener("load", () => {
       const monthString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
       const monthInput = document.getElementById("monthly-points-filter");
       if (monthInput) monthInput.value = monthString;
+
+      // Set bulk attendance date to today
+      const dateInput = document.getElementById("bulk-attendance-date");
+      if (dateInput) {
+        const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        dateInput.value = dateString;
+      }
     }
   }, 80);
 });
@@ -1142,7 +1141,6 @@ window.deleteEvent = deleteEvent;
 window.loadEvents = loadEvents;
 window.loadBulkEventSelect = loadBulkEventSelect;
 window.loadBulkMembers = loadBulkMembers;
-window.filterBulkMembers = filterBulkMembers;
 window.parseBulkPaste = parseBulkPaste;
 window.applyBulkAttendance = applyBulkAttendance;
 window.loadAttendance = loadAttendance;
