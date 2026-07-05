@@ -5,6 +5,78 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Member Attendance Spreadsheet</title>
   <link rel="stylesheet" href="styles-portal.css" />
+  <style>
+    #attendance-sheet {
+      overflow: auto;
+      max-height: calc(100vh - 240px);
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #222;
+      background: rgba(5, 10, 10, 0.95);
+    }
+
+    #attendance-sheet table {
+      width: 100%;
+      min-width: 900px;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+      color: #ddd;
+    }
+
+    #attendance-sheet th,
+    #attendance-sheet td {
+      padding: 10px 8px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      text-align: center;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    #attendance-sheet th {
+      background: rgba(3, 14, 12, 0.95);
+      color: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 3;
+    }
+
+    #attendance-sheet th:first-child,
+    #attendance-sheet td:first-child {
+      position: sticky;
+      left: 0;
+      background: rgba(3, 14, 12, 0.98);
+      z-index: 4;
+      text-align: left;
+    }
+
+    #attendance-sheet tbody tr:nth-child(odd) td {
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    #attendance-sheet tbody tr:hover td {
+      background: rgba(0, 255, 136, 0.08);
+    }
+
+    #attendance-sheet th small {
+      display: block;
+      margin-top: 6px;
+      color: #999;
+      font-size: 0.78rem;
+      line-height: 1.2;
+    }
+
+    @media (max-width: 1100px) {
+      #attendance-sheet table {
+        min-width: 760px;
+      }
+    }
+
+    @media (max-width: 850px) {
+      #attendance-sheet table {
+        min-width: 640px;
+      }
+    }
+  </style>
 </head>
 <body>
   <header class="header">

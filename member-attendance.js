@@ -55,11 +55,11 @@ async function loadSheet() {
     table.style.borderCollapse = 'collapse';
     
     const thead = document.createElement('thead');
-    let head = '<tr style="background:#111;color:#fff;position:sticky;top:0;"><th style="padding:10px; text-align:left; min-width:180px; font-weight:700;">Member</th>';
+    let head = '<tr style="background:#111;color:#fff;position:sticky;top:0;"><th style="padding:10px; text-align:left; min-width:200px; font-weight:700;">Member</th>';
     
     events.forEach(ev => {
       const eventDate = ev.event_date ? new Date(ev.event_date).toLocaleDateString() : 'No date';
-      head += `<th style="padding:10px; text-align:center; font-size:11px;"><div style="max-width:80px;">${escapeHtml(ev.name || 'Event')}</div><small style="color:#999">${eventDate}</small></th>`;
+      head += `<th style="padding:10px; text-align:center; font-size:11px;"><div style="max-width:110px;">${escapeHtml(ev.name || 'Event')}</div><small>${eventDate}</small></th>`;
     });
     head += '</tr>';
     thead.innerHTML = head;
