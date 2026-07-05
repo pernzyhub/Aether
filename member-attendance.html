@@ -76,6 +76,46 @@
         min-width: 640px;
       }
     }
+
+    .attendance-legend {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+      color: #ccc;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+
+    .attendance-legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #aaa;
+    }
+
+    .legend-swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      display: inline-block;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .attendance-attended {
+      background: rgba(0, 255, 136, 0.12);
+      color: #b8ffb8;
+    }
+
+    .attendance-pending {
+      background: rgba(255, 176, 0, 0.12);
+      color: #ffe1a0;
+    }
+
+    .attendance-missing {
+      background: rgba(255, 255, 255, 0.04);
+      color: #888;
+    }
   </style>
 </head>
 <body>
@@ -93,10 +133,16 @@
 
   <main class="container" style="grid-template-columns: 1fr;">
     <section class="card">
-      <div style="display:flex; gap:12px; align-items:center; margin-bottom:12px;">
+      <div style="display:flex; gap:12px; align-items:center; margin-bottom:12px; flex-wrap:wrap;">
         <label style="color:#ccc">Month:</label>
         <input type="month" id="sheet-month" class="input" />
         <button id="sheet-load" class="btn btn-secondary" style="background:#00ff88; color:#000; font-weight:700;">LOAD</button>
+      </div>
+
+      <div class="attendance-legend">
+        <span><span class="legend-swatch" style="background:#0f8;"></span>Attended</span>
+        <span><span class="legend-swatch" style="background:#ffb000;"></span>RSVP / Pending</span>
+        <span><span class="legend-swatch" style="background:rgba(255,255,255,0.05);"></span>No record</span>
       </div>
 
       <div id="attendance-sheet" style="overflow:auto; background:#0a0a0a; padding:12px; border-radius:8px; border:1px solid #222;"></div>

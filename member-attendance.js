@@ -78,8 +78,11 @@ async function loadSheet() {
         const status = match 
           ? (match.attended === true ? '✔️' : '⏳') 
           : '';
+        const cellClass = match
+          ? (match.attended === true ? 'attendance-attended' : 'attendance-pending')
+          : 'attendance-missing';
         
-        row += `<td style="padding:10px; text-align:center; color:#ccc;">${status}</td>`;
+        row += `<td class="${cellClass}" style="padding:10px; text-align:center; color:#ccc;">${status}</td>`;
       });
       row += '</tr>';
       tbody.innerHTML += row;
