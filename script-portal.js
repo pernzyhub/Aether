@@ -140,6 +140,14 @@ function formatDate(dateValue) {
   return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
 }
 
+function formatMonthYear(monthYear) {
+  if (!monthYear) return '';
+  const parts = String(monthYear).split('-');
+  if (parts.length !== 2) return '';
+  const [year, month] = parts;
+  return `${month.padStart(2, '0')}/01/${year}`;
+}
+
 function formatTime(dateValue) {
   if (!dateValue) return '';
   const d = new Date(dateValue);
@@ -498,7 +506,8 @@ async function loadMemberAttendance() {
 
     const recentHtml = (attendedList || []).map(r => {
       const ev = r.events || {};
-      return `<div style="padding:6px 0; border-bottom:1px solid #222; font-size:13px; color:#ccc">${escapeHtml(ev.name || 'Event')} · ${r.month_year || (ev.event_date ? escapeHtml(formatDate(ev.event_date)) : '')} · ${r.attended ? '<span style="color:#00ff88">Attended</span>' : '<span style="color:#ffcc66">RSVP/Not marked</span>'} · ${r.points_awarded || 0} pts</div>`;
+      const dateText = r.month_year ? formatMonthYear(r.month_year) : (ev.event_date ? formatDate(ev.event_date) : '');
+      return `<div style="padding:6px 0; border-bottom:1px solid #222; font-size:13px; color:#ccc">${escapeHtml(ev.name || 'Event')} · ${escapeHtml(dateText)} · ${r.attended ? '<span style="color:#00ff88">Attended</span>' : '<span style="color:#ffcc66">RSVP/Not marked</span>'} · ${r.points_awarded || 0} pts</div>`;
     }).join('');
 
     container.innerHTML = `
