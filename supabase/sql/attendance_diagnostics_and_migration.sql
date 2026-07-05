@@ -24,6 +24,13 @@ FROM public.attendance
 ORDER BY created_at DESC
 LIMIT 200;
 
+-- 5) Find duplicate rows for same event/user/date (if any)
+SELECT event_id, user_id, COALESCE(attendance_date::date, created_at::date) AS attendance_day, COUNT(*) AS cnt
+FROM public.attendance
+GROUP BY event_id, user_id, COALESCE(attendance_date::date, created_at::date)
+HAVING COUNT(*) > 1
+LIMIT 100;
+
 -- ------------------------------------------------------------
 -- Migration: make attendance unique per (event_id, user_id, attendance_date)
 -- Run only if you are project owner/admin and after reviewing diagnostics.
@@ -63,6 +70,24 @@ CREATE POLICY "Members can delete their monthly_points" ON public.monthly_points
 ALTER TABLE public.attendance
   DROP CONSTRAINT IF EXISTS attendance_event_id_user_id_key;
 
+-- If an index with the intended name already exists (constraint created as an index), drop it first
+-- Ensure any existing constraint with the target name is dropped first (otherwise index drop will fail)
+ALTER TABLE public.attendance
+  DROP CONSTRAINT IF EXISTS attendance_event_id_user_id_attendance_date_key;
+
+DROP INDEX IF EXISTS attendance_event_id_user_id_attendance_date_key;
+
+-- Remove duplicate rows (keep the newest) partitioned by event_id, user_id, attendance_date (by date)
+WITH ranked AS (
+  SELECT id,
+         ROW_NUMBER() OVER (PARTITION BY event_id, user_id, COALESCE(attendance_date::date, created_at::date)
+                            ORDER BY COALESCE(attendance_date, created_at) DESC, id DESC) AS rn
+  FROM public.attendance
+)
+DELETE FROM public.attendance
+WHERE id IN (SELECT id FROM ranked WHERE rn > 1);
+
+-- Now add the new unique constraint (idempotent due to prior drops)
 ALTER TABLE public.attendance
   ADD CONSTRAINT attendance_event_id_user_id_attendance_date_key UNIQUE (event_id, user_id, attendance_date);
 
