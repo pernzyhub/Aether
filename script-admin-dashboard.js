@@ -1118,6 +1118,22 @@ async function logout() {
 }
 window.logout = logout;
 
+// Debug: watch storage and auth events to diagnose unexpected sign-outs
+try {
+  window.addEventListener('storage', (e) => {
+    if (!e) return;
+    if (e.key === 'aether_member_session') {
+      console.debug('[admin] storage event: aether_member_session changed', { oldValue: e.oldValue, newValue: e.newValue });
+    }
+  });
+} catch (e) {}
+
+try {
+  supabase.auth.onAuthStateChange((event, session) => {
+    console.debug('[admin] supabase auth state change', { event, hasSession: !!session?.user, session });
+  });
+} catch (e) {}
+
 function navigateToFrontPage(event) {
   if (event) {
     event.preventDefault();
