@@ -617,7 +617,10 @@ async function loadUsers() {
           <button class="btn ${user.is_active ? 'btn-danger' : 'btn-success'}" onclick="toggleUserStatus('${user.id}', ${!user.is_active})">
             ${user.is_active ? 'DEACTIVATE' : 'ACTIVATE'}
           </button>
-          <button class="btn btn-danger" onclick="deleteUser('${user.id}')">DELETE</button>
+          ${user.id === currentUser?.id ?
+            `<button class="btn btn-danger" disabled title="Cannot delete the signed-in admin">DELETE</button>` :
+            `<button class="btn btn-danger" onclick="deleteUser('${user.id}')">DELETE</button>`
+          }
         </div>
       </div>
     `).join("");
