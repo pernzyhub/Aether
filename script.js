@@ -171,12 +171,10 @@ async function memberLogin() {
 }
 
 supabase.auth.onAuthStateChange((event, session) => {
-  console.debug('[auth] onAuthStateChange', { event, skip: shouldSkipAuthRedirect(), hasSession: !!session?.user, isAdminPreview });
-
   if (isAdminPreview) {
-    console.debug('[auth] admin preview page ignoring auth state changes');
     return;
   }
+  console.debug('[auth] onAuthStateChange', { event, skip: shouldSkipAuthRedirect(), hasSession: !!session?.user, isAdminPreview });
 
   // Prevent cross-tab broadcasts from causing navigation in other tabs.
   // Only react to explicit sign-out events here; successful sign-ins are handled
