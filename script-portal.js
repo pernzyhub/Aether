@@ -42,13 +42,17 @@ const fallbackEvents = [
 ];
 
 async function loadUser() {
-  const supabaseSession = await ensureSupabaseSession();
-  const { data: sessionData } = await supabase.auth.getSession();
-  const { data: userData } = await supabase.auth.getUser();
+  const params = new URLSearchParams(window.location.search);
+  const isAdminPreview = params.get('preview') === 'admin';
+
+  // In admin preview mode, do not call ensureSupabaseSession or redirect to login.
+  const supabaseSession = isAdminPreview ? null : await ensureSupabaseSession();
+  const { data: sessionData } = isAdminPreview ? {} : await supabase.auth.getSession();
+  const { data: userData } = isAdminPreview ? {} : await supabase.auth.getUser();
   const user = supabaseSession?.user || sessionData?.session?.user || userData?.user;
   const memberSession = getMemberSession();
 
-  if (!user && !memberSession) {
+  if (!user && !memberSession && !isAdminPreview) {
     window.location.replace("/index.html");
     return;
   }
@@ -93,7 +97,7 @@ async function loadUser() {
 
   if (!error && clanUser) {
     currentClanUser = clanUser;
-    if (clanUser.is_active === false) {
+    if (clanUser.is_active === false && !isAdminPreview) {
       await logout();
       return;
     }
@@ -117,6 +121,11 @@ async function loadUser() {
   const welcomeEl = document.getElementById("welcome-text");
   if (welcomeEl) {
     welcomeEl.textContent = `WELCOME, ${username.toUpperCase()}`;
+  }
+
+  // Show admin preview badge when enabled
+  if (isAdminPreview) {
+    try { document.getElementById('adminPreviewBadge').style.display = 'block'; } catch {};
   }
 }
 

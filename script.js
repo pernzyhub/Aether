@@ -81,7 +81,8 @@ function shouldSkipAuthRedirect() {
   const path = window.location.pathname.toLowerCase();
   const isLandingPage = path === "/" || path.endsWith("/index.html");
   const isPublicView = new URLSearchParams(window.location.search).get("view") === "public";
-  return isLandingPage || isPublicView;
+  const isAdminPreview = new URLSearchParams(window.location.search).get("preview") === "admin";
+  return isLandingPage || isPublicView || isAdminPreview;
 }
 
 async function adminLogin() {
