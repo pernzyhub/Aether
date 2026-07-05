@@ -3,6 +3,7 @@ import { getMemberSession, ensureSupabaseSession, logout, setActiveNavLink } fro
 
 let currentClanUser = null;
 let currentUser = null;
+const isAdminPreview = new URLSearchParams(window.location.search).get('preview') === 'admin';
 
 const fallbackAnnouncements = [
   {
@@ -42,9 +43,6 @@ const fallbackEvents = [
 ];
 
 async function loadUser() {
-  const params = new URLSearchParams(window.location.search);
-  const isAdminPreview = params.get('preview') === 'admin';
-
   // In admin preview mode, do not call ensureSupabaseSession or redirect to login.
   const supabaseSession = isAdminPreview ? null : await ensureSupabaseSession();
   const { data: sessionData } = isAdminPreview ? {} : await supabase.auth.getSession();
@@ -320,7 +318,9 @@ async function loadEvents() {
     container.innerHTML = "<p>Loading events...</p>";
   }
 
-  await ensureSupabaseSession();
+  if (!isAdminPreview) {
+    await ensureSupabaseSession();
+  }
 
   try {
     const { data, error } = await supabase
@@ -423,7 +423,9 @@ async function loadUpcomingEvent() {
   container.innerHTML = '<p style="color:#aaa;">Loading upcoming events...</p>';
 
   try {
-    await ensureSupabaseSession();
+    if (!isAdminPreview) {
+      await ensureSupabaseSession();
+    }
     const { data: events, error } = await supabase
       .from('events')
       .select('id, name, description, event_date, is_recurring, recurrence_type, recurrence_days, recurrence_time, points')
@@ -485,6 +487,11 @@ async function loadMemberAttendance() {
   if (!container) return;
   container.textContent = 'Loading...';
   try {
+    if (isAdminPreview) {
+      container.innerHTML = '<p style="color:#ccc;">Admin preview does not show personal attendance.</p>';
+      return;
+    }
+
     await ensureSupabaseSession();
     const userId = currentClanUser?.id || null;
     if (!userId) { container.textContent = 'Please login to see your attendance.'; return; }

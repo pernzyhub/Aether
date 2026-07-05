@@ -77,11 +77,12 @@ function setLoginSide(side) {
   }
 }
 
+const isAdminPreview = new URLSearchParams(window.location.search).get("preview") === "admin";
+
 function shouldSkipAuthRedirect() {
   const path = window.location.pathname.toLowerCase();
   const isLandingPage = path === "/" || path.endsWith("/index.html");
   const isPublicView = new URLSearchParams(window.location.search).get("view") === "public";
-  const isAdminPreview = new URLSearchParams(window.location.search).get("preview") === "admin";
   return isLandingPage || isPublicView || isAdminPreview;
 }
 
@@ -170,7 +171,12 @@ async function memberLogin() {
 }
 
 supabase.auth.onAuthStateChange((event, session) => {
-  console.debug('[auth] onAuthStateChange', { event, skip: shouldSkipAuthRedirect(), hasSession: !!session?.user });
+  console.debug('[auth] onAuthStateChange', { event, skip: shouldSkipAuthRedirect(), hasSession: !!session?.user, isAdminPreview });
+
+  if (isAdminPreview) {
+    console.debug('[auth] admin preview page ignoring auth state changes');
+    return;
+  }
 
   // Prevent cross-tab broadcasts from causing navigation in other tabs.
   // Only react to explicit sign-out events here; successful sign-ins are handled
@@ -192,6 +198,9 @@ window.addEventListener("load", () => {
     // (avoids creating anonymous sessions that replace existing sessions in other tabs)
     if (shouldSkipAuthRedirect()) {
       setLoginSide('member');
+      if (isAdminPreview) {
+        document.getElementById('adminPreviewBadge')?.style.display = 'block';
+      }
       return;
     }
 
