@@ -1075,6 +1075,72 @@ async function updateAccessCode(event) {
   showStatus("access-code-status", "Access code updated.", "success");
 }
 
+// Site-wide access gate settings stored in `site_settings` (key: 'access_gate')
+async function getAccessGateSetting() {
+  try {
+    const { data, error } = await supabase
+      .from('site_settings')
+      .select('value')
+      .eq('key', 'access_gate')
+      .single();
+    if (error) return null;
+    return data?.value || null;
+  } catch (err) {
+    return null;
+  }
+}
+
+async function loadAccessGate() {
+  const btn = document.getElementById('toggle-access-gate-btn');
+  const status = document.getElementById('access-gate-status');
+  if (!btn) return;
+  btn.disabled = true;
+  btn.textContent = 'Loading...';
+  try {
+    const setting = await getAccessGateSetting();
+    const enabled = setting ? (setting.enabled === true) : (localStorage.getItem('aether_access_gate_enabled') === 'true');
+    btn.textContent = enabled ? 'Disable Access Gate' : 'Enable Access Gate';
+    status.textContent = enabled ? 'Enabled' : 'Disabled';
+    btn.classList.toggle('btn-danger', enabled);
+    btn.classList.toggle('btn-success', !enabled);
+  } catch (err) {
+    btn.textContent = 'Error';
+    if (status) status.textContent = err.message || 'Error';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function toggleAccessGate() {
+  const btn = document.getElementById('toggle-access-gate-btn');
+  const status = document.getElementById('access-gate-status');
+  if (!btn) return;
+  btn.disabled = true;
+  try {
+    const setting = await getAccessGateSetting();
+    const current = setting?.enabled === true || localStorage.getItem('aether_access_gate_enabled') === 'true';
+    const newVal = !current;
+    const payload = {
+      key: 'access_gate',
+      value: { enabled: newVal, access_code: localStorage.getItem('aether_access_code') || getAccessCode() },
+      updated_at: new Date().toISOString()
+    };
+
+    const { error } = await supabase
+      .from('site_settings')
+      .upsert(payload, { returning: 'minimal' });
+
+    if (error) throw error;
+
+    localStorage.setItem('aether_access_gate_enabled', newVal ? 'true' : 'false');
+    loadAccessGate();
+    showStatus('access-code-status', `Access gate ${newVal ? 'enabled' : 'disabled'}.`, 'success');
+  } catch (err) {
+    showStatus('access-code-status', `Error toggling access gate: ${err.message}`, 'error');
+    btn.disabled = false;
+  }
+}
+
 function setAccountsTab(tabName) {
   const tabs = document.querySelectorAll('.account-tab');
   tabs.forEach(tab => {
@@ -1134,6 +1200,7 @@ window.addEventListener("load", () => {
       loadUsers();
       loadRequests();
       loadAccessCode();
+      loadAccessGate();
       attachEditorUploadHandlers();
       setAccountsTab('register');
     }
@@ -1156,6 +1223,8 @@ window.toggleAnnouncement = toggleAnnouncement;
 window.toggleRule = toggleRule;
 window.updateAccessCode = updateAccessCode;
 window.loadAccessCode = loadAccessCode;
+window.toggleAccessGate = toggleAccessGate;
+window.loadAccessGate = loadAccessGate;
 window.postAnnouncement = postAnnouncement;
 window.deleteAnnouncement = deleteAnnouncement;
 window.postRule = postRule;
