@@ -1192,6 +1192,7 @@ async function createEvent(e) {
   const description = document.getElementById("event-description").value.trim();
   const points = parseInt(document.getElementById("event-points").value);
   const eventDate = document.getElementById("event-date").value;
+  const eventMonthYear = eventDate ? eventDate.slice(0, 7) : null;
 
   if (!name || isNaN(points)) {
     showStatus("event-status", "Event name and points are required.", "error");
@@ -1209,6 +1210,7 @@ async function createEvent(e) {
         description: description || null,
         points,
         event_date: eventDate || null,
+        month_year: eventMonthYear,
         is_active: true
       }]);
 
@@ -1253,6 +1255,7 @@ async function editEvent(eventId) {
         description: newDescription || null,
         points: parseInt(newPoints) || 0,
         event_date: newDate || null,
+        month_year: newDate ? newDate.slice(0, 7) : event.month_year || null,
         updated_at: new Date().toISOString()
       })
       .eq("id", eventId);

@@ -92,6 +92,10 @@ async function loadUser() {
 
   if (!error && clanUser) {
     currentClanUser = clanUser;
+    if (clanUser.is_active === false) {
+      await logout();
+      return;
+    }
   }
 
   if (memberSession?.needsPasswordChange) {

@@ -339,6 +339,7 @@ async function createEvent(e) {
   const description = document.getElementById("event-description").value.trim();
   const points = parseInt(document.getElementById("event-points").value);
   const eventDate = document.getElementById("event-date").value;
+  const eventMonthYear = eventDate ? eventDate.slice(0, 7) : null;
   const isRecurring = isRecurringEnabled();
   const recurrenceType = document.getElementById("recurrence-type").value;
   const recurrenceTime = document.getElementById("recurrence-time").value;
@@ -379,7 +380,7 @@ async function createEvent(e) {
         recurrence_type: isRecurring ? recurrenceType : null,
         recurrence_days: isRecurring ? JSON.stringify(recurrenceDays) : null,
         recurrence_time: isRecurring ? recurrenceTime : null,
-        month_year: new Date().toISOString().slice(0, 7)
+        month_year: eventMonthYear
       }]);
 
     if (error) throw error;
@@ -646,7 +647,8 @@ async function applyBulkAttendance() {
     }
 
     const pointsToAward = customPoints ? parseInt(customPoints) : event.points;
-    const selectedDate = new Date(dateInput);
+    const [year, month, day] = dateInput.split('-').map(Number);
+    const selectedDate = new Date(year, month - 1, day);
     const monthYear = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}`;
 
     const attendanceRecords = selectedMembers.map(userId => ({
@@ -654,6 +656,7 @@ async function applyBulkAttendance() {
       user_id: userId,
       attended: true,
       points_awarded: pointsToAward,
+      attendance_date: selectedDate.toISOString(),
       month_year: monthYear,
       updated_at: new Date().toISOString()
     }));
@@ -726,7 +729,7 @@ async function loadAttendance() {
 
     const { data: attendance, error: attendanceError } = await supabase
       .from("attendance")
-      .select("id, event_id, user_id, attended, points_awarded, month_year, created_at, updated_at")
+      .select("id, event_id, user_id, attended, points_awarded, month_year, attendance_date, created_at, updated_at")
       .order("created_at", { ascending: false });
 
     if (attendanceError) throw attendanceError;
@@ -785,7 +788,7 @@ async function loadAttendance() {
                 <div class="attendance-member-row present">
                   <div>
                     <div class="attendance-member-name">${escapeHtml(record.user?.ign || "Unknown member")}</div>
-                    <div class="attendance-member-meta">Points: ${record.points_awarded ?? 0}</div>
+                    <div class="attendance-member-meta">Points: ${record.points_awarded ?? 0}${record.attendance_date ? ` | Date: ${new Date(record.attendance_date).toLocaleDateString()}` : ''}</div>
                   </div>
                   <div class="attendance-member-actions">
                     <span class="attendance-status-pill present">PRESENT</span>
@@ -843,6 +846,7 @@ async function toggleAttendanceStatus(eventId, userId, currentlyPresent) {
           user_id: userId,
           attended: true,
           points_awarded: event?.points || 0,
+          attendance_date: new Date().toISOString(),
           month_year: event?.month_year || getAttendanceMonthYear(event?.event_date),
           updated_at: new Date().toISOString()
         }], { onConflict: "event_id,user_id" });
@@ -910,6 +914,7 @@ async function editAttendanceEvent(eventId) {
         description: newDescription || null,
         points: parseInt(newPoints, 10) || 0,
         event_date: newDate || null,
+        month_year: newDate ? newDate.slice(0, 7) : event.month_year || null,
         updated_at: new Date().toISOString()
       })
       .eq("id", eventId);

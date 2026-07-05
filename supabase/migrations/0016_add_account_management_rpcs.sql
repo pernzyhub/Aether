@@ -73,11 +73,11 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
-  -- Delete the clan user record
-  DELETE FROM public.clan_users WHERE id = target_user_id;
+  -- Soft delete the clan user by deactivating the record.
+  UPDATE public.clan_users SET is_active = false WHERE id = target_user_id;
   
-  -- Note: We don't delete the auth user here as that requires admin privileges
-  -- The auth user will remain but won't have access to clan functionality
+  -- Note: We don't delete the auth user here as that requires admin privileges.
+  -- Preserving the clan_users row prevents deleted users from being recreated automatically.
 END;
 $$;
 

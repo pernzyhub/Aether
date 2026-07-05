@@ -31,9 +31,12 @@ CREATE TABLE IF NOT EXISTS public.monthly_points_summary (
   UNIQUE(user_id, month_year)
 );
 
--- Add month_year to attendance for monthly tracking
+-- Add month_year and attendance_date to attendance for monthly tracking and date-specific logs
 ALTER TABLE public.attendance
 ADD COLUMN IF NOT EXISTS month_year VARCHAR(7) DEFAULT NULL; -- 'YYYY-MM'
+
+ALTER TABLE public.attendance
+ADD COLUMN IF NOT EXISTS attendance_date TIMESTAMP WITH TIME ZONE DEFAULT NULL;
 
 -- Update existing attendance records to have month_year
 UPDATE public.attendance
