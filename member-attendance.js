@@ -6,6 +6,20 @@ const WEEK_WINDOW_DAYS = (typeof window !== 'undefined' && window.WEEK_WINDOW_DA
 
 function escapeHtml(text) { const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
 
+function formatDate(dateValue) {
+  if (!dateValue) return '';
+  const d = new Date(dateValue);
+  if (Number.isNaN(d.getTime())) return '';
+  return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
+}
+
+function formatTime(dateValue) {
+  if (!dateValue) return '';
+  const d = new Date(dateValue);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+
 window.logout = logout;
 
 async function loadSheet() {
@@ -66,20 +80,36 @@ async function loadSheet() {
     // Build occurrence list: each event occurrence (event_id + dateKey)
     const occurrenceList = [];
     events.forEach(ev => {
-      // collect dates from attendance rows for this event
       const dateSet = new Set();
+
       (attendance || []).forEach(a => {
         if (a.event_id !== ev.id) return;
         const dt = a.attendance_date ? new Date(a.attendance_date) : (a.created_at ? new Date(a.created_at) : null);
-        if (!dt) return;
-        dateSet.add(dt.toISOString().slice(0,10));
+        if (!dt || Number.isNaN(dt.getTime())) return;
+        dateSet.add(dt.toISOString());
       });
-      // if no attendance dates, include event.event_date if present and in month
+
       if (dateSet.size === 0 && ev.event_date) {
-        try { dateSet.add(new Date(ev.event_date).toISOString().slice(0,10)); } catch(e) {}
+        const dt = new Date(ev.event_date);
+        if (!Number.isNaN(dt.getTime())) {
+          dateSet.add(dt.toISOString());
+        }
       }
+
       const dates = Array.from(dateSet).sort();
-      dates.forEach(dk => occurrenceList.push({ eventId: ev.id, eventName: ev.name || 'Event', dateKey: dk }));
+      dates.forEach(dtIso => {
+        occurrenceList.push({
+          eventId: ev.id,
+          eventName: ev.name || 'Event',
+          dateKey: dtIso.slice(0,10),
+          dateTime: dtIso
+        });
+      });
+    });
+
+    occurrenceList.sort((a, b) => {
+      if (a.dateTime !== b.dateTime) return a.dateTime.localeCompare(b.dateTime);
+      return a.eventName.localeCompare(b.eventName);
     });
 
     // Compute weekly and monthly progress per user based on unique occurrences
@@ -118,8 +148,9 @@ async function loadSheet() {
     head += '<th style="padding:10px; text-align:center; font-size:11px;">Week</th>';
     head += '<th style="padding:10px; text-align:center; font-size:11px;">Month</th>';
     occurrenceList.forEach(o => {
-      const displayDate = o.dateKey ? new Date(o.dateKey).toLocaleDateString() : 'No date';
-      head += `<th style="padding:10px; text-align:center; font-size:11px;"><div style="max-width:140px;">${escapeHtml(o.eventName)}<br/><small style=\"color:#999\">${escapeHtml(displayDate)}</small></div></th>`;
+      const displayDate = formatDate(o.dateTime);
+      const displayTime = formatTime(o.dateTime);
+      head += `<th style="padding:10px; text-align:center; font-size:11px;"><div style="max-width:140px;">${escapeHtml(o.eventName)}<br/><small style=\"color:#999\">${escapeHtml(displayTime)} ${escapeHtml(displayDate)}</small></div></th>`;
     });
     head += '</tr>';
     thead.innerHTML = head;
