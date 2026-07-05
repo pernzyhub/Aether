@@ -186,9 +186,14 @@ body::before {
 }
 
 .request-page {
-  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  display: grid;
+  grid-template-columns: minmax(260px, 0.9fr) minmax(340px, 1.2fr) minmax(280px, 0.95fr);
   align-items: start;
-  gap: 22px;
+  gap: 20px;
+}
+
+.request-column {
+  min-width: 0;
 }
 
 .request-left-column {
@@ -247,16 +252,16 @@ body::before {
 .request-summary {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .request-entry,
 .summary-card {
   background: rgba(4, 16, 10, 0.95);
   border: 1px solid rgba(0, 255, 136, 0.25);
-  border-radius: 14px;
-  padding: 12px 13px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 10px 11px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   position: relative;
   overflow: hidden;
 }
@@ -275,7 +280,7 @@ body::before {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 12px;
+  gap: 10px;
 }
 
 .request-entry::after {
@@ -291,7 +296,7 @@ body::before {
 .request-entry-main {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
   flex: 1;
 }
@@ -299,7 +304,7 @@ body::before {
 .request-entry-topline {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
   align-items: center;
 }
 
@@ -317,29 +322,29 @@ body::before {
 
 .request-copy {
   color: #ffffff;
-  line-height: 1.45;
-  font-size: 0.95rem;
+  line-height: 1.3;
+  font-size: 0.9rem;
 }
 
 .request-progress-pill {
   display: inline-flex;
   align-self: flex-start;
-  padding: 6px 10px;
+  padding: 4px 8px;
   border-radius: 999px;
   background: rgba(0, 255, 136, 0.14);
   border: 1px solid rgba(0, 255, 136, 0.25);
   color: #7dffb4;
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   font-weight: 700;
 }
 
 .request-note {
   display: block;
-  margin-top: 4px;
+  margin-top: 2px;
   color: #e8fff0;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
 }
 
 .request-entry-actions {
@@ -347,26 +352,26 @@ body::before {
   flex-direction: column;
   align-items: flex-end;
   justify-content: flex-start;
-  gap: 6px;
+  gap: 4px;
   flex-shrink: 0;
 }
 
 .request-action-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 3px;
   flex-wrap: nowrap;
 }
 
 .request-action {
   width: auto;
-  min-width: 74px;
-  padding: 7px 10px;
+  min-width: 48px;
+  padding: 3px 6px;
   border-width: 1px;
   border-radius: 999px;
-  font-size: 0.74rem;
-  letter-spacing: 0.5px;
-  line-height: 1.1;
+  font-size: 0.62rem;
+  letter-spacing: 0.3px;
+  line-height: 1;
 }
 
 .request-action-edit {
@@ -494,6 +499,10 @@ body::before {
 
   .request-page {
     grid-template-columns: 1fr;
+  }
+
+  .request-column {
+    width: 100%;
   }
 
   .request-entry {

@@ -18,57 +18,55 @@
   </header>
 
   <div class="container request-page">
-    <div class="request-left-column">
-      <section class="card request-form-card">
-        <h2>REQUEST AN ITEM</h2>
-        <form id="request-form" onsubmit="submitRequest(event)">
-          <div class="form-group">
-            <label for="item-select">Select Item</label>
-            <select id="item-select" required>
-              <option value="">Loading items...</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="quantity">Quantity</label>
-            <input type="number" id="quantity" min="1" value="1" required />
-          </div>
-          <div class="form-group">
-            <label for="notes">Notes (Optional)</label>
-            <textarea id="notes"></textarea>
-          </div>
-          <div class="form-group">
-            <label for="proof-image">Proof Image (Optional)</label>
-            <input type="file" id="proof-image" accept="image/*" />
-          </div>
-          <button type="submit" class="btn btn-primary">SUBMIT REQUEST</button>
-        </form>
-        <p id="request-status" class="status-text"></p>
-      </section>
-
-      <section class="card request-feed-card">
-        <div class="card-heading">
-          <h2>REQUEST FEED</h2>
-          <div class="card-controls">
-            <label class="control-label" for="request-filter">Filter</label>
-            <select id="request-filter" class="sort-select">
-              <option value="all">All</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="denied">Denied</option>
-            </select>
-            <label class="control-label" for="request-sort">Sort</label>
-            <select id="request-sort" class="sort-select">
-              <option value="newest">Newest</option>
-              <option value="oldest">Oldest</option>
-            </select>
-          </div>
-          <span class="card-badge">LIVE</span>
+    <section class="card request-form-card request-column">
+      <h2>REQUEST AN ITEM</h2>
+      <form id="request-form" onsubmit="submitRequest(event)">
+        <div class="form-group">
+          <label for="item-select">Select Item</label>
+          <select id="item-select" required>
+            <option value="">Loading items...</option>
+          </select>
         </div>
-        <div id="my-requests" class="request-feed"></div>
-      </section>
-    </div>
+        <div class="form-group">
+          <label for="quantity">Quantity</label>
+          <input type="number" id="quantity" min="1" value="1" required />
+        </div>
+        <div class="form-group">
+          <label for="notes">Notes (Optional)</label>
+          <textarea id="notes"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="proof-image">Proof Image (Optional)</label>
+          <input type="file" id="proof-image" accept="image/*" />
+        </div>
+        <button type="submit" class="btn btn-primary">SUBMIT REQUEST</button>
+      </form>
+      <p id="request-status" class="status-text"></p>
+    </section>
 
-    <section class="card request-summary-card">
+    <section class="card request-feed-card request-column">
+      <div class="card-heading">
+        <h2>REQUEST FEED</h2>
+        <div class="card-controls">
+          <label class="control-label" for="request-filter">Filter</label>
+          <select id="request-filter" class="sort-select">
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="denied">Denied</option>
+          </select>
+          <label class="control-label" for="request-sort">Sort</label>
+          <select id="request-sort" class="sort-select">
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+          </select>
+        </div>
+        <span class="card-badge">LIVE</span>
+      </div>
+      <div id="my-requests" class="request-feed"></div>
+    </section>
+
+    <section class="card request-summary-card request-column">
       <div class="card-heading">
         <h2>ITEM SUMMARY</h2>
         <div class="card-controls summary-controls">
