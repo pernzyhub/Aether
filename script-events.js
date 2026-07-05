@@ -812,6 +812,34 @@ async function loadAttendance() {
       }));
       const hasAttendance = eventRecords.length > 0;
 
+      // compute event-level weekly/monthly summaries
+      const now = new Date();
+      const weekAgo = new Date(now);
+      weekAgo.setDate(now.getDate() - 6);
+      const monthTarget = event.month_year || (event.event_date ? (new Date(event.event_date)).toISOString().slice(0,7) : null);
+      const eventWeekPoints = eventRecords.reduce((s, r) => {
+        const d = r.attendance_date ? new Date(r.attendance_date) : (r.created_at ? new Date(r.created_at) : null);
+        if (!d) return s;
+        if (d >= weekAgo && r.attended) return s + (r.points_awarded || 0);
+        return s;
+      }, 0);
+      const eventWeekPresent = eventRecords.reduce((c, r) => {
+        const d = r.attendance_date ? new Date(r.attendance_date) : (r.created_at ? new Date(r.created_at) : null);
+        if (!d) return c;
+        if (d >= weekAgo && r.attended) return c + 1;
+        return c;
+      }, 0);
+      const eventMonthPoints = eventRecords.reduce((s, r) => {
+        const my = r.month_year || (r.attendance_date ? new Date(r.attendance_date).toISOString().slice(0,7) : null);
+        if (my === monthTarget && r.attended) return s + (r.points_awarded || 0);
+        return s;
+      }, 0);
+      const eventMonthPresent = eventRecords.reduce((c, r) => {
+        const my = r.month_year || (r.attendance_date ? new Date(r.attendance_date).toISOString().slice(0,7) : null);
+        if (my === monthTarget && r.attended) return c + 1;
+        return c;
+      }, 0);
+
       return `
         <div class="attendance-event-card">
           <button type="button" class="attendance-event-header" onclick="toggleAttendanceCard('${event.id}')">
@@ -822,6 +850,8 @@ async function loadAttendance() {
             <div class="attendance-event-badges">
               <span class="attendance-pill present">${presentMembers.length} present</span>
               <span class="attendance-pill absent">${hasAttendance ? absentUsers.length : 0} absent</span>
+              <span class="attendance-pill week">W: ${eventWeekPresent}/${eventWeekPoints} pts</span>
+              <span class="attendance-pill month">M: ${eventMonthPresent}/${eventMonthPoints} pts</span>
             </div>
           </button>
           <div id="attendance-event-body-${event.id}" class="attendance-event-body" style="display: ${attendanceLogState.openEventIds[event.id] ? 'block' : 'none'};">
