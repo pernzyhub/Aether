@@ -20,6 +20,18 @@ function formatTime(dateValue) {
   return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 }
 
+function formatDateTime(dateValue) {
+  if (!dateValue) return '';
+  const d = new Date(dateValue);
+  if (Number.isNaN(d.getTime())) return '';
+  const dateText = formatDate(d);
+  const timeText = formatTime(d);
+  if (d.getHours() === 0 && d.getMinutes() === 0 && d.getSeconds() === 0) {
+    return dateText;
+  }
+  return `${timeText} ${dateText}`;
+}
+
 window.logout = logout;
 
 async function loadSheet() {
@@ -91,13 +103,20 @@ async function loadSheet() {
     const { data: attendanceRecords, error: attErr } = await supabase
       .from('attendance')
       .select('id, user_id, event_id, attended, points_awarded, month_year, attendance_date, created_at')
-      .in('event_id', eventIdArray);
+      .in('event_id', eventIdArray)
+      .or(`month_year.eq.${monthYear},and(attendance_date.gte.${monthStartIso},attendance_date.lt.${nextMonthStartIso})`);
 
     if (attErr) throw new Error(`Attendance query failed: ${attErr.message}`);
 
+    const attendanceRecordsFiltered = (attendanceRecords || []).filter(a => {
+      const dt = a.attendance_date ? new Date(a.attendance_date) : null;
+      const recordMonthYear = a.month_year || (dt ? dt.toISOString().slice(0, 7) : null);
+      return recordMonthYear === monthYear || (dt && dt >= monthStart && dt < nextMonthStart);
+    });
+
     // Build a lookup of the latest attendance record per event+user+date (date-keyed)
     const attendanceMap = {}; // key: eventId::userId::YYYY-MM-DD -> record
-    (attendanceRecords || []).forEach(a => {
+    (attendanceRecordsFiltered || []).forEach(a => {
       const dt = a.attendance_date ? new Date(a.attendance_date) : (a.created_at ? new Date(a.created_at) : null);
       if (!dt || Number.isNaN(dt.getTime())) return;
       const dateKey = dt.toISOString().slice(0,10);
@@ -112,16 +131,18 @@ async function loadSheet() {
     events.forEach(ev => {
       const dateSet = new Set();
 
-      (attendanceRecords || []).forEach(a => {
+      (attendanceRecordsFiltered || []).forEach(a => {
         if (a.event_id !== ev.id) return;
         const dt = a.attendance_date ? new Date(a.attendance_date) : (a.created_at ? new Date(a.created_at) : null);
         if (!dt || Number.isNaN(dt.getTime())) return;
-        dateSet.add(dt.toISOString());
+        if (dt >= monthStart && dt < nextMonthStart) {
+          dateSet.add(dt.toISOString());
+        }
       });
 
       if (dateSet.size === 0 && ev.event_date) {
         const dt = new Date(ev.event_date);
-        if (!Number.isNaN(dt.getTime())) {
+        if (!Number.isNaN(dt.getTime()) && dt >= monthStart && dt < nextMonthStart) {
           dateSet.add(dt.toISOString());
         }
       }

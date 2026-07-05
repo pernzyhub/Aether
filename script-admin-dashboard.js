@@ -1308,7 +1308,7 @@ async function loadEvents() {
           <div class="list-item-title">${escapeHtml(event.name)} <span class="qty-badge">${event.points} pts</span></div>
           <div class="list-item-meta">
             ${event.description ? escapeHtml(event.description) : 'No description'}
-            ${event.event_date ? `| Date: ${new Date(event.event_date).toLocaleString()}` : ''}
+            ${event.event_date ? `| Date: ${escapeHtml(formatDateTime(event.event_date))}` : ''}
           </div>
           <div class="list-item-text">
             Status: <strong style="color: ${event.is_active ? '#00ff88' : '#ff4444'};">
