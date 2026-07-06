@@ -519,6 +519,10 @@ async function deleteEvent(eventId) {
 
 /* BULK ATTENDANCE */
 let allMembers = [];
+let distributionMembers = [];
+let distributionAssignments = [];
+let distributionSaved = false;
+let distributionHistory = [];
 
 async function loadBulkEventSelect() {
   console.log('loadBulkEventSelect() called');
@@ -1462,50 +1466,169 @@ function setEventsTab(tabName) {
 }
 
 /* ITEM DISTRIBUTION */
-function loadItemDistribution() {
-  console.log('loadItemDistribution() called');
-  const statusEl = document.getElementById('item-distribution-status');
-  const logContainer = document.getElementById('distribution-log');
-  if (statusEl) statusEl.textContent = 'Ready to log item distributions.';
-  if (logContainer) {
-    logContainer.innerHTML = '<p style="color:#ccc;">No distributions logged yet.</p>';
-  }
+let distributionMembers = [];
+let distributionAssignments = [];
+let distributionSaved = false;
+let distributionHistory = [];
+
+function loadDistributionMembers() {
+  const container = document.getElementById('distribution-members-list');
+  const countEl = document.getElementById('distribution-member-count');
+  if (!container) return;
+
+  container.innerHTML = '<p style="color:#ccc;">Loading members...</p>';
+
+  fetchClanUsersWithOptionalHidden(
+    'id, ign, is_active, is_hidden_from_members',
+    'id, ign',
+    (query) => query.eq('is_active', true).order('ign')
+  ).then(({ data: members, error }) => {
+    if (error) {
+      container.innerHTML = `<p class="status-text error">Error loading members: ${escapeHtml(error.message)}</p>`;
+      return;
+    }
+
+    distributionMembers = filterVisibleMembers(members || []);
+    renderDistributionMemberList();
+    if (countEl) countEl.textContent = '0';
+  }).catch(err => {
+    container.innerHTML = `<p class="status-text error">Error loading members: ${escapeHtml(err.message)}</p>`;
+  });
 }
 
-function logItemDistribution() {
-  const itemName = document.getElementById('distribution-item-name')?.value.trim();
-  const quantity = Number(document.getElementById('distribution-item-quantity')?.value);
-  const recipientIgn = document.getElementById('distribution-recipient')?.value.trim();
-  const notes = document.getElementById('distribution-notes')?.value.trim();
-  const statusEl = document.getElementById('item-distribution-status');
-  const logContainer = document.getElementById('distribution-log');
-
-  if (!itemName || !recipientIgn || Number.isNaN(quantity) || quantity < 1) {
-    if (statusEl) showStatus('item-distribution-status', 'Item name, quantity, and recipient IGN are required.', 'error');
+function renderDistributionMemberList() {
+  const container = document.getElementById('distribution-members-list');
+  if (!container) return;
+  if (!distributionMembers.length) {
+    container.innerHTML = '<p style="color:#ccc;">No members available.</p>';
     return;
   }
 
-  const timestamp = new Date().toLocaleString();
-  const entryHtml = `
-    <div class="list-item" style="margin-bottom:12px; padding:14px; background:#111; border:1px solid #333;">
-      <div class="list-item-content">
-        <div class="list-item-title">${escapeHtml(itemName)} <span class="qty-badge">x${quantity}</span></div>
-        <div class="list-item-meta">Recipient: <strong>${escapeHtml(recipientIgn)}</strong> | ${escapeHtml(timestamp)}</div>
-        <div class="list-item-text">${escapeHtml(notes || 'No notes')}</div>
-      </div>
-    </div>
-  `;
+  container.innerHTML = distributionMembers.map(member => `
+    <label style="display:block; margin-bottom:8px; color:#fff; font-size:13px;">
+      <input type="checkbox" name="distribution-member" value="${escapeHtml(member.id)}" style="margin-right:8px;" />
+      ${escapeHtml(member.ign)}
+    </label>
+  `).join('');
 
-  if (logContainer) {
-    const previous = logContainer.innerHTML.includes('No distributions logged yet.') ? '' : logContainer.innerHTML;
-    logContainer.innerHTML = entryHtml + previous;
+  container.querySelectorAll('input[name="distribution-member"]').forEach(input => {
+    input.addEventListener('change', updateDistributionMemberCount);
+  });
+}
+
+function getSelectedDistributionMembers() {
+  return distributionMembers.filter(member => {
+    const checkbox = document.querySelector(`input[name="distribution-member"][value="${member.id}"]`);
+    return checkbox && checkbox.checked;
+  });
+}
+
+function updateDistributionMemberCount() {
+  const selected = getSelectedDistributionMembers();
+  const countEl = document.getElementById('distribution-member-count');
+  if (countEl) countEl.textContent = String(selected.length);
+}
+
+function parseDistributionItems() {
+  const raw = document.getElementById('distribution-items-input')?.value || '';
+  return raw.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
+}
+
+function distributeItems() {
+  const selectedMembers = getSelectedDistributionMembers();
+  const items = parseDistributionItems();
+  const statusEl = document.getElementById('item-distribution-status');
+
+  if (!selectedMembers.length) {
+    if (statusEl) showStatus('item-distribution-status', 'Please select at least one member.', 'error');
+    return;
   }
 
-  if (statusEl) showStatus('item-distribution-status', 'Item distribution logged locally.', 'success');
-  document.getElementById('distribution-item-name').value = '';
-  document.getElementById('distribution-item-quantity').value = '';
-  document.getElementById('distribution-recipient').value = '';
-  document.getElementById('distribution-notes').value = '';
+  if (!items.length) {
+    if (statusEl) showStatus('item-distribution-status', 'Please enter at least one item.', 'error');
+    return;
+  }
+
+  distributionAssignments = selectedMembers.map((member, index) => ({
+    member,
+    item: items[index % items.length],
+    saved: false
+  }));
+  distributionSaved = false;
+  renderDistributionPreview();
+  renderDistributionDetails();
+
+  if (statusEl) showStatus('item-distribution-status', 'Preview created. Confirm to save final distribution.', 'info');
+}
+
+function renderDistributionPreview() {
+  const preview = document.getElementById('distribution-preview-list');
+  if (!preview) return;
+  if (!distributionAssignments.length) {
+    preview.innerHTML = '<p style="color:#ccc; margin:0;">No assignments yet.</p>';
+    return;
+  }
+
+  preview.innerHTML = distributionAssignments.map((entry, idx) => `
+    <div style="padding:10px 0; border-bottom:1px solid #222; color:#fff;">
+      <strong>${idx + 1}.</strong> ${escapeHtml(entry.member.ign)} → <span style="color:#00ff88;">${escapeHtml(entry.item)}</span>
+    </div>
+  `).join('');
+}
+
+function renderDistributionDetails() {
+  const panel = document.getElementById('distribution-details-panel');
+  if (!panel) return;
+  if (!distributionAssignments.length) {
+    panel.innerHTML = '<p style="color:#ccc; margin:0;">Toggle details after distribution.</p>';
+    return;
+  }
+
+  panel.innerHTML = distributionAssignments.map(entry => `
+    <div style="padding:10px; border:1px solid #222; border-radius:6px; margin-bottom:10px; background:#080808; color:#fff;">
+      <div style="margin-bottom:6px; font-weight:bold;">${escapeHtml(entry.member.ign)}</div>
+      <div>Item: <strong style="color:#00ff88;">${escapeHtml(entry.item)}</strong></div>
+      <div>Status: <strong>${entry.saved ? 'Saved' : 'Pending'}</strong></div>
+    </div>
+  `).join('');
+}
+
+function toggleDistributionDetails() {
+  const panel = document.getElementById('distribution-details-panel');
+  if (!panel) return;
+  panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+}
+
+function confirmDistribution() {
+  const statusEl = document.getElementById('item-distribution-status');
+  if (!distributionAssignments.length) {
+    if (statusEl) showStatus('item-distribution-status', 'No distribution assignments to confirm.', 'error');
+    return;
+  }
+
+  if (!confirm('Confirm distribution finalization? This will save the assignments.')) return;
+
+  distributionAssignments = distributionAssignments.map(entry => ({ ...entry, saved: true }));
+  distributionSaved = true;
+  distributionHistory.push({
+    savedAt: new Date().toISOString(),
+    assignments: distributionAssignments.map(entry => ({ memberId: entry.member.id, ign: entry.member.ign, item: entry.item }))
+  });
+  renderDistributionPreview();
+  renderDistributionDetails();
+
+  if (statusEl) showStatus('item-distribution-status', 'Distribution confirmed and saved.', 'success');
+}
+
+function loadItemDistribution() {
+  console.log('loadItemDistribution() called');
+  const statusEl = document.getElementById('item-distribution-status');
+  const preview = document.getElementById('distribution-preview-list');
+  const panel = document.getElementById('distribution-details-panel');
+  if (statusEl) statusEl.textContent = 'Ready for item distribution.';
+  if (preview) preview.innerHTML = '<p style="color:#ccc; margin:0;">No preview generated yet.</p>';
+  if (panel) panel.innerHTML = '<p style="color:#ccc; margin:0;">Toggle details after distribution.</p>';
+  loadDistributionMembers();
 }
 
 /* MEMBERS SHEET */
@@ -1751,9 +1874,35 @@ window.addEventListener("load", () => {
       applyBulkAttendanceBtn.addEventListener("click", applyBulkAttendance);
     }
 
-    const distributionSubmitBtn = document.getElementById("distribution-submit-btn");
-    if (distributionSubmitBtn) {
-      distributionSubmitBtn.addEventListener("click", logItemDistribution);
+    const distributeItemsBtn = document.getElementById("distribute-items-btn");
+    if (distributeItemsBtn) {
+      distributeItemsBtn.addEventListener("click", distributeItems);
+    }
+
+    const confirmDistributionBtn = document.getElementById("confirm-distribution-btn");
+    if (confirmDistributionBtn) {
+      confirmDistributionBtn.addEventListener("click", confirmDistribution);
+    }
+
+    const distributionToggleOnBtn = document.getElementById("distribution-toggle-on-btn");
+    if (distributionToggleOnBtn) {
+      distributionToggleOnBtn.addEventListener("click", () => {
+        document.querySelectorAll('input[name="distribution-member"]').forEach(input => { input.checked = true; });
+        updateDistributionMemberCount();
+      });
+    }
+
+    const distributionToggleOffBtn = document.getElementById("distribution-toggle-off-btn");
+    if (distributionToggleOffBtn) {
+      distributionToggleOffBtn.addEventListener("click", () => {
+        document.querySelectorAll('input[name="distribution-member"]').forEach(input => { input.checked = false; });
+        updateDistributionMemberCount();
+      });
+    }
+
+    const toggleUserDetailsBtn = document.getElementById("toggle-user-details-btn");
+    if (toggleUserDetailsBtn) {
+      toggleUserDetailsBtn.addEventListener("click", toggleDistributionDetails);
     }
 
     const logoutBtn = document.getElementById("logout-button");
@@ -1790,11 +1939,6 @@ window.addEventListener("load", () => {
   const eventForm = document.getElementById("event-form");
   if (eventForm) {
     eventForm.addEventListener("submit", createEvent);
-  }
-
-  const distributionSubmitBtn = document.getElementById("distribution-submit-btn");
-  if (distributionSubmitBtn) {
-    distributionSubmitBtn.addEventListener("click", logItemDistribution);
   }
 
   window.setTimeout(async () => {
@@ -1853,4 +1997,6 @@ window.deleteAttendance = deleteAttendance;
 window.loadMonthlyPoints = loadMonthlyPoints;
 window.setEventsTab = setEventsTab;
 window.toggleAllBulkMembers = toggleAllBulkMembers;
-window.logItemDistribution = logItemDistribution;
+window.distributeItems = distributeItems;
+window.confirmDistribution = confirmDistribution;
+window.toggleDistributionDetails = toggleDistributionDetails;

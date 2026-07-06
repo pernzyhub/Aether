@@ -219,6 +219,41 @@
         </div>
       </div>
 
+      <!-- Item Distribution Tab -->
+      <div id="events-tab-item-distribution" class="events-tab-content">
+        <p id="item-distribution-status" class="status-text"></p>
+        <div style="display: grid; grid-template-columns: 1.1fr 1fr 1.1fr 1fr; gap: 18px; align-items: start;">
+          <div style="border:1px solid #444; border-radius:8px; padding:16px; background:#111;">
+            <h3 style="margin-top:0; color:#ff6688;">PICK MEMBERS</h3>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+              <button type="button" id="distribution-toggle-on-btn" class="btn btn-secondary" style="padding:8px 12px;">TOGGLE ALL ON</button>
+              <button type="button" id="distribution-toggle-off-btn" class="btn btn-secondary" style="padding:8px 12px;">TOGGLE ALL OFF</button>
+            </div>
+            <div id="distribution-members-list" style="max-height:520px; overflow:auto; border:1px solid #333; padding:10px; border-radius:6px; background:#0b0b0b;"></div>
+            <small style="color:#888; display:block; margin-top:8px;">Selected <span id="distribution-member-count" style="color:#ff6688;">0</span> members.</small>
+          </div>
+
+          <div style="border:1px solid #444; border-radius:8px; padding:16px; background:#111;">
+            <h3 style="margin-top:0; color:#00ff88;">ITEM LIST</h3>
+            <textarea id="distribution-items-input" class="input" placeholder="Enter one item per line\nExample:\nSword of Fire\nMagic Potion\nGold Chest" style="width:100%; min-height:340px; resize:vertical;"></textarea>
+            <button type="button" id="distribute-items-btn" class="btn btn-primary" style="margin-top:12px; width:100%;">DISTRIBUTE</button>
+            <p style="margin-top:10px; color:#aaa; font-size:13px;">Distribute items to selected members for preview. Use Confirm & Save to persist.</p>
+          </div>
+
+          <div style="border:1px solid #444; border-radius:8px; padding:16px; background:#111;">
+            <h3 style="margin-top:0; color:#ffa500;">PREVIEW ASSIGNMENTS</h3>
+            <div id="distribution-preview-list" style="min-height:320px; overflow:auto; border:1px solid #333; border-radius:6px; padding:10px; background:#0b0b0b;"></div>
+            <button type="button" id="confirm-distribution-btn" class="btn btn-success" style="margin-top:12px; width:100%; background:#00ff88; color:#000;">CONFIRM AND SAVE</button>
+          </div>
+
+          <div style="border:1px solid #444; border-radius:8px; padding:16px; background:#111;">
+            <h3 style="margin-top:0; color:#ccc;">USER DETAILS</h3>
+            <button type="button" id="toggle-user-details-btn" class="btn btn-secondary" style="margin-bottom:12px; width:100%;">TOGGLE DETAILS</button>
+            <div id="distribution-details-panel" style="display:none; min-height:320px; overflow:auto; border:1px solid #333; border-radius:6px; padding:10px; background:#0b0b0b;"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- Attendance Log Tab -->
       <div id="events-tab-attendance" class="events-tab-content">
         <p id="attendance-status" class="status-text"></p>
