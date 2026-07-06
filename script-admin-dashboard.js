@@ -977,66 +977,108 @@ async function renderRequests(requests, container, isHistory = false) {
     `}).join("");
 }
 
-function parseRequestIgns(raw) {
-  return raw
-    .split(/[\r\n,]+/)
-    .map(line => line.trim())
-    .filter(line => line.length > 0)
-    .map(line => line.toLowerCase());
+function downloadRequestsCsvGuide() {
+  const headers = ['IGN', 'Item', 'Quantity'];
+  const example = ['ExamplePlayer', 'Epic Promotional Stone', '1'];
+  const csv = [headers.join(','), example.join(',')].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'request-import-guide.csv';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
-function importRequestsFromDiscord() {
-  const raw = document.getElementById('requests-import-input')?.value || '';
+function parseRequestCsv(raw) {
+  const lines = raw.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
+  if (!lines.length) return [];
+
+  const headers = lines[0].split(',').map(header => header.trim().toLowerCase());
+  const ignIndex = headers.findIndex(h => /ign/i.test(h));
+  const itemIndex = headers.findIndex(h => /(item|name)/i.test(h));
+  const qtyIndex = headers.findIndex(h => /(qty|quantity)/i.test(h));
+  if (ignIndex === -1) return [];
+
+  return lines.slice(1).map(line => {
+    const cells = line.split(',').map(cell => cell.trim().replace(/^"|"$/g, ''));
+    return {
+      ign: cells[ignIndex] || '',
+      item: itemIndex >= 0 ? (cells[itemIndex] || '') : '',
+      quantity: qtyIndex >= 0 ? (cells[qtyIndex] || '') : ''
+    };
+  }).filter(row => row.ign);
+}
+
+function importRequestsFromCsv() {
+  const fileInput = document.getElementById('requests-import-file');
   const statusEl = document.getElementById('requests-import-status');
   if (!statusEl) return;
-
-  const igns = parseRequestIgns(raw);
-  if (!igns.length) {
-    statusEl.textContent = 'Paste request names from Discord before importing.';
+  if (!fileInput || !fileInput.files || !fileInput.files.length) {
+    statusEl.textContent = 'Choose a CSV file to import.';
     return;
   }
 
-  const lookup = new Set(igns);
-  let matched = 0;
-  const notFound = new Set(igns);
-
-  document.querySelectorAll('input[name="request-select"]').forEach(input => {
-    if (lookup.has(input.value)) {
-      input.checked = true;
-      matched += 1;
-      notFound.delete(input.value);
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+  reader.onload = () => {
+    const csvText = reader.result || '';
+    const rows = parseRequestCsv(String(csvText));
+    if (!rows.length) {
+      statusEl.textContent = 'CSV must include a header row with IGN.';
+      return;
     }
-  });
 
-  statusEl.textContent = `Selected ${matched} request${matched === 1 ? '' : 's'}. ${notFound.size ? `${notFound.size} not found.` : 'All names matched.'}`;
+    const lookup = new Set(rows.map(r => r.ign.toLowerCase()));
+    let matched = 0;
+    const notFound = new Set(lookup);
+
+    document.querySelectorAll('#requests-list input[name="request-select"]').forEach(input => {
+      if (lookup.has(input.value.toLowerCase())) {
+        input.checked = true;
+        matched += 1;
+        notFound.delete(input.value.toLowerCase());
+      } else {
+        input.checked = false;
+      }
+    });
+
+    statusEl.textContent = `Imported ${matched} request${matched === 1 ? '' : 's'}. ${notFound.size ? `${notFound.size} not found.` : 'All matches selected.'}`;
+  };
+  reader.readAsText(file);
 }
 
-function exportSelectedRequests() {
+function exportSelectedRequestsToCsv() {
   const statusEl = document.getElementById('requests-import-status');
-  const outputEl = document.getElementById('requests-import-input');
-  if (!statusEl || !outputEl) return;
+  if (!statusEl) return;
 
-  const selected = Array.from(document.querySelectorAll('input[name="request-select"]:checked')).map(el => el.value);
-  if (!selected.length) {
+  const selectedRows = Array.from(document.querySelectorAll('#requests-list input[name="request-select"]:checked'));
+  if (!selectedRows.length) {
     statusEl.textContent = 'Select at least one request to export.';
     return;
   }
 
-  const exportText = selected.join('\n');
-  outputEl.value = exportText;
-  statusEl.textContent = `Exported ${selected.length} selected request${selected.length === 1 ? '' : 's'}.`;
+  const rows = selectedRows.map(input => {
+    const listItem = input.closest('.list-item');
+    const ign = input.value;
+    const item = listItem?.dataset?.item || '';
+    const quantity = listItem?.dataset?.requestedqty || '';
+    return [ign, item, quantity].map(value => `"${String(value).replace(/"/g, '""')}"`).join(',');
+  });
 
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(exportText).then(() => {
-      statusEl.textContent += ' Copied to clipboard.';
-    }).catch(() => {
-      // ignore clipboard failures
-    });
-  }
+  const csv = ['IGN,Item,Quantity', ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'selected-requests.csv';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  statusEl.textContent = `Exported ${selectedRows.length} selected request${selectedRows.length === 1 ? '' : 's'} to CSV.`;
 }
 
 function clearRequestsImportArea() {
-  const inputEl = document.getElementById('requests-import-input');
+  const inputEl = document.getElementById('requests-import-file');
   const statusEl = document.getElementById('requests-import-status');
   if (inputEl) inputEl.value = '';
   if (statusEl) statusEl.textContent = 'Import area cleared.';
