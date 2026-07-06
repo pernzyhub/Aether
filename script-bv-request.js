@@ -274,19 +274,37 @@ function renderBVSummary(list) {
   }, {});
 
   const groups = Object.keys(grouped).sort();
-  const html = groups.map((title) => {
+  const groupHtml = groups.map((title) => {
     const names = Array.from(grouped[title]).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
     const items = names.map((name) => `<li>${escapeHtml(name)}</li>`).join('');
 
     return `
       <div class="bv-summary-group">
-        <div class="bv-summary-group-title">BLACK VALK: ${escapeHtml(title)}</div>
+        <div class="bv-summary-group-title">${escapeHtml(title)}</div>
         <ul class="bv-summary-group-list">${items}</ul>
       </div>
     `;
   }).join('');
 
-  container.innerHTML = html;
+  const approvedItems = list
+    .filter((r) => String(r.status || '').toLowerCase() === 'approved')
+    .map((r) => {
+      const title = getBVTitle(r.reason);
+      const requestor = r.clan_users?.ign || 'Unknown';
+      return `<li>${escapeHtml(title)} - ${escapeHtml(requestor)}</li>`;
+    })
+    .join('');
+
+  const approvedHtml = approvedItems ? `
+    <div class="bv-summary-approved">
+      <div class="bv-summary-approved-title">DONE</div>
+      <ul class="bv-summary-approved-list">
+        ${approvedItems}
+      </ul>
+    </div>
+  ` : '';
+
+  container.innerHTML = `${groupHtml}${approvedHtml}`;
 }
 
 async function updateBVRequestStatus(requestId, newStatus) {

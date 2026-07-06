@@ -644,6 +644,45 @@ body::before {
     line-height: 1.6;
   }
 
+  .bv-summary-approved {
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: rgba(0, 255, 136, 0.06);
+    border: 1px solid rgba(0, 255, 136, 0.14);
+    margin-top: 16px;
+  }
+
+  .bv-summary-approved-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #efffe8;
+    margin-bottom: 10px;
+    letter-spacing: 0.08em;
+  }
+
+  .bv-summary-approved-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+    display: grid;
+    gap: 8px;
+  }
+
+  .bv-summary-approved-list li {
+    color: #d4ffda;
+    padding-left: 10px;
+    position: relative;
+  }
+
+  .bv-summary-approved-list li::before {
+    content: '-';
+    position: absolute;
+    left: 0;
+    color: #7cff94;
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
   .status-dot {
     width: 12px;
     height: 12px;
