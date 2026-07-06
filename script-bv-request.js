@@ -10,6 +10,7 @@ let bvAllData = [];
 let bvCurrentPage = 1;
 const bvPageSize = 10;
 let bvSort = 'newest';
+let bvTypeMap = new Map();
 
 async function checkAuthLocal() {
   const welcomeEl = document.getElementById("welcome-text");
@@ -101,6 +102,8 @@ async function loadBVTypes() {
   select.disabled = true;
   select.innerHTML = '<option value="">Loading types...</option>';
 
+  bvTypeMap = new Map(BV_TYPE_FALLBACKS.map((t) => [t.key, t.label]));
+
   try {
     const { data, error } = await supabase.from('bv_request_types').select('*').eq('is_active', true).order('sort_order', { ascending: true });
     const types = (!error && Array.isArray(data) && data.length > 0) ? data : BV_TYPE_FALLBACKS;
@@ -112,6 +115,8 @@ async function loadBVTypes() {
       opt.textContent = t.label;
       select.appendChild(opt);
     });
+
+    bvTypeMap = new Map(types.map((t) => [t.key, t.label]));
   } catch (e) {
     console.warn('Could not load BV types:', e.message);
     select.innerHTML = '<option value="">Choose...</option>' + BV_TYPE_FALLBACKS.map(t => `<option value="${t.key}">${t.label}</option>`).join('');
@@ -194,14 +199,17 @@ function applyBVSortAndRender() {
   const start = (bvCurrentPage - 1) * bvPageSize;
   const pageItems = list.slice(start, start + bvPageSize);
 
-  const rows = pageItems.map(r => `
-    <tr>
-      <td>${escapeHtml(currentUser?.ign || 'You')}</td>
-      <td>${escapeHtml(r.reason || '')}</td>
-      <td>${escapeHtml((r.status || 'pending').toUpperCase())}</td>
-      <td>${formatDateTime(r.created_at)}</td>
-    </tr>
-  `).join('');
+  const rows = pageItems.map(r => {
+    const reasonLabel = bvTypeMap.get(r.reason) || r.reason || 'Unknown';
+    return `
+      <tr>
+        <td>${escapeHtml(currentUser?.ign || 'You')}</td>
+        <td>${escapeHtml(reasonLabel)}</td>
+        <td>${escapeHtml((r.status || 'pending').toUpperCase())}</td>
+        <td>${formatDateTime(r.created_at)}</td>
+      </tr>
+    `;
+  }).join('');
 
   container.innerHTML = `
     <table class="compact-table">
