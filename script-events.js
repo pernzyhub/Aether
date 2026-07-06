@@ -1949,30 +1949,50 @@ function renderRewardLogDetailTable(log) {
   titleEl.textContent = `Reward Log ${escapeHtml(log.name)}`;
   subtitleEl.textContent = `Saved: ${new Date(log.savedAt || log.created_at).toLocaleString()}`;
 
-  const rows = (log.assignments || []).map(item => ({
+  log.assignments = (log.assignments || []).map(item => ({
     ...item,
-    status: 'Distributed',
-    notes: `${log.name} • ${new Date(log.savedAt || log.created_at).toLocaleString()}`
+    status: item.status || 'Distributed'
   }));
 
-  if (!rows.length) {
+  if (!log.assignments.length) {
     body.innerHTML = `
       <tr>
-        <td colspan="5" style="padding:16px; color:#ccc; text-align:center;">No items recorded for this reward log.</td>
+        <td colspan="4" style="padding:16px; color:#ccc; text-align:center;">No items recorded for this reward log.</td>
       </tr>
     `;
     return;
   }
 
-  body.innerHTML = rows.map(row => `
-    <tr style="border-bottom:1px solid #222;">
-      <td style="padding:12px 10px; vertical-align:top;">${escapeHtml(row.item)}</td>
-      <td style="padding:12px 10px; vertical-align:top;">${row.quantity}</td>
-      <td style="padding:12px 10px; vertical-align:top;">${escapeHtml(row.ign)}</td>
-      <td style="padding:12px 10px; vertical-align:top; color:#00ff88; font-weight:bold;">${escapeHtml(row.status)}</td>
-      <td style="padding:12px 10px; vertical-align:top; color:#ccc; font-size:13px;">${escapeHtml(row.notes)}</td>
-    </tr>
-  `).join('');
+  body.innerHTML = log.assignments.map((row, index) => {
+    const distributedActive = row.status === 'Distributed';
+    const pendingActive = row.status === 'Pending';
+    return `
+      <tr style="border-bottom:1px solid #222;">
+        <td style="padding:12px 10px; vertical-align:top;">${escapeHtml(row.item)}</td>
+        <td style="padding:12px 10px; vertical-align:top; text-align:center;">${row.quantity}</td>
+        <td style="padding:12px 10px; vertical-align:top;">${escapeHtml(row.ign)}</td>
+        <td style="padding:12px 10px; vertical-align:top;">
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="reward-log-status-btn" data-index="${index}" data-status="Distributed" style="padding:8px 12px; background:${distributedActive ? '#1a8f3a' : '#2d2d2d'}; color:${distributedActive ? '#fff' : '#ccc'}; border:1px solid ${distributedActive ? '#1a8f3a' : '#444'}; border-radius:6px; cursor:pointer;">Distributed</button>
+            <button type="button" class="reward-log-status-btn" data-index="${index}" data-status="Pending" style="padding:8px 12px; background:${pendingActive ? '#aa1f1f' : '#2d2d2d'}; color:${pendingActive ? '#fff' : '#ccc'}; border:1px solid ${pendingActive ? '#aa1f1f' : '#444'}; border-radius:6px; cursor:pointer;">Pending</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  const table = document.getElementById('reward-log-detail-table');
+  if (table) {
+    table.onclick = (event) => {
+      const button = event.target.closest('.reward-log-status-btn');
+      if (!button) return;
+      const rowIndex = Number(button.dataset.index);
+      const newStatus = button.dataset.status;
+      if (!Number.isFinite(rowIndex) || !newStatus) return;
+      log.assignments[rowIndex] = { ...log.assignments[rowIndex], status: newStatus };
+      renderRewardLogDetailTable(log);
+    };
+  }
 }
 
 function openRewardLogsModal() {
