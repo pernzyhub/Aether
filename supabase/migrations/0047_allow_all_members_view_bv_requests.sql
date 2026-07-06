@@ -4,6 +4,7 @@
 ALTER TABLE public.bv_requests ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Users can view their own BV requests" ON public.bv_requests;
+DROP POLICY IF EXISTS "Authenticated users can view BV requests" ON public.bv_requests;
 
 CREATE POLICY "Authenticated users can view BV requests"
   ON public.bv_requests
