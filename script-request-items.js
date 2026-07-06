@@ -452,17 +452,36 @@ async function loadMyRequests() {
     let memberNames = new Map();
 
     if (userIds.length > 0) {
-      const { data: clanUsers, error: clanError } = await supabase
+      let { data: clanUsers, error: clanError } = await supabase
         .from("clan_users")
-        .select("id, ign")
+        .select("id, ign, is_hidden_from_members")
         .in("id", userIds);
 
+      if (clanError && /is_hidden_from_members|column .* does not exist/i.test(clanError.message)) {
+        ({ data: clanUsers, error: clanError } = await supabase
+          .from("clan_users")
+          .select("id, ign")
+          .in("id", userIds));
+      }
+
       if (!clanError && clanUsers) {
-        memberNames = new Map(clanUsers.map(user => [user.id, user.ign || "Unknown Member"]));
+        memberNames = new Map(
+          clanUsers
+            .filter((user) => user.is_hidden_from_members !== true)
+            .map(user => [user.id, user.ign || "Unknown Member"])
+        );
       }
     }
 
-    container.innerHTML = sortedRequests.map(req => {
+    const visibleRequests = sortedRequests.filter((req) => memberNames.has(req.user_id));
+
+    if (visibleRequests.length === 0) {
+      container.innerHTML = '<p class="empty-state">No visible member requests right now.</p>';
+      summaryContainer.innerHTML = '<p class="empty-state">No visible member summary available right now.</p>';
+      return;
+    }
+
+    container.innerHTML = visibleRequests.map(req => {
       const memberName = memberNames.get(req.user_id) || "Unknown Member";
       const isOwner = req.user_id === currentUser?.id;
       const originalQty = Number(req.requested_quantity ?? req.quantity ?? 1);
@@ -521,13 +540,13 @@ async function loadMyRequests() {
         .eq("status", "pending");
 
       if (!pendingError && Array.isArray(allPending)) {
-        pendingRequests = allPending;
+        pendingRequests = allPending.filter((req) => memberNames.has(req.user_id));
       } else {
         // Fallback to using the already-fetched requests if the separate query fails
-        pendingRequests = sortedRequests.filter(req => (req.status || "pending") === "pending");
+        pendingRequests = visibleRequests.filter(req => (req.status || "pending") === "pending");
       }
     } catch (e) {
-      pendingRequests = sortedRequests.filter(req => (req.status || "pending") === "pending");
+      pendingRequests = visibleRequests.filter(req => (req.status || "pending") === "pending");
     }
 
     pendingRequests.forEach(req => {

@@ -82,20 +82,31 @@ async function loadSheet() {
 
     if (eventsErr) throw new Error(`Events query failed: ${eventsErr.message}`);
 
-    const { data: users, error: usErr } = await supabase
+    let { data: users, error: usErr } = await supabase
       .from('clan_users')
-      .select('id, ign')
+      .select('id, ign, is_hidden_from_members')
       .eq('is_active', true)
       .order('ign', { ascending: true });
 
+    if (usErr && /is_hidden_from_members|column .* does not exist/i.test(usErr.message)) {
+      ({ data: users, error: usErr } = await supabase
+        .from('clan_users')
+        .select('id, ign')
+        .eq('is_active', true)
+        .order('ign', { ascending: true }));
+    }
+
     if (usErr) throw new Error(`Users query failed: ${usErr.message}`);
+
+    const visibleUsers = (users || []).filter((user) => user.is_hidden_from_members !== true);
+    const visibleUserIds = new Set(visibleUsers.map((user) => user.id));
 
     if (!events || events.length === 0) {
       container.innerHTML = `<p style="color:#ffaa00">No events found for ${month}</p>`;
       return;
     }
 
-    if (!users || users.length === 0) {
+    if (visibleUsers.length === 0) {
       container.innerHTML = `<p style="color:#ffaa00">No active members found</p>`;
       return;
     }
@@ -109,6 +120,7 @@ async function loadSheet() {
     if (attErr) throw new Error(`Attendance query failed: ${attErr.message}`);
 
     const attendanceRecordsFiltered = (attendanceRecords || []).filter(a => {
+      if (!visibleUserIds.has(a.user_id)) return false;
       const dt = a.attendance_date ? new Date(a.attendance_date) : null;
       const recordMonthYear = a.month_year || (dt ? dt.toISOString().slice(0, 7) : null);
       return recordMonthYear === monthYear || (dt && dt >= monthStart && dt < nextMonthStart);
@@ -169,7 +181,7 @@ async function loadSheet() {
     weekAgo.setDate(now.getDate() - (WEEK_WINDOW_DAYS - 1)); // include today
     const monthlyTarget = month; // 'YYYY-MM'
     const progressMap = {};
-    users.forEach(u => progressMap[u.id] = { totalPoints: 0, weekPoints: 0, weekAttended: 0, monthPoints: 0, monthAttended: 0 });
+    visibleUsers.forEach(u => progressMap[u.id] = { totalPoints: 0, weekPoints: 0, weekAttended: 0, monthPoints: 0, monthAttended: 0 });
     Object.values(attendanceMap).forEach(a => {
       const uid = a.user_id;
       if (!progressMap[uid]) return;
@@ -210,7 +222,7 @@ async function loadSheet() {
     table.appendChild(thead);
 
     const tbody = document.createElement('tbody');
-    users.forEach(u => {
+    visibleUsers.forEach(u => {
       let row = `<tr style="border-bottom:1px solid #222;"><td style="padding:10px; font-weight:600; color:#00ff88;">${escapeHtml(u.ign || 'Unknown')}</td>`;
       const prog = progressMap[u.id] || { totalPoints: 0, weekPoints: 0, weekAttended: 0, monthPoints: 0, monthAttended: 0 };
       row += `<td style="padding:10px; text-align:center; color:#fff;">${prog.totalPoints}</td>`;
@@ -259,14 +271,14 @@ async function loadSheet() {
         pre.style.padding = '10px';
         pre.style.border = '1px solid #113';
         pre.style.borderRadius = '6px';
-        pre.textContent = JSON.stringify(attendanceRecords || [], null, 2);
+        pre.textContent = JSON.stringify(attendanceRecordsFiltered || [], null, 2);
 
         diagContainer.appendChild(btn);
         diagContainer.appendChild(pre);
         container.appendChild(diagContainer);
       } else {
         const pre = diagContainer.querySelector('pre');
-        if (pre) pre.textContent = JSON.stringify(attendanceRecords || [], null, 2);
+        if (pre) pre.textContent = JSON.stringify(attendanceRecordsFiltered || [], null, 2);
       }
     })();
   } catch (err) {

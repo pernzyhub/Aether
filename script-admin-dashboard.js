@@ -656,12 +656,14 @@ async function loadUsers() {
 
     if (error) throw error;
 
-    if (!data || data.length === 0) {
+    const visibleUsers = (data || []).filter((user) => user.id !== currentUser?.id && user.is_hidden_from_members !== true);
+
+    if (visibleUsers.length === 0) {
       container.innerHTML = "<p>No users yet.</p>";
       return;
     }
 
-    container.innerHTML = data.map(user => `
+    container.innerHTML = visibleUsers.map(user => `
       <div class="list-item" data-id="${user.id}">
         <div class="list-item-content">
           <div class="list-item-title">${escapeHtml(user.ign || "IGN not set")}</div>

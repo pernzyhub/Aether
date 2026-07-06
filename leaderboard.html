@@ -382,6 +382,19 @@
     let currentPeriod = 'month';
     let currentUserId = null;
 
+    function isVisibleMember(memberLike) {
+      return memberLike?.clan_users?.is_hidden_from_members !== true
+        && memberLike?.clan_users?.[0]?.is_hidden_from_members !== true;
+    }
+
+    async function fetchWithOptionalHidden(table, selectWithHidden, selectWithoutHidden, applyQuery) {
+      let { data, error } = await applyQuery(supabase.from(table).select(selectWithHidden));
+      if (error && /is_hidden_from_members|column .* does not exist/i.test(error.message)) {
+        ({ data, error } = await applyQuery(supabase.from(table).select(selectWithoutHidden)));
+      }
+      return { data, error };
+    }
+
     // Setup period selector
     document.querySelectorAll('.period-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -416,9 +429,12 @@
         }
 
         if (currentPeriod === 'all') {
-          const { data: allAttendance, error: attendanceError } = await supabase
-            .from('attendance')
-            .select('user_id, attended, points_awarded, clan_users(ign, is_active)');
+          const { data: allAttendance, error: attendanceError } = await fetchWithOptionalHidden(
+            'attendance',
+            'user_id, attended, points_awarded, clan_users(ign, is_active, is_hidden_from_members)',
+            'user_id, attended, points_awarded, clan_users(ign, is_active)',
+            (query) => query
+          );
 
           if (attendanceError) {
             console.warn('Unable to load attendance leaderboard:', attendanceError.message);
@@ -427,7 +443,7 @@
           }
 
           const aggregated = {};
-          (allAttendance || []).forEach(record => {
+          (allAttendance || []).filter(isVisibleMember).forEach(record => {
             const userId = record.user_id;
             if (!aggregated[userId]) {
               aggregated[userId] = {
@@ -436,7 +452,8 @@
                 events_attended: 0,
                 clan_users: [{
                   username: record.clan_users?.ign || 'Unknown member',
-                  is_active: record.clan_users?.is_active
+                  is_active: record.clan_users?.is_active,
+                  is_hidden_from_members: record.clan_users?.is_hidden_from_members
                 }]
               };
             }
@@ -453,11 +470,12 @@
         const now = new Date();
         const monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-        const { data: leaderboardData, error: leaderboardError } = await supabase
-          .from('monthly_points_summary')
-          .select('user_id, total_points, events_attended, clan_users(ign, is_active)')
-          .eq('month_year', monthYear)
-          .order('total_points', { ascending: false });
+        const { data: leaderboardData, error: leaderboardError } = await fetchWithOptionalHidden(
+          'monthly_points_summary',
+          'user_id, total_points, events_attended, clan_users(ign, is_active, is_hidden_from_members)',
+          'user_id, total_points, events_attended, clan_users(ign, is_active)',
+          (query) => query.eq('month_year', monthYear).order('total_points', { ascending: false })
+        );
 
         if (leaderboardError && leaderboardError.code !== 'PGRST116') {
           console.warn('Unable to load leaderboard:', leaderboardError.message);
@@ -465,22 +483,28 @@
           return;
         }
 
-        let enriched = (leaderboardData || []).map(row => ({
+        let enriched = (leaderboardData || []).filter(isVisibleMember).map(row => ({
           user_id: row.user_id,
           total_points: row.total_points || 0,
           events_attended: row.events_attended || 0,
-          clan_users: [{ username: row.clan_users?.ign || 'Unknown member', is_active: row.clan_users?.is_active }]
+          clan_users: [{
+            username: row.clan_users?.ign || 'Unknown member',
+            is_active: row.clan_users?.is_active,
+            is_hidden_from_members: row.clan_users?.is_hidden_from_members
+          }]
         }));
 
         if ((!enriched || enriched.length === 0) && !leaderboardError) {
-          const { data: attendanceRows, error: attendanceFallbackError } = await supabase
-            .from('attendance')
-            .select('user_id, attended, points_awarded, month_year, clan_users(ign, is_active)')
-            .eq('month_year', monthYear);
+          const { data: attendanceRows, error: attendanceFallbackError } = await fetchWithOptionalHidden(
+            'attendance',
+            'user_id, attended, points_awarded, month_year, clan_users(ign, is_active, is_hidden_from_members)',
+            'user_id, attended, points_awarded, month_year, clan_users(ign, is_active)',
+            (query) => query.eq('month_year', monthYear)
+          );
 
           if (!attendanceFallbackError && attendanceRows && attendanceRows.length > 0) {
             const aggregated = {};
-            attendanceRows.forEach(record => {
+            attendanceRows.filter(isVisibleMember).forEach(record => {
               if (!record.user_id) return;
               const userId = record.user_id;
               if (!aggregated[userId]) {
@@ -490,7 +514,8 @@
                   events_attended: 0,
                   clan_users: [{
                     username: record.clan_users?.ign || 'Unknown member',
-                    is_active: record.clan_users?.is_active
+                    is_active: record.clan_users?.is_active,
+                    is_hidden_from_members: record.clan_users?.is_hidden_from_members
                   }]
                 };
               }
