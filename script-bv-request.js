@@ -68,6 +68,24 @@ async function submitBVRequest(e) {
   }
 }
 
+async function loadBVTypes() {
+  try {
+    const { data, error } = await supabase.from('bv_request_types').select('*').eq('is_active', true).order('sort_order', { ascending: true });
+    if (error) throw error;
+    const select = document.getElementById('bv-select');
+    if (!select) return;
+    // clear existing options except placeholder
+    const placeholder = select.querySelector('option[value=""]');
+    select.innerHTML = '';
+    if (placeholder) select.appendChild(placeholder);
+    (data || []).forEach(t => {
+      const opt = document.createElement('option'); opt.value = t.key; opt.textContent = t.label; select.appendChild(opt);
+    });
+  } catch (e) {
+    console.warn('Could not load BV types:', e.message);
+  }
+}
+
 function formatDateTime(value) {
   if (!value) return '';
   return new Date(value).toLocaleString();
@@ -176,6 +194,7 @@ window.addEventListener('load', () => {
     document.getElementById('bv-prev-page')?.addEventListener('click', () => { bvCurrentPage = Math.max(1, bvCurrentPage - 1); applyBVSortAndRender(); });
     document.getElementById('bv-next-page')?.addEventListener('click', () => { bvCurrentPage = bvCurrentPage + 1; applyBVSortAndRender(); });
     document.getElementById('bv-export-csv')?.addEventListener('click', () => exportCurrentBVPageCsv());
+    loadBVTypes();
     loadBVRequests();
     setActiveNavLink && setActiveNavLink();
 

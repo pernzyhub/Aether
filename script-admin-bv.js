@@ -2,6 +2,7 @@ import { supabase } from './lib/supabaseClient.js';
 
 let adminPending = [];
 let adminPast = [];
+let adminBVTypes = [];
 
 async function loadAdminBVRequests() {
   const container = document.getElementById('bv-requests-list');
@@ -19,10 +20,65 @@ async function loadAdminBVRequests() {
     adminPast = past || [];
 
     renderAdminLists();
+    loadAdminBVTypes();
   } catch (err) {
     if (container) container.innerHTML = `<p class="status-text error">Error loading BV requests: ${err.message}</p>`;
     if (historyContainer) historyContainer.innerHTML = `<p class="status-text error">Error loading history: ${err.message}</p>`;
   }
+}
+
+async function loadAdminBVTypes() {
+  try {
+    const { data, error } = await supabase.from('bv_request_types').select('*').order('sort_order', { ascending: true });
+    if (error) throw error;
+    adminBVTypes = data || [];
+    renderAdminBVTypes();
+  } catch (e) {
+    const el = document.getElementById('bv-types-admin-list');
+    if (el) el.innerHTML = `<p class="status-text error">Error loading BV types: ${e.message}</p>`;
+  }
+}
+
+function renderAdminBVTypes() {
+  const el = document.getElementById('bv-types-admin-list');
+  if (!el) return;
+  if (!adminBVTypes || adminBVTypes.length === 0) { el.innerHTML = '<p class="empty-state">No BV types defined.</p>'; return; }
+  el.innerHTML = adminBVTypes.map(t => `
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 4px; border-bottom:1px solid #111;">
+      <div style="display:flex; gap:8px; align-items:center;">
+        <strong style="min-width:100px;">${escapeHtml(t.key)}</strong>
+        <span>${escapeHtml(t.label)}</span>
+      </div>
+      <div style="display:flex; gap:6px; align-items:center;">
+        <label style="display:flex; align-items:center; gap:6px;">
+          <input type="checkbox" ${t.is_active ? 'checked' : ''} onchange="toggleBVTypeActive('${t.id}', this.checked)" /> Active
+        </label>
+        <button class="btn-xs btn-danger" onclick="deleteBVType('${t.id}')">DEL</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function addBVType(e) {
+  e && e.preventDefault && e.preventDefault();
+  const key = document.getElementById('bv-type-key')?.value?.trim();
+  const label = document.getElementById('bv-type-label')?.value?.trim();
+  if (!key || !label) return alert('Provide key and label');
+  try {
+    const { error } = await supabase.from('bv_request_types').insert([{ key, label, is_active: true }]);
+    if (error) throw error;
+    document.getElementById('bv-type-form')?.reset();
+    loadAdminBVTypes();
+  } catch (err) { alert('Error adding type: '+err.message); }
+}
+
+async function toggleBVTypeActive(id, isActive) {
+  try { const { error } = await supabase.from('bv_request_types').update({ is_active: isActive }).eq('id', id); if (error) throw error; loadAdminBVTypes(); } catch (e) { alert('Error: '+e.message); }
+}
+
+async function deleteBVType(id) {
+  if (!confirm('Delete this BV type?')) return;
+  try { const { error } = await supabase.from('bv_request_types').delete().eq('id', id); if (error) throw error; loadAdminBVTypes(); } catch (e) { alert('Error: '+e.message); }
 }
 
 function renderAdminLists() {
@@ -92,6 +148,9 @@ async function deleteBVRequest(id) {
 window.approveBVRequest = approveBVRequest;
 window.denyBVRequest = denyBVRequest;
 window.deleteBVRequest = deleteBVRequest;
+window.addBVType = addBVType;
+window.toggleBVTypeActive = toggleBVTypeActive;
+window.deleteBVType = deleteBVType;
 
 window.addEventListener('load', () => setTimeout(() => { 
   try { 
@@ -102,6 +161,7 @@ window.addEventListener('load', () => setTimeout(() => {
     if (refresh) refresh.addEventListener('click', () => loadAdminBVRequests());
     const exportBtn = document.getElementById('bv-requests-export');
     if (exportBtn) exportBtn.addEventListener('click', () => exportAdminPendingCsv());
+    const typeForm = document.getElementById('bv-type-form'); if (typeForm) typeForm.addEventListener('submit', addBVType);
   } catch(e){ }
 }, 120));
 
