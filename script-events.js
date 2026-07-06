@@ -2494,11 +2494,6 @@ window.addEventListener("load", () => {
       closeRewardLogsListModalBtn.addEventListener("click", closeRewardLogsListModal);
     }
 
-    const closeRewardLogsListModalFooterBtn = document.getElementById("close-reward-logs-list-modal-footer-btn");
-    if (closeRewardLogsListModalFooterBtn) {
-      closeRewardLogsListModalFooterBtn.addEventListener("click", closeRewardLogsListModal);
-    }
-
     const closeRewardLogDetailModalBtn = document.getElementById("close-reward-log-detail-modal-btn");
     if (closeRewardLogDetailModalBtn) {
       closeRewardLogDetailModalBtn.addEventListener("click", closeRewardLogDetailModal);
