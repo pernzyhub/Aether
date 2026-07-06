@@ -186,7 +186,10 @@ async function loadBVRequests() {
 
   renderBVSummary(bvAllDataRaw);
 
-  bvAllData = filter === 'all' ? [...bvAllDataRaw] : bvAllDataRaw.filter((r) => r.status === filter);
+  const activeData = bvAllDataRaw.filter((r) => String(r.status || '').toLowerCase() !== 'approved');
+  bvAllData = filter === 'all'
+    ? [...activeData]
+    : activeData.filter((r) => String(r.status || '').toLowerCase() === filter);
 
   if (!bvAllData || bvAllData.length === 0) {
     container.innerHTML = `
@@ -208,7 +211,7 @@ async function loadBVRequests() {
 function applyBVSortAndRender() {
   const container = document.getElementById('bv-requests-table');
   if (!container) return;
-  let list = [...bvAllData];
+  let list = [...bvAllData].filter((r) => String(r.status || '').toLowerCase() !== 'approved');
   switch (bvSort) {
     case 'oldest': list.sort((a,b)=> new Date(a.created_at) - new Date(b.created_at)); break;
     case 'amount_desc': list.sort((a,b)=> (b.amount||0)-(a.amount||0)); break;
@@ -252,7 +255,6 @@ function applyBVSortAndRender() {
     </div>
   `;
 
-  renderBVSummary(bvAllData);
   updatePagination(total);
 }
 
