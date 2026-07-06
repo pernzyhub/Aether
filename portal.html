@@ -74,37 +74,7 @@
       </div>
     </div>
 
-    <!-- BV Module (hidden by default) -->
-    <div id="bv-module" style="display:none; margin-top:18px;">
-      <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:18px;">
-        <section class="card">
-          <h2>BV REQUEST</h2>
-          <form id="portal-bv-form" onsubmit="submitPortalBVRequest(event)">
-            <div class="form-group">
-              <label for="portal-bv-select">Select Request Type</label>
-              <select id="portal-bv-select" required>
-                <option value="">Choose...</option>
-                <option value="standard">Standard</option>
-                <option value="event">Event</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-            <button type="submit" class="btn btn-primary">SUBMIT</button>
-            <p id="portal-bv-status" class="status-text"></p>
-          </form>
-        </section>
-
-        <section class="card">
-          <h2>LIVE BV REQUESTS</h2>
-          <div id="bv-portal-list"><p class="empty-state">Loading...</p></div>
-        </section>
-
-        <section class="card">
-          <h2>BV SUMMARY</h2>
-          <div id="bv-portal-summary"><p class="empty-state">Loading summary...</p></div>
-        </section>
-      </div>
-    </div>
+    <!-- BV Module removed — dedicated /bv-request.html is used instead -->
   </main>
 
   <footer class="footer">

@@ -50,6 +50,8 @@ function renderAdminBVTypes() {
         <div style="color:#aaa; font-size:0.9rem;">${escapeHtml(t.description || '')}</div>
       </div>
       <div style="display:flex; gap:6px; align-items:center;">
+        <button class="btn-xs" onclick="moveBVTypeUp('${t.id}')">↑</button>
+        <button class="btn-xs" onclick="moveBVTypeDown('${t.id}')">↓</button>
         <label style="display:flex; align-items:center; gap:6px;">
           <input type="checkbox" ${t.is_active ? 'checked' : ''} onchange="toggleBVTypeActive('${t.id}', this.checked)" /> Active
         </label>
@@ -58,6 +60,35 @@ function renderAdminBVTypes() {
       </div>
     </div>
   `).join('');
+}
+
+async function moveBVTypeUp(id) {
+  const idx = adminBVTypes.findIndex(t => t.id === id);
+  if (idx <= 0) return;
+  const prev = adminBVTypes[idx - 1];
+  const cur = adminBVTypes[idx];
+  try {
+    // swap sort_order
+    const { error: e1 } = await supabase.from('bv_request_types').update({ sort_order: prev.sort_order }).eq('id', cur.id);
+    if (e1) throw e1;
+    const { error: e2 } = await supabase.from('bv_request_types').update({ sort_order: cur.sort_order }).eq('id', prev.id);
+    if (e2) throw e2;
+    loadAdminBVTypes();
+  } catch (e) { alert('Error reordering: '+e.message); }
+}
+
+async function moveBVTypeDown(id) {
+  const idx = adminBVTypes.findIndex(t => t.id === id);
+  if (idx === -1 || idx >= adminBVTypes.length - 1) return;
+  const next = adminBVTypes[idx + 1];
+  const cur = adminBVTypes[idx];
+  try {
+    const { error: e1 } = await supabase.from('bv_request_types').update({ sort_order: next.sort_order }).eq('id', cur.id);
+    if (e1) throw e1;
+    const { error: e2 } = await supabase.from('bv_request_types').update({ sort_order: cur.sort_order }).eq('id', next.id);
+    if (e2) throw e2;
+    loadAdminBVTypes();
+  } catch (e) { alert('Error reordering: '+e.message); }
 }
 
 function slugify(text) {
@@ -176,6 +207,8 @@ window.deleteBVType = deleteBVType;
 window.editBVType = editBVType;
 window.saveBVType = saveBVType;
 window.cancelEditBVType = cancelEditBVType;
+window.moveBVTypeUp = moveBVTypeUp;
+window.moveBVTypeDown = moveBVTypeDown;
 
 window.addEventListener('load', () => setTimeout(() => { 
   try { 

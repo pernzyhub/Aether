@@ -74,10 +74,8 @@ async function loadBVTypes() {
     if (error) throw error;
     const select = document.getElementById('bv-select');
     if (!select) return;
-    // clear existing options except placeholder
-    const placeholder = select.querySelector('option[value=""]');
-    select.innerHTML = '';
-    if (placeholder) select.appendChild(placeholder);
+    // rebuild options with a placeholder
+    select.innerHTML = '<option value="">Choose...</option>';
     (data || []).forEach(t => {
       const opt = document.createElement('option'); opt.value = t.key; opt.textContent = t.label; select.appendChild(opt);
     });
@@ -165,9 +163,9 @@ function exportCurrentBVPageCsv() {
   }
   const start = (bvCurrentPage - 1) * bvPageSize;
   const pageItems = list.slice(start, start + bvPageSize);
-  const csv = [ ['IGN','BV','Reason','Proof URL','Status','Created'] ].concat(
-    pageItems.map(r => [r.clan_users?.ign || '', r.amount || '', (r.reason||'').replace(/"/g,'""'), r.proof_image||'', r.status||'', r.created_at||''])
-  ).map(row => row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const csv = [ ['IGN','Selection','Status','Created'] ].concat(
+    pageItems.map(r => [r.clan_users?.ign || '', (r.reason||'').replace(/"/g,'""'), r.status||'', r.created_at||''])
+  ).map(row => row.map(cell => `"${String(cell).replace(/"/g,'""') }"`).join(',')).join('\n');
 
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
