@@ -315,11 +315,11 @@ body::before {
   }
 
   .bv-request-summary-section {
-    grid-column: 1 / -1;
+    width: 100%;
   }
 
   .bv-request-board-section {
-    grid-column: 1 / -1;
+    width: 100%;
   }
 
   .bv-request-summary-list {
