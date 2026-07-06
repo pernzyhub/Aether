@@ -200,7 +200,8 @@ function applyBVSortAndRender() {
   const pageItems = list.slice(start, start + bvPageSize);
 
   const rows = pageItems.map(r => {
-    const reasonLabel = bvTypeMap.get(r.reason) || r.reason || 'Unknown';
+    const rawReason = bvTypeMap.get(r.reason) || r.reason || 'Unknown';
+    const reasonLabel = String(rawReason).replace(/-/g, ' ');
     return `
       <tr>
         <td>${escapeHtml(currentUser?.ign || 'You')}</td>
@@ -213,7 +214,7 @@ function applyBVSortAndRender() {
 
   container.innerHTML = `
     <table class="compact-table">
-      <thead><tr><th>IGN</th><th>Selection</th><th>Status</th><th>Created</th></tr></thead>
+      <thead><tr><th>IGN</th><th>Reason</th><th>Status</th><th>Created</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   `;
