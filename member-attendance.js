@@ -260,40 +260,62 @@ async function loadSheet() {
     container.appendChild(tableWrapper);
     tableWrapper.style.marginBottom = '20px';
 
-    // Diagnostic: toggle raw attendance rows for debugging
-    (function addDiagnosticView() {
-      let diagContainer = document.getElementById('attendance-diagnostic-container');
-      if (!diagContainer) {
-        diagContainer = document.createElement('div');
-        diagContainer.id = 'attendance-diagnostic-container';
-        diagContainer.style.marginTop = '12px';
+    // Export CSV button
+    (function addExportButton() {
+      let exportContainer = document.getElementById('attendance-export-container');
+      if (!exportContainer) {
+        exportContainer = document.createElement('div');
+        exportContainer.id = 'attendance-export-container';
+        exportContainer.style.marginTop = '12px';
+        exportContainer.style.display = 'flex';
+        exportContainer.style.gap = '8px';
 
-        const btn = document.createElement('button');
-        btn.textContent = 'Toggle Raw Attendance Data';
-        btn.className = 'btn btn-secondary';
-        btn.style.marginBottom = '8px';
-        btn.onclick = () => {
-          const pre = diagContainer.querySelector('pre');
-          if (pre) pre.style.display = pre.style.display === 'none' ? 'block' : 'none';
+        const exportBtn = document.createElement('button');
+        exportBtn.textContent = 'Export as CSV';
+        exportBtn.className = 'btn btn-secondary';
+        exportBtn.style.padding = '10px 16px';
+        exportBtn.onclick = () => {
+          // Build CSV
+          const rows = [];
+          const headers = ['Member', 'Points', 'Week', 'Month'];
+          occurrenceList.forEach(o => {
+            headers.push(`${o.eventName} (${o.dateKey})`);
+          });
+          rows.push(headers.map(h => `"${h}"`).join(','));
+
+          visibleUsers.forEach(u => {
+            const prog = progressMap[u.id] || { totalPoints: 0, weekPoints: 0, weekAttended: 0, monthPoints: 0, monthAttended: 0 };
+            const csvRow = [
+              `"${u.ign || 'Unknown'}"`,
+              prog.totalPoints,
+              `"${prog.weekAttended}/${prog.weekPoints}"`,
+              `"${prog.monthAttended}/${prog.monthPoints}"`
+            ];
+
+            occurrenceList.forEach(o => {
+              const key = `${o.eventId}::${u.id}::${o.dateKey}`;
+              const match = attendanceMap[key] || null;
+              const status = match ? (match.attended === true ? 'Attended' : 'Pending') : 'No Record';
+              csvRow.push(`"${status}"`);
+            });
+
+            rows.push(csvRow.join(','));
+          });
+
+          const csv = rows.join('\n');
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+          const link = document.createElement('a');
+          const url = URL.createObjectURL(blob);
+          link.setAttribute('href', url);
+          link.setAttribute('download', `attendance-${month}.csv`);
+          link.style.display = 'none';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
         };
 
-        const pre = document.createElement('pre');
-        pre.style.display = 'none';
-        pre.style.maxHeight = '300px';
-        pre.style.overflow = 'auto';
-        pre.style.background = '#07110a';
-        pre.style.color = '#b8ffb8';
-        pre.style.padding = '10px';
-        pre.style.border = '1px solid #113';
-        pre.style.borderRadius = '6px';
-        pre.textContent = JSON.stringify(attendanceRecordsFiltered || [], null, 2);
-
-        diagContainer.appendChild(btn);
-        diagContainer.appendChild(pre);
-        container.appendChild(diagContainer);
-      } else {
-        const pre = diagContainer.querySelector('pre');
-        if (pre) pre.textContent = JSON.stringify(attendanceRecordsFiltered || [], null, 2);
+        exportContainer.appendChild(exportBtn);
+        container.appendChild(exportContainer);
       }
     })();
   } catch (err) {
