@@ -1319,6 +1319,7 @@ window.toggleUserStatus = toggleUserStatus;
 window.changeUserIgn = changeUserIgn;
 window.changeUserPassword = changeUserPassword;
 window.deleteUser = deleteUser;
+window.filterUsers = filterUsers;
 window.adjustQuantity = adjustQuantity;
 window.markRequestDone = markRequestDone;
 window.rejectRequest = rejectRequest;
