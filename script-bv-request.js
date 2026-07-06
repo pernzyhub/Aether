@@ -401,35 +401,30 @@ function updateBVTypeOptions() {
     const isApproved = approvedBVTypes.has(option.value);
     return {
       value: option.value,
-      text: isApproved
-        ? `${normalizedText} (approved)`
-        : isRequested
-          ? `${normalizedText} (requested)`
-          : normalizedText,
-      disabled: isRequested || isApproved,
+      text: isRequested ? `${normalizedText} (requested)` : normalizedText,
+      disabled: isRequested,
       hidden: isApproved
     };
   });
 
-  const availableOptions = items.filter(item => !item.disabled);
+  const availableOptions = items.filter(item => !item.disabled && !item.hidden);
   const requestedOptions = items.filter(item => item.disabled && !item.hidden);
-  const approvedOptions = items.filter(item => item.hidden);
 
   select.innerHTML = '';
   if (placeholder) {
     select.appendChild(placeholder.cloneNode(true));
   }
 
-  [...availableOptions, ...requestedOptions, ...approvedOptions].forEach(item => {
+  [...availableOptions, ...requestedOptions].forEach(item => {
     const option = document.createElement('option');
     option.value = item.value;
     option.textContent = item.text;
     if (item.disabled) option.disabled = true;
-    if (item.hidden) option.hidden = true;
     select.appendChild(option);
   });
 
-  if (select.value && select.selectedOptions[0]?.disabled) {
+  const selectedOption = select.selectedOptions[0];
+  if (select.value && (!selectedOption || selectedOption.disabled || selectedOption.hidden)) {
     select.value = '';
   }
 }
