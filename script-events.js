@@ -1840,24 +1840,6 @@ function renderDistributionPreview() {
   `;
 }
 
-function renderDistributionDetails() {
-  const panel = document.getElementById('distribution-details-panel');
-  if (!panel) return;
-  if (!distributionAssignments.length) {
-    panel.innerHTML = '<p style="color:#ccc; margin:0;">Toggle details after distribution.</p>';
-    return;
-  }
-
-  panel.innerHTML = distributionAssignments.map(entry => `
-    <div style="padding:10px; border:1px solid #222; border-radius:6px; margin-bottom:10px; background:#080808; color:#fff;">
-      <div style="margin-bottom:6px; font-weight:bold;">${escapeHtml(entry.member.ign)}</div>
-      <div>Item: <strong style="color:#00ff88;">${escapeHtml(entry.item)}</strong></div>
-      <div>Assigned Quantity: <strong>${entry.quantity}</strong></div>
-      <div>Status: <strong>${entry.saved ? 'Saved' : 'Pending'}</strong></div>
-    </div>
-  `).join('');
-}
-
 function renderDistributionHistory(filter = '') {
   const panel = document.getElementById('distribution-history-panel');
   if (!panel) return;
@@ -1922,7 +1904,7 @@ function loadDistributionHistoryFromStorage() {
 
 function toggleDistributionDetails() {
   const panel = document.getElementById('distribution-history-panel');
-  const toggleBtn = document.getElementById('toggle-user-details-btn');
+  const toggleBtn = document.getElementById('toggle-history-btn');
   if (!panel) return;
   const isVisible = panel.style.display !== 'none';
   panel.style.display = isVisible ? 'none' : 'block';
@@ -2316,9 +2298,9 @@ window.addEventListener("load", () => {
       distributionClearImportBtn.addEventListener("click", clearDistributionImportArea);
     }
 
-    const toggleUserDetailsBtn = document.getElementById("toggle-user-details-btn");
-    if (toggleUserDetailsBtn) {
-      toggleUserDetailsBtn.addEventListener("click", toggleDistributionDetails);
+    const toggleHistoryBtn = document.getElementById("toggle-history-btn");
+    if (toggleHistoryBtn) {
+      toggleHistoryBtn.addEventListener("click", toggleDistributionDetails);
     }
 
     const distributionHistoryFilter = document.getElementById('distribution-history-filter');
