@@ -1602,11 +1602,18 @@ function confirmDistribution() {
     return;
   }
 
-  if (!confirm('Confirm distribution finalization? This will save the assignments.')) return;
+  const logName = prompt('Enter a name for this reward log:', `Reward Log ${new Date().toLocaleDateString()}`);
+  if (!logName || !logName.trim()) {
+    if (statusEl) showStatus('item-distribution-status', 'Reward log name is required to save.', 'error');
+    return;
+  }
+
+  if (!confirm('Confirm reward log save? This will save the assignments under the given log name.')) return;
 
   distributionAssignments = distributionAssignments.map(entry => ({ ...entry, saved: true }));
   distributionSaved = true;
   distributionHistory.push({
+    name: logName.trim(),
     savedAt: new Date().toISOString(),
     assignments: distributionAssignments.map(entry => ({ memberId: entry.member.id, ign: entry.member.ign, item: entry.item }))
   });
