@@ -198,15 +198,21 @@ body::before {
   padding-top: 30px;
 }
 
+.container.bv-request-layout {
+  max-width: 1600px;
+}
+
 .request-page {
   display: grid;
-    grid-template-columns: minmax(260px, 0.95fr) minmax(420px, 1.6fr);
-    align-items: start;
-    gap: 20px;
-  }
+  grid-template-columns: minmax(320px, 1fr) minmax(1080px, 2.6fr);
+  align-items: start;
+  gap: 28px;
+}
 
-  .bv-request-wider {
-    grid-template-columns: minmax(280px, 0.9fr) minmax(520px, 1.8fr);
+.bv-request-wider {
+  grid-template-columns: minmax(340px, 1fr) minmax(1200px, 3fr);
+}
+
 .request-column {
   min-width: 0;
 }
