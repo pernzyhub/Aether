@@ -101,6 +101,27 @@ const BV_TYPE_FALLBACKS = [
   { key: 'other', label: 'Other' }
 ];
 
+const BV_TITLE_MAP = new Map([
+  ['light_of_greed', 'LIGHT OF GREED'],
+  ['soul_of_darkness', 'SOUL OF DARKNESS'],
+  ['crimson_frost', 'CRIMSON FROST'],
+  ['abyssal_wave', 'ABYSSAL WAVE']
+]);
+
+function getBVTitle(reason) {
+  const normalized = String(reason || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_');
+
+  if (BV_TITLE_MAP.has(normalized)) {
+    return BV_TITLE_MAP.get(normalized);
+  }
+
+  const rawLabel = String(bvTypeMap.get(reason) || reason || 'Unknown');
+  return rawLabel.replace(/[-_]+/g, ' ').toUpperCase();
+}
+
 async function loadBVTypes() {
   const select = document.getElementById('bv-select');
   if (!select) return;
@@ -200,8 +221,7 @@ function applyBVSortAndRender() {
   const pageItems = list.slice(start, start + bvPageSize);
 
   const rows = pageItems.map(r => {
-    const rawReason = bvTypeMap.get(r.reason) || r.reason || 'Unknown';
-    const reasonLabel = String(rawReason).replace(/-/g, ' ');
+    const reasonLabel = getBVTitle(r.reason);
     const amount = Number(r.amount ?? r.request_amount ?? 0);
     const statusText = formatBVStatus(String(r.status || 'pending').toLowerCase());
     const summaryText = amount > 0 ? `${amount} BV` : statusText;
@@ -245,26 +265,28 @@ function renderBVSummary(list) {
     return;
   }
 
-  const items = list.map((r, index) => {
+  const grouped = list.reduce((acc, r) => {
+    const title = getBVTitle(r.reason);
     const requestor = r.clan_users?.ign || 'Unknown';
-    const reasonLabel = String(bvTypeMap.get(r.reason) || r.reason || 'Unknown').replace(/-/g, ' ');
-    const statusClass = String(r.status || 'pending').toLowerCase();
-    const statusLabel = formatBVStatus(statusClass);
+    acc[title] = acc[title] || new Set();
+    acc[title].add(requestor);
+    return acc;
+  }, {});
+
+  const groups = Object.keys(grouped).sort();
+  const html = groups.map((title) => {
+    const names = Array.from(grouped[title]).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    const items = names.map((name) => `<li>${escapeHtml(name)}</li>`).join('');
 
     return `
-      <div class="bv-summary-item">
-        <div class="summary-left">
-          <span class="bv-summary-person">${index + 1}. ${escapeHtml(requestor)}</span>
-          <span class="bv-summary-meta">${escapeHtml(reasonLabel)}</span>
-        </div>
-        <div class="summary-right">
-          <span class="status-dot status-${escapeHtml(statusClass)}" title="${escapeHtml(statusLabel)}"></span>
-        </div>
+      <div class="bv-summary-group">
+        <div class="bv-summary-group-title">BLACK VALK: ${escapeHtml(title)}</div>
+        <ul class="bv-summary-group-list">${items}</ul>
       </div>
     `;
   }).join('');
 
-  container.innerHTML = items;
+  container.innerHTML = html;
 }
 
 async function updateBVRequestStatus(requestId, newStatus) {
