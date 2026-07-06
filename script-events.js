@@ -1525,6 +1525,46 @@ function updateDistributionMemberCount() {
   if (countEl) countEl.textContent = String(selected.length);
 }
 
+function setDistributionMode(mode) {
+  const toggleControls = document.getElementById('distribution-toggle-controls');
+  const bulkControls = document.getElementById('distribution-bulk-controls');
+  const toggleBtn = document.getElementById('distribution-mode-toggle-btn');
+  const bulkBtn = document.getElementById('distribution-mode-bulk-btn');
+  if (!toggleControls || !bulkControls || !toggleBtn || !bulkBtn) return;
+
+  if (mode === 'bulk') {
+    toggleControls.style.display = 'none';
+    bulkControls.style.display = 'block';
+    toggleBtn.classList.remove('is-active');
+    bulkBtn.classList.add('is-active');
+  } else {
+    toggleControls.style.display = 'block';
+    bulkControls.style.display = 'none';
+    toggleBtn.classList.add('is-active');
+    bulkBtn.classList.remove('is-active');
+  }
+}
+
+function applyBulkMemberSelection() {
+  const raw = document.getElementById('distribution-member-bulk-input')?.value || '';
+  const names = raw.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
+  const selected = new Set(names.map(n => n.toLowerCase()));
+  let matched = 0;
+
+  distributionMembers.forEach(member => {
+    const checkbox = document.querySelector(`input[name="distribution-member"][value="${member.id}"]`);
+    if (!checkbox) return;
+    if (selected.has(member.ign.toLowerCase())) {
+      checkbox.checked = true;
+      matched += 1;
+    }
+  });
+
+  updateDistributionMemberCount();
+  const statusEl = document.getElementById('item-distribution-status');
+  if (statusEl) showStatus('item-distribution-status', `Selected ${matched} members from bulk entry.`, 'success');
+}
+
 function parseDistributionItems() {
   const raw = document.getElementById('distribution-items-input')?.value || '';
   return raw.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
@@ -1901,6 +1941,21 @@ window.addEventListener("load", () => {
         document.querySelectorAll('input[name="distribution-member"]').forEach(input => { input.checked = false; });
         updateDistributionMemberCount();
       });
+    }
+
+    const distributionModeToggleBtn = document.getElementById("distribution-mode-toggle-btn");
+    if (distributionModeToggleBtn) {
+      distributionModeToggleBtn.addEventListener("click", () => setDistributionMode('toggle'));
+    }
+
+    const distributionModeBulkBtn = document.getElementById("distribution-mode-bulk-btn");
+    if (distributionModeBulkBtn) {
+      distributionModeBulkBtn.addEventListener("click", () => setDistributionMode('bulk'));
+    }
+
+    const distributionBulkApplyBtn = document.getElementById("distribution-member-bulk-apply-btn");
+    if (distributionBulkApplyBtn) {
+      distributionBulkApplyBtn.addEventListener("click", applyBulkMemberSelection);
     }
 
     const toggleUserDetailsBtn = document.getElementById("toggle-user-details-btn");

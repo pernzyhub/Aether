@@ -226,8 +226,16 @@
           <div style="border:1px solid #444; border-radius:8px; padding:16px; background:#111;">
             <h3 style="margin-top:0; color:#ff6688;">PICK MEMBERS</h3>
             <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
-              <button type="button" id="distribution-toggle-on-btn" class="btn btn-secondary" style="padding:8px 12px;">TOGGLE ALL ON</button>
+              <button type="button" id="distribution-mode-toggle-btn" class="btn btn-secondary" style="padding:8px 12px;">TOGGLE</button>
+              <button type="button" id="distribution-mode-bulk-btn" class="btn btn-secondary" style="padding:8px 12px;">BULK</button>
+            </div>
+            <div id="distribution-toggle-controls" style="display:block; margin-bottom:12px;">
+              <button type="button" id="distribution-toggle-on-btn" class="btn btn-secondary" style="padding:8px 12px; margin-right:8px;">TOGGLE ALL ON</button>
               <button type="button" id="distribution-toggle-off-btn" class="btn btn-secondary" style="padding:8px 12px;">TOGGLE ALL OFF</button>
+            </div>
+            <div id="distribution-bulk-controls" style="display:none; margin-bottom:12px;">
+              <textarea id="distribution-member-bulk-input" class="input" placeholder="Paste member IGNs here, one per line" style="width:100%; min-height:120px; resize:vertical; margin-bottom:10px;"></textarea>
+              <button type="button" id="distribution-member-bulk-apply-btn" class="btn btn-secondary" style="width:100%;">APPLY BULK</button>
             </div>
             <div id="distribution-members-list" style="max-height:520px; overflow:auto; border:1px solid #333; padding:10px; border-radius:6px; background:#0b0b0b;"></div>
             <small style="color:#888; display:block; margin-top:8px;">Selected <span id="distribution-member-count" style="color:#ff6688;">0</span> members.</small>
