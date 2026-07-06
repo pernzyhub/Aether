@@ -1326,16 +1326,16 @@ async function loadMembersSheet() {
     thead.innerHTML = headerHtml;
     table.appendChild(thead);
     const tbody = document.createElement('tbody');
-    users.forEach(u => {
+    visibleUsers.forEach(u => {
       const r = map[u.id];
       const tr = document.createElement('tr');
       tr.style.borderBottom = '1px solid #333';
-      let rowHtml = `<td style="padding:8px"><strong>${escapeHtml(r.ign)}</strong></td><td style="padding:8px;text-align:center">${r.is_active ? 'Yes' : 'No'}</td><td style="padding:8px;text-align:center">${r.total_attended}</td><td style="padding:8px;text-align:center;color:#ffaa00">${r.total_points}</td>`;
+      let rowHtml = `<td style="padding:8px"><strong>${escapeHtml(r?.ign || u.ign || 'Unknown member')}</strong></td><td style="padding:8px;text-align:center">${r?.is_active ? 'Yes' : 'No'}</td><td style="padding:8px;text-align:center">${r?.total_attended || 0}</td><td style="padding:8px;text-align:center;color:#ffaa00">${r?.total_points || 0}</td>`;
       months.forEach(m => {
-        const cell = r.months[m] || { attended: 0, points: 0 };
+        const cell = r?.months?.[m] || { attended: 0, points: 0 };
         rowHtml += `<td style="padding:8px;text-align:center">${cell.attended}/${cell.points}</td>`;
       });
-      rowHtml += `<td style="padding:8px">${r.last_attended ? r.last_attended.toLocaleString() : '—'}</td>`;
+      rowHtml += `<td style="padding:8px">${r?.last_attended ? r.last_attended.toLocaleString() : '—'}</td>`;
       tr.innerHTML = rowHtml;
       tbody.appendChild(tr);
     });
@@ -1343,7 +1343,7 @@ async function loadMembersSheet() {
 
     container.innerHTML = '';
     container.appendChild(table);
-    statusEl.textContent = `Showing ${users.length} members (last ${monthsCount} months)`;
+    statusEl.textContent = `Showing ${visibleUsers.length} members (last ${monthsCount} months)`;
 
     // Wire refresh button
     const refreshBtn = document.getElementById('members-refresh');
