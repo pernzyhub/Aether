@@ -1,11 +1,31 @@
 import { supabase } from './lib/supabaseClient.js';
-import { getMemberSession, ensureSupabaseSession, logout, setActiveNavLink } from './lib/memberAuth.js';
+import { getMemberSession, ensureSupabaseSession, logout, setActiveNavLink, isAdminPreviewMode } from './lib/memberAuth.js';
 
 let currentUser = null;
 let currentClanUser = null;
 let editingRequestId = null;
+const isAdminPreview = isAdminPreviewMode();
 
 async function checkAuth() {
+  if (isAdminPreview) {
+    const welcomeEl = document.getElementById("welcome-text");
+    if (welcomeEl) {
+      welcomeEl.textContent = "ADMIN PREVIEW MODE";
+    }
+    const form = document.getElementById("request-form");
+    if (form) {
+      form.querySelectorAll("input, select, textarea, button").forEach((el) => {
+        el.disabled = true;
+      });
+    }
+    const statusEl = document.getElementById("request-status");
+    if (statusEl) {
+      statusEl.textContent = "Preview mode: request submission is disabled.";
+      statusEl.className = "status-text";
+    }
+    return true;
+  }
+
   const supabaseSession = await ensureSupabaseSession();
   const { data } = await supabase.auth.getSession();
   const user = supabaseSession?.user || data.session?.user;

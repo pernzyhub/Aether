@@ -1,9 +1,9 @@
 import { supabase } from './lib/supabaseClient.js';
-import { getMemberSession, ensureSupabaseSession, logout, setActiveNavLink } from './lib/memberAuth.js';
+import { getMemberSession, ensureSupabaseSession, logout, setActiveNavLink, isAdminPreviewMode } from './lib/memberAuth.js';
 
 let currentClanUser = null;
 let currentUser = null;
-const isAdminPreview = new URLSearchParams(window.location.search).get('preview') === 'admin';
+const isAdminPreview = isAdminPreviewMode();
 
 const fallbackAnnouncements = [
   {

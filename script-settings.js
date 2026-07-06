@@ -1,9 +1,10 @@
 import { supabase } from './lib/supabaseClient.js';
-import { getMemberSession, ensureSupabaseSession, logout, setActiveNavLink } from './lib/memberAuth.js';
+import { getMemberSession, ensureSupabaseSession, logout, setActiveNavLink, isAdminPreviewMode } from './lib/memberAuth.js';
 
 let currentUser = null;
 let currentClanUser = null;
 const DEFAULT_MEMBER_PASSWORD = "123";
+const isAdminPreview = isAdminPreviewMode();
 
 function showSettingsStatus(message, type) {
   const statusEl = document.getElementById("settings-status");
@@ -13,6 +14,21 @@ function showSettingsStatus(message, type) {
 }
 
 async function loadUser() {
+  if (isAdminPreview) {
+    const welcomeEl = document.getElementById("welcome-text");
+    if (welcomeEl) {
+      welcomeEl.textContent = "ADMIN PREVIEW MODE";
+    }
+    showSettingsStatus("Preview mode: settings are disabled.", "error");
+    const form = document.getElementById("settings-form");
+    if (form) {
+      form.querySelectorAll("input, button").forEach((el) => {
+        el.disabled = true;
+      });
+    }
+    return;
+  }
+
   const supabaseSession = await ensureSupabaseSession();
   const { data: sessionData } = await supabase.auth.getSession();
   const user = supabaseSession?.user || sessionData?.session?.user;
