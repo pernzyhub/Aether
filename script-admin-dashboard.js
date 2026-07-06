@@ -1305,6 +1305,10 @@ window.addEventListener("load", () => {
       if (requestsRefreshBtn) {
         requestsRefreshBtn.addEventListener('click', () => loadRequests());
       }
+      const usersFilter = document.getElementById('users-filter');
+      if (usersFilter) {
+        usersFilter.addEventListener('input', debounce(() => filterUsers(), 150));
+      }
     }
   }, 80);
 });
