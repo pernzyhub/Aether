@@ -734,6 +734,17 @@ body::before {
     justify-content: flex-start;
   }
 
+  .bv-summary-mini {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: rgba(0, 255, 136, 0.08);
+    color: #ebffec;
+    font-size: 0.96rem;
+    line-height: 1.4;
+    border: 1px solid rgba(0, 255, 136, 0.16);
+  }
+
   .bv-summary-card {
     width: 100%;
     padding: 14px 16px;

@@ -165,8 +165,6 @@ async function loadBVRequests() {
 
   bvAllData = filter === 'all' ? [...bvAllDataRaw] : bvAllDataRaw.filter((r) => r.status === filter);
 
-  renderBVSummary(bvAllDataRaw);
-
   if (!bvAllData || bvAllData.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
@@ -203,8 +201,8 @@ function applyBVSortAndRender() {
     const rawReason = bvTypeMap.get(r.reason) || r.reason || 'Unknown';
     const reasonLabel = String(rawReason).replace(/-/g, ' ');
     const amount = Number(r.amount ?? r.request_amount ?? 0);
-    const summaryText = amount > 0 ? `${amount} BV requested` : '';
     const statusText = formatBVStatus(String(r.status || 'pending').toLowerCase());
+    const summaryText = amount > 0 ? `${amount} BV` : statusText;
     const requestor = r.clan_users?.ign || 'Unknown';
 
     return `
@@ -215,11 +213,7 @@ function applyBVSortAndRender() {
         </div>
         <div class="bv-request-cell bv-request-reason">${escapeHtml(reasonLabel)}</div>
         <div class="bv-request-cell bv-request-summary">
-          <div class="bv-summary-card">
-            <div class="bv-summary-title">BV SUMMARY</div>
-            <div class="bv-summary-main">${escapeHtml(summaryText)}</div>
-            <div class="bv-summary-meta status-${escapeHtml(String(r.status || 'pending').toLowerCase())}">${escapeHtml(statusText)}</div>
-          </div>
+          <div class="bv-summary-mini">${escapeHtml(summaryText)}</div>
         </div>
       </div>
     `;
@@ -254,7 +248,6 @@ function renderBVSummary(list) {
     const reasonLabel = String(bvTypeMap.get(r.reason) || r.reason || 'Unknown').replace(/-/g, ' ');
     const statusClass = String(r.status || 'pending').toLowerCase();
     const statusLabel = formatBVStatus(statusClass);
-    const isPending = statusClass === 'pending';
 
     return `
       <div class="bv-summary-item">
@@ -264,17 +257,12 @@ function renderBVSummary(list) {
         </div>
         <div class="summary-right">
           <span class="status-dot status-${escapeHtml(statusClass)}" title="${escapeHtml(statusLabel)}"></span>
-          <div class="bv-summary-actions">
-            <button type="button" class="btn btn-small btn-success bv-summary-action" data-request-id="${r.id}" data-action="approved" ${isPending ? '' : 'disabled'}>DONE</button>
-            <button type="button" class="btn btn-small btn-danger bv-summary-action" data-request-id="${r.id}" data-action="denied" ${isPending ? '' : 'disabled'}>CANCEL</button>
-          </div>
         </div>
       </div>
     `;
   }).join('');
 
   container.innerHTML = items;
-  attachBVSummaryActionHandlers();
 }
 
 async function updateBVRequestStatus(requestId, newStatus) {
