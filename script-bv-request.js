@@ -163,6 +163,8 @@ async function loadBVRequests() {
   requestedBVTypes = new Set(bvAllDataRaw.filter((r) => r.user_id === userId).map((r) => r.reason));
   updateBVTypeOptions();
 
+  renderBVSummary(bvAllDataRaw);
+
   bvAllData = filter === 'all' ? [...bvAllDataRaw] : bvAllDataRaw.filter((r) => r.status === filter);
 
   if (!bvAllData || bvAllData.length === 0) {
