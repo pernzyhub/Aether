@@ -93,6 +93,9 @@ async function checkAuth() {
 
 async function loadItems() {
   const selectEl = document.getElementById("item-select");
+  if (!selectEl) return;
+
+  selectEl.disabled = true;
   selectEl.innerHTML = '<option value="">Loading items...</option>';
   
   try {
@@ -105,10 +108,12 @@ async function loadItems() {
 
     if (!data || data.length === 0) {
       selectEl.innerHTML = '<option value="">No items available</option>';
+      selectEl.disabled = true;
       return;
     }
 
     selectEl.innerHTML = '<option value="">Select an item...</option>';
+    selectEl.disabled = false;
     data.forEach(item => {
       const option = document.createElement("option");
       option.value = item.id;
@@ -117,7 +122,13 @@ async function loadItems() {
     });
   } catch (err) {
     selectEl.innerHTML = '<option value="">Error loading items</option>';
-    console.error(err);
+    selectEl.disabled = true;
+    console.error('loadItems error:', err);
+    const statusEl = document.getElementById('request-status');
+    if (statusEl) {
+      statusEl.textContent = 'Error loading item list. Check developer console for details.';
+      statusEl.className = 'status-text error';
+    }
   }
 }
 
