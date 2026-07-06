@@ -1296,6 +1296,17 @@ body::before {
     width: 100%;
   }
 
+  .portal-grid {
+    display: grid;
+    grid-template-columns: minmax(300px, 1fr) minmax(300px, 1fr) minmax(360px, 1.2fr);
+    gap: 24px;
+    align-items: start;
+  }
+
+  .portal-grid section.card {
+    min-width: 0;
+  }
+
   .request-entry {
     flex-direction: column;
   }

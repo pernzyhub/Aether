@@ -33,25 +33,21 @@
 
   <main class="container">
     <div id="adminPreviewBadge" style="display:none; position:fixed; top:76px; left:12px; background:#d4af37; color:#071; padding:6px 10px; border-radius:8px; z-index:99999; font-weight:700;">ADMIN PREVIEW</div>
-    <div style="display: grid; grid-template-columns: 1fr 1.4fr; gap: 24px; align-items: start;">
-      <!-- LEFT COLUMN: Announcements & Rules -->
-      <div style="display: flex; flex-direction: column; gap: 20px;">
-        <section class="card">
-          <h2>ANNOUNCEMENTS</h2>
-          <div id="announcements-list" class="announcements-list">
-            <p>Loading announcements...</p>
-          </div>
-        </section>
+    <div class="portal-grid">
+      <section class="card">
+        <h2>ANNOUNCEMENTS</h2>
+        <div id="announcements-list" class="announcements-list">
+          <p>Loading announcements...</p>
+        </div>
+      </section>
 
-        <section class="card">
-          <h2>CLAN RULES</h2>
-          <div id="rules-list" class="rules-list">
-            <p>Loading rules...</p>
-          </div>
-        </section>
-      </div>
+      <section class="card">
+        <h2>CLAN RULES</h2>
+        <div id="rules-list" class="rules-list">
+          <p>Loading rules...</p>
+        </div>
+      </section>
 
-      <!-- RIGHT COLUMN: Events & Attendance -->
       <div style="display: flex; flex-direction: column; gap: 20px;">
         <section class="card" id="upcoming-card">
           <h2>UPCOMING EVENTS</h2>
