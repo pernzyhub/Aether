@@ -1666,6 +1666,23 @@ window.addEventListener("load", () => {
     applyBulkAttendanceBtn.addEventListener("click", applyBulkAttendance);
   }
 
+  const logoutBtn = document.getElementById("logout-button");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", logout);
+  }
+
+  document.querySelectorAll('.events-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const tabName = tab.dataset.tab;
+      if (tabName) setEventsTab(tabName);
+    });
+  });
+
+  const monthlyPointsBtn = document.getElementById('load-monthly-points-btn');
+  if (monthlyPointsBtn) {
+    monthlyPointsBtn.addEventListener('click', loadMonthlyPoints);
+  }
+
   // bulk search removed per admin request (hidden in UI)
 
   const eventTypeForm = document.getElementById("event-type-form");

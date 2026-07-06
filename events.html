@@ -13,7 +13,7 @@
       <span id="admin-welcome" style="color: #ff6688; text-transform: uppercase;"></span>
       <a href="/admin-dashboard.html" class="nav-link">DASHBOARD</a>
       <a href="/portal.html?preview=admin" class="nav-link">VIEW PORTAL</a>
-      <button class="nav-link" style="background: none; cursor: pointer;" onclick="logout()">LOGOUT</button>
+      <button id="logout-button" class="nav-link" style="background: none; cursor: pointer;">LOGOUT</button>
     </div>
   </header>
 
@@ -22,13 +22,13 @@
       <h2>EVENTS MANAGEMENT</h2>
       
       <div class="events-tabs">
-        <button class="events-tab is-active" data-tab="event-types" onclick="setEventsTab('event-types')">EVENT TYPES</button>
-        <button class="events-tab" data-tab="create" onclick="setEventsTab('create')">CREATE EVENT</button>
-        <button class="events-tab" data-tab="manage" onclick="setEventsTab('manage')">MANAGE EVENTS</button>
-          <button class="events-tab" data-tab="members" onclick="setEventsTab('members')">MEMBERS</button>
-        <button class="events-tab" data-tab="bulk-attendance" onclick="setEventsTab('bulk-attendance')">BULK ATTENDANCE</button>
-        <button class="events-tab" data-tab="attendance" onclick="setEventsTab('attendance')">ATTENDANCE LOG</button>
-        <button class="events-tab" data-tab="monthly-points" onclick="setEventsTab('monthly-points')">MONTHLY POINTS</button>
+        <button class="events-tab is-active" data-tab="event-types">EVENT TYPES</button>
+        <button class="events-tab" data-tab="create">CREATE EVENT</button>
+        <button class="events-tab" data-tab="manage">MANAGE EVENTS</button>
+        <button class="events-tab" data-tab="members">MEMBERS</button>
+        <button class="events-tab" data-tab="bulk-attendance">BULK ATTENDANCE</button>
+        <button class="events-tab" data-tab="attendance">ATTENDANCE LOG</button>
+        <button class="events-tab" data-tab="monthly-points">MONTHLY POINTS</button>
       </div>
               <input type="text" id="bulk-search" class="input" placeholder="Search by IGN..." style="margin-bottom: 10px; display: none;" />
       <!-- Event Types Tab -->
@@ -226,7 +226,7 @@
             <label>Select Month</label>
             <input type="month" id="monthly-points-filter" class="input" />
           </div>
-          <button class="btn btn-secondary" onclick="loadMonthlyPoints()">VIEW POINTS</button>
+          <button type="button" id="load-monthly-points-btn" class="btn btn-secondary">VIEW POINTS</button>
         </div>
         <p id="monthly-status" class="status-text"></p>
         <div id="monthly-points-table"></div>
