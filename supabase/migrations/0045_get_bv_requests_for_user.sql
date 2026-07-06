@@ -10,8 +10,7 @@ RETURNS TABLE (
   proof_image TEXT,
   status TEXT,
   created_at TIMESTAMPTZ,
-  updated_at TIMESTAMPTZ,
-  ign TEXT
+  updated_at TIMESTAMPTZ
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -31,10 +30,8 @@ BEGIN
     b.proof_image,
     b.status,
     b.created_at,
-    b.updated_at,
-    cu.ign
+    b.updated_at
   FROM public.bv_requests b
-  JOIN public.clan_users cu ON cu.id = b.user_id
   WHERE b.user_id = target_user_id
   ORDER BY b.created_at DESC;
 END;

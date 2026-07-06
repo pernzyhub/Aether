@@ -143,10 +143,25 @@ async function loadBVRequests() {
   try {
     const { data, error } = await supabase.rpc('get_bv_requests_for_user', { target_user_id: userId });
     if (error) throw error;
-    bvAllData = Array.isArray(data) ? data : [];
+    bvAllData = Array.isArray(data) ? data : (data ? [data] : []);
+
+    if (bvAllData.length === 0) {
+      // Fallback: try direct query when supabase auth is present
+      const { data: directData, error: directError } = await supabase
+        .from('bv_requests')
+        .select('*, clan_users(ign)')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (!directError && Array.isArray(directData) && directData.length > 0) {
+        bvAllData = directData;
+      }
+    }
+
     if (filter !== 'all') {
       bvAllData = bvAllData.filter((r) => r.status === filter);
     }
+
     if (!bvAllData || bvAllData.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
@@ -181,7 +196,7 @@ function applyBVSortAndRender() {
 
   const rows = pageItems.map(r => `
     <tr>
-      <td>${escapeHtml(r.clan_users?.ign || 'Unknown')}</td>
+      <td>${escapeHtml(currentUser?.ign || 'You')}</td>
       <td>${escapeHtml(r.reason || '')}</td>
       <td>${escapeHtml((r.status || 'pending').toUpperCase())}</td>
       <td>${formatDateTime(r.created_at)}</td>
