@@ -34,6 +34,12 @@ function formatDateTime(dateValue) {
 
 window.logout = logout;
 
+function isHiddenAdminAccount(user) {
+  const ign = typeof user?.ign === 'string' ? user.ign.trim().toLowerCase() : '';
+  const id = typeof user?.id === 'string' ? user.id : '';
+  return ign === 'adminpernzy' || id === 'fec85282-b333-4625-b482-b398e0506218';
+}
+
 async function loadSheet() {
   const input = document.getElementById('sheet-month');
   const container = document.getElementById('attendance-sheet');
@@ -98,7 +104,7 @@ async function loadSheet() {
 
     if (usErr) throw new Error(`Users query failed: ${usErr.message}`);
 
-    const visibleUsers = (users || []).filter((user) => user.is_hidden_from_members !== true);
+    const visibleUsers = (users || []).filter((user) => !isHiddenAdminAccount(user) && user.is_hidden_from_members !== true);
     const visibleUserIds = new Set(visibleUsers.map((user) => user.id));
 
     if (!events || events.length === 0) {
@@ -202,20 +208,27 @@ async function loadSheet() {
       }
     });
 
+    // Build wrapper with horizontal scroll for better visibility
+    const tableWrapper = document.createElement('div');
+    tableWrapper.style.overflowX = 'auto';
+    tableWrapper.style.borderRadius = '8px';
+    tableWrapper.style.border = '1px solid #222';
+
     // Build table with Week and Month progress columns
     const table = document.createElement('table');
     table.style.width = '100%';
     table.style.borderCollapse = 'collapse';
+    table.style.minWidth = '1200px';
 
     const thead = document.createElement('thead');
     let head = '<tr style="background:#111;color:#fff;position:sticky;top:0;">';
-    head += '<th style="padding:10px; text-align:left; min-width:200px; font-weight:700;">Member</th>';
-    head += '<th style="padding:10px; text-align:center; font-size:11px;">Points</th>';
-    head += '<th style="padding:10px; text-align:center; font-size:11px;">Week</th>';
-    head += '<th style="padding:10px; text-align:center; font-size:11px;">Month</th>';
+    head += '<th style="padding:12px; text-align:left; min-width:140px; font-weight:700; font-size:13px;">Member</th>';
+    head += '<th style="padding:12px; text-align:center; font-size:12px; min-width:60px;">Points</th>';
+    head += '<th style="padding:12px; text-align:center; font-size:12px; min-width:60px;">Week</th>';
+    head += '<th style="padding:12px; text-align:center; font-size:12px; min-width:60px;">Month</th>';
     occurrenceList.forEach(o => {
       const displayDate = formatDate(o.dateTime);
-      head += `<th style="padding:10px; text-align:center; font-size:11px;"><div style="max-width:160px; white-space:normal; word-break:break-word; margin:0 auto;">${escapeHtml(o.eventName)}<br/><small style=\"color:#999\">${escapeHtml(displayDate)}</small></div></th>`;
+      head += `<th style="padding:12px; text-align:center; font-size:11px; min-width:120px; white-space:normal;"><div style="word-break:break-word;">${escapeHtml(o.eventName)}<br/><small style=\"color:#999; font-size:10px;\">${escapeHtml(displayDate)}</small></div></th>`;
     });
     head += '</tr>';
     thead.innerHTML = head;
@@ -223,18 +236,18 @@ async function loadSheet() {
 
     const tbody = document.createElement('tbody');
     visibleUsers.forEach(u => {
-      let row = `<tr style="border-bottom:1px solid #222;"><td style="padding:10px; font-weight:600; color:#00ff88;">${escapeHtml(u.ign || 'Unknown')}</td>`;
+      let row = `<tr style="border-bottom:1px solid #222; background:#0a0a0a;"><td style="padding:12px; font-weight:600; color:#00ff88; font-size:13px;">${escapeHtml(u.ign || 'Unknown')}</td>`;
       const prog = progressMap[u.id] || { totalPoints: 0, weekPoints: 0, weekAttended: 0, monthPoints: 0, monthAttended: 0 };
-      row += `<td style="padding:10px; text-align:center; color:#fff;">${prog.totalPoints}</td>`;
-      row += `<td style="padding:10px; text-align:center; color:#b8ffb8;">${prog.weekAttended}/${prog.weekPoints}</td>`;
-      row += `<td style="padding:10px; text-align:center; color:#ffaa00;">${prog.monthAttended}/${prog.monthPoints}</td>`;
+      row += `<td style="padding:12px; text-align:center; color:#fff; font-size:13px;">${prog.totalPoints}</td>`;
+      row += `<td style="padding:12px; text-align:center; color:#b8ffb8; font-size:12px;">${prog.weekAttended}/${prog.weekPoints}</td>`;
+      row += `<td style="padding:12px; text-align:center; color:#ffaa00; font-size:12px;">${prog.monthAttended}/${prog.monthPoints}</td>`;
 
       occurrenceList.forEach(o => {
         const key = `${o.eventId}::${u.id}::${o.dateKey}`;
         const match = attendanceMap[key] || null;
         const status = match ? (match.attended === true ? '✔️' : '⏳') : '';
         const cellClass = match ? (match.attended === true ? 'attendance-attended' : 'attendance-pending') : 'attendance-missing';
-        row += `<td class="${cellClass}" style="padding:10px; text-align:center; color:#ccc;">${status}</td>`;
+        row += `<td class="${cellClass}" style="padding:12px; text-align:center; color:#ccc; font-size:13px; min-width:120px;">${status}</td>`;
       });
 
       row += '</tr>';
@@ -242,8 +255,10 @@ async function loadSheet() {
     });
 
     table.appendChild(tbody);
+    tableWrapper.appendChild(table);
     container.innerHTML = '';
-    container.appendChild(table);
+    container.appendChild(tableWrapper);
+    tableWrapper.style.marginBottom = '20px';
 
     // Diagnostic: toggle raw attendance rows for debugging
     (function addDiagnosticView() {
