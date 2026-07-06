@@ -689,6 +689,19 @@ function downloadBulkAttendanceTemplate() {
   document.body.removeChild(link);
 }
 
+function downloadDistributionTemplate() {
+  const headers = ['Item', 'Quantity', 'Winners'];
+  const exampleRow = ['Sword of Fire', '10', '3'];
+  const csv = [headers.map(escapeCsvValue).join(','), exampleRow.map(escapeCsvValue).join(',')].join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.setAttribute('download', 'item-distribution-template.csv');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
 async function importBulkAttendanceCsv() {
   const fileInput = document.getElementById('bulk-csv-file');
   if (!fileInput || fileInput.files.length === 0) {
@@ -1659,7 +1672,7 @@ function parseDistributionItemEntries(raw) {
 
 function parseDistributionCsvItems(text) {
   const { headers, rows } = parseCsvText(text);
-  if (!headers.length) {
+  if (!headers.length && !rows.length) {
     throw new Error('CSV file is empty or missing headers.');
   }
 
@@ -1669,8 +1682,18 @@ function parseDistributionCsvItems(text) {
   const winnerIndex = normalizedHeaders.findIndex(header => header.includes('winner') || header.includes('recipient'));
   const resolvedWinnerIndex = winnerIndex >= 0 ? winnerIndex : (headers.length > 2 ? 2 : -1);
 
+  // If headers don't include item/quantity, assume the CSV was headerless and use positional columns
   if (itemIndex === -1 || quantityIndex === -1) {
-    throw new Error('CSV must include item and quantity columns.');
+    const rawRows = headers.length ? [headers].concat(rows) : rows;
+    return rawRows
+      .map(row => {
+        const item = String(row[0] ?? '').trim();
+        const quantity = Number.parseInt(String(row[1] ?? '').trim(), 10);
+        const winnerCount = row[2] !== undefined ? Number.parseInt(String(row[2]).trim(), 10) : 1;
+        if (!item || !Number.isInteger(quantity) || quantity <= 0) return null;
+        return { item, quantity, winners: Number.isInteger(winnerCount) && winnerCount > 0 ? winnerCount : 1 };
+      })
+      .filter(Boolean);
   }
 
   return rows
@@ -2138,6 +2161,10 @@ window.addEventListener("load", () => {
     const importDistributionItemsBtn = document.getElementById("distribution-import-items-btn");
     if (importDistributionItemsBtn) {
       importDistributionItemsBtn.addEventListener("click", importDistributionItemsCsv);
+    }
+    const exportDistributionItemsBtn = document.getElementById("distribution-export-items-btn");
+    if (exportDistributionItemsBtn) {
+      exportDistributionItemsBtn.addEventListener("click", downloadDistributionTemplate);
     }
 
     const confirmDistributionBtn = document.getElementById("confirm-distribution-btn");
