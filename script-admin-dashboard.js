@@ -954,10 +954,9 @@ async function renderRequests(requests, container, isHistory = false, searchTerm
     return `
       <div class="list-item compact ${isDone ? 'completed' : ''}" data-id="${req.id}" data-ign="${escapeHtml(ign.toLowerCase())}" data-item="${escapeHtml(req.items.name)}" data-requestedqty="${requestedQty}">
         <div class="list-item-content compact" style="display:flex; align-items:flex-start; gap:10px;">
-          <label style="display:flex; align-items:center; margin:0; color:#ccc; font-size:13px;">
-            <input type="checkbox" name="request-select" value="${escapeHtml(ign.toLowerCase())}" style="margin-right:8px;" />
+          <div style="display:flex; align-items:center; margin:0; color:#ccc; font-size:13px;">
             <span style="font-size:13px;">${escapeHtml(ign)}</span>
-          </label>
+          </div>
           <div style="flex:1;">
             <div class="list-item-title compact">
               ${escapeHtml(req.items.name)} <span class="qty-badge">${remainingQty}/${requestedQty}</span>
