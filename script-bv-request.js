@@ -300,14 +300,15 @@ function renderBVSummary(list) {
     .map((pair) => `<li>${escapeHtml(pair)}</li>`)
     .join('');
 
-  const approvedHtml = approvedItems ? `
+  const approvedContent = approvedItems || '<li>No approved requests yet.</li>';
+  const approvedHtml = `
     <div class="bv-summary-approved">
       <div class="bv-summary-approved-title">DONE</div>
       <ul class="bv-summary-approved-list">
-        ${approvedItems}
+        ${approvedContent}
       </ul>
     </div>
-  ` : '';
+  `;
 
   container.innerHTML = `${groupHtml}${approvedHtml}`;
 }
