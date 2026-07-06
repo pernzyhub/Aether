@@ -881,7 +881,8 @@ async function loadRequests() {
     if (!requests || requests.length === 0) {
       container.innerHTML = "<p>No pending requests.</p>";
     } else {
-      renderRequests(requests, container);
+      const searchTerm = (document.getElementById('requests-search')?.value || '').trim().toLowerCase();
+      renderRequests(requests, container, false, searchTerm);
     }
     
     loadRequestsHistory();
@@ -913,7 +914,7 @@ async function loadRequestsHistory() {
   }
 }
 
-async function renderRequests(requests, container, isHistory = false) {
+async function renderRequests(requests, container, isHistory = false, searchTerm = '') {
   // Fetch clan_users for all user_ids in the requests
   const userIds = [...new Set(requests.map(r => r.user_id))];
   const { data: users, error: usersError } = await supabase
@@ -929,7 +930,17 @@ async function renderRequests(requests, container, isHistory = false) {
     userMap[u.id] = u.ign;
   });
 
-  container.innerHTML = requests.map(req => {
+  // apply admin search filter if provided (by IGN or item name)
+  let filtered = requests;
+  if (searchTerm) {
+    filtered = requests.filter(r => {
+      const ign = (userMap[r.user_id] || '').toLowerCase();
+      const item = (r.items?.name || '').toLowerCase();
+      return ign.includes(searchTerm) || item.includes(searchTerm);
+    });
+  }
+
+  container.innerHTML = filtered.map(req => {
     const ign = userMap[req.user_id] || "Unknown User";
     const requestedQty = Number(req.requested_quantity ?? req.quantity ?? 1);
     const remainingQty = Math.max(0, Number(req.quantity ?? 0));
@@ -985,6 +996,15 @@ function normalizeIgn(value) {
     .split(/\s+/)
     .join(' ')
     .toLowerCase();
+}
+
+// Debounce helper for admin UI
+function debounce(fn, wait = 300) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn.apply(this, args), wait);
+  };
 }
 
 
@@ -1247,6 +1267,15 @@ window.addEventListener("load", () => {
       setAccountsTab('register');
 
       // requests CSV import/export UI removed; no handlers to attach
+      const requestsSearch = document.getElementById('requests-search');
+      if (requestsSearch) {
+        requestsSearch.addEventListener('input', debounce(() => loadRequests(), 300));
+      }
+
+      const requestsRefreshBtn = document.getElementById('requests-refresh-btn');
+      if (requestsRefreshBtn) {
+        requestsRefreshBtn.addEventListener('click', () => loadRequests());
+      }
     }
   }, 80);
 });

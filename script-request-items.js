@@ -394,6 +394,15 @@ function animateCountUp(elements) {
   });
 }
 
+// Simple debounce helper
+function debounce(fn, wait = 250) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn.apply(this, args), wait);
+  };
+}
+
 function attachRequestSortHandler() {
   const sortEl = document.getElementById("request-sort");
   const filterEl = document.getElementById("request-filter");
@@ -406,7 +415,7 @@ function attachRequestSortHandler() {
     filterEl.addEventListener("change", () => loadMyRequests());
   }
   if (summarySelect) {
-    summarySelect.addEventListener("change", () => loadRequestSummary());
+    summarySelect.addEventListener("change", debounce(() => loadRequestSummary(), 300));
   }
 }
 
