@@ -1902,6 +1902,56 @@ function loadDistributionHistoryFromStorage() {
   }
 }
 
+function renderRewardLogsTable() {
+  const body = document.getElementById('reward-logs-table-body');
+  if (!body) return;
+
+  const rows = distributionHistory.flatMap(log => {
+    return (log.assignments || []).map(item => ({
+      ...item,
+      logName: log.name,
+      savedAt: log.savedAt || log.created_at
+    }));
+  });
+
+  if (!rows.length) {
+    body.innerHTML = `
+      <tr>
+        <td colspan="5" style="padding:16px; color:#ccc; text-align:center;">No reward logs available.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  body.innerHTML = rows.map(row => `
+    <tr style="border-bottom:1px solid #222;">
+      <td style="padding:12px 10px; vertical-align:top;">${escapeHtml(row.item)}</td>
+      <td style="padding:12px 10px; vertical-align:top;">${row.quantity}</td>
+      <td style="padding:12px 10px; vertical-align:top;">${escapeHtml(row.ign)}</td>
+      <td style="padding:12px 10px; vertical-align:top; color:#00ff88; font-weight:bold;">Distributed</td>
+      <td style="padding:12px 10px; vertical-align:top; color:#ccc; font-size:13px;">
+        ${escapeHtml(row.logName)}<br />
+        ${row.savedAt ? escapeHtml(new Date(row.savedAt).toLocaleString()) : ''}
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openRewardLogsModal() {
+  const modal = document.getElementById('reward-logs-modal');
+  if (!modal) return;
+  renderRewardLogsTable();
+  modal.style.display = 'grid';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeRewardLogsModal() {
+  const modal = document.getElementById('reward-logs-modal');
+  if (!modal) return;
+  modal.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
 async function loadDistributionHistoryFromSupabase() {
   try {
     const { data, error } = await supabase
@@ -2348,6 +2398,21 @@ window.addEventListener("load", () => {
     const distributionClearImportBtn = document.getElementById("distribution-member-clear-import-btn");
     if (distributionClearImportBtn) {
       distributionClearImportBtn.addEventListener("click", clearDistributionImportArea);
+    }
+
+    const openRewardLogsModalBtn = document.getElementById("open-reward-logs-modal-btn");
+    if (openRewardLogsModalBtn) {
+      openRewardLogsModalBtn.addEventListener("click", openRewardLogsModal);
+    }
+
+    const closeRewardLogsModalBtn = document.getElementById("close-reward-logs-modal-btn");
+    if (closeRewardLogsModalBtn) {
+      closeRewardLogsModalBtn.addEventListener("click", closeRewardLogsModal);
+    }
+
+    const closeRewardLogsModalFooterBtn = document.getElementById("close-reward-logs-modal-footer-btn");
+    if (closeRewardLogsModalFooterBtn) {
+      closeRewardLogsModalFooterBtn.addEventListener("click", closeRewardLogsModal);
     }
 
     const toggleHistoryBtn = document.getElementById("toggle-history-btn");
