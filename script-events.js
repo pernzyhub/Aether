@@ -1902,6 +1902,28 @@ function loadDistributionHistoryFromStorage() {
   }
 }
 
+async function loadDistributionHistoryFromSupabase() {
+  try {
+    const { data, error } = await supabase
+      .from('distribution_logs')
+      .select('id, name, assignments, recipient_count, total_quantity, created_at')
+      .order('created_at', { ascending: false })
+      .limit(200);
+
+    if (error) throw error;
+    if (!Array.isArray(data)) throw new Error('Invalid distribution log response');
+
+    distributionHistory = data.map(log => ({
+      ...log,
+      savedAt: log.created_at
+    }));
+
+    renderDistributionHistory(document.getElementById('distribution-history-filter')?.value || '');
+  } catch (err) {
+    console.warn('Unable to load reward logs from Supabase:', err);
+  }
+}
+
 function toggleDistributionDetails() {
   const panel = document.getElementById('distribution-history-panel');
   const toggleBtn = document.getElementById('toggle-history-btn');
@@ -1930,16 +1952,45 @@ function confirmDistribution() {
 
   distributionAssignments = distributionAssignments.map(entry => ({ ...entry, saved: true }));
   distributionSaved = true;
-  distributionHistory.push({
-    name: logName.trim(),
-    savedAt: new Date().toISOString(),
-    assignments: distributionAssignments.map(entry => ({ memberId: entry.member.id, ign: entry.member.ign, item: entry.item, quantity: entry.quantity }))
-  });
-  saveDistributionHistory();
-  renderDistributionPreview();
-  renderDistributionHistory(document.getElementById('distribution-history-filter')?.value || '');
+  const assignments = distributionAssignments.map(entry => ({ memberId: entry.member.id, ign: entry.member.ign, item: entry.item, quantity: entry.quantity }));
+  const recipientCount = new Set(distributionAssignments.map(entry => entry.member.id)).size;
+  const totalQuantity = distributionAssignments.reduce((sum, entry) => sum + entry.quantity, 0);
 
-  if (statusEl) showStatus('item-distribution-status', 'Distribution confirmed and saved.', 'success');
+  const payload = {
+    name: logName.trim(),
+    created_by: currentUser?.id || null,
+    assignments,
+    recipient_count: recipientCount,
+    total_quantity: totalQuantity
+  };
+
+  try {
+    const { data, error } = await supabase
+      .from('distribution_logs')
+      .insert([payload])
+      .select('id, created_at')
+      .single();
+
+    if (error) throw error;
+
+    distributionHistory.unshift({
+      id: data.id,
+      name: payload.name,
+      created_by: payload.created_by,
+      assignments,
+      recipient_count: payload.recipient_count,
+      total_quantity: payload.total_quantity,
+      savedAt: data.created_at
+    });
+    saveDistributionHistory();
+    renderDistributionPreview();
+    renderDistributionHistory(document.getElementById('distribution-history-filter')?.value || '');
+
+    if (statusEl) showStatus('item-distribution-status', 'Distribution confirmed and saved to Supabase.', 'success');
+  } catch (err) {
+    if (statusEl) showStatus('item-distribution-status', `Supabase save failed: ${err.message}`, 'error');
+    return;
+  }
 
   // Clear selections and inputs after confirming (preserve saved assignments and history)
   try {
@@ -1987,6 +2038,7 @@ function loadItemDistribution() {
   if (preview) preview.innerHTML = '<p style="color:#ccc; margin:0;">No preview generated yet.</p>';
   loadDistributionHistoryFromStorage();
   if (panel) renderDistributionHistory(document.getElementById('distribution-history-filter')?.value || '');
+  loadDistributionHistoryFromSupabase();
   if (textarea) textarea.value = '';
   if (fileInput) fileInput.value = '';
   distributionAssignments = [];
