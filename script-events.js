@@ -1481,6 +1481,7 @@ let distributionAssignments = [];
 let distributionSaved = false;
 let distributionHistory = [];
 let distributionItemEntries = [];
+let activeRewardLog = null;
 
 function loadDistributionMembers() {
   const container = document.getElementById('distribution-members-list');
@@ -1902,22 +1903,39 @@ function loadDistributionHistoryFromStorage() {
   }
 }
 
-function renderRewardLogsTable() {
+function renderRewardLogsTable(log) {
   const body = document.getElementById('reward-logs-table-body');
-  if (!body) return;
+  const titleEl = document.getElementById('reward-logs-modal-title');
+  const subtitleEl = document.getElementById('reward-logs-modal-subtitle');
+  if (!body || !titleEl || !subtitleEl) return;
 
-  const rows = distributionHistory.flatMap(log => {
-    return (log.assignments || []).map(item => ({
-      ...item,
-      logName: log.name,
-      savedAt: log.savedAt || log.created_at
-    }));
-  });
+  if (!log) {
+    if (!distributionHistory.length) {
+      titleEl.textContent = 'Reward Log';
+      subtitleEl.textContent = 'Saved: none';
+      body.innerHTML = `
+        <tr>
+          <td colspan="5" style="padding:16px; color:#ccc; text-align:center;">No reward logs available.</td>
+        </tr>
+      `;
+      return;
+    }
+    log = distributionHistory[0];
+  }
+
+  titleEl.textContent = `Reward Log ${escapeHtml(log.name)}`;
+  subtitleEl.textContent = `Saved: ${new Date(log.savedAt || log.created_at).toLocaleString()}`;
+
+  const rows = (log.assignments || []).map(item => ({
+    ...item,
+    status: 'Distributed',
+    notes: `${log.name} • ${new Date(log.savedAt || log.created_at).toLocaleString()}`
+  }));
 
   if (!rows.length) {
     body.innerHTML = `
       <tr>
-        <td colspan="5" style="padding:16px; color:#ccc; text-align:center;">No reward logs available.</td>
+        <td colspan="5" style="padding:16px; color:#ccc; text-align:center;">No items recorded for this reward log.</td>
       </tr>
     `;
     return;
@@ -1928,19 +1946,17 @@ function renderRewardLogsTable() {
       <td style="padding:12px 10px; vertical-align:top;">${escapeHtml(row.item)}</td>
       <td style="padding:12px 10px; vertical-align:top;">${row.quantity}</td>
       <td style="padding:12px 10px; vertical-align:top;">${escapeHtml(row.ign)}</td>
-      <td style="padding:12px 10px; vertical-align:top; color:#00ff88; font-weight:bold;">Distributed</td>
-      <td style="padding:12px 10px; vertical-align:top; color:#ccc; font-size:13px;">
-        ${escapeHtml(row.logName)}<br />
-        ${row.savedAt ? escapeHtml(new Date(row.savedAt).toLocaleString()) : ''}
-      </td>
+      <td style="padding:12px 10px; vertical-align:top; color:#00ff88; font-weight:bold;">${escapeHtml(row.status)}</td>
+      <td style="padding:12px 10px; vertical-align:top; color:#ccc; font-size:13px;">${escapeHtml(row.notes)}</td>
     </tr>
   `).join('');
 }
 
-function openRewardLogsModal() {
+function openRewardLogsModal(log) {
   const modal = document.getElementById('reward-logs-modal');
   if (!modal) return;
-  renderRewardLogsTable();
+  activeRewardLog = log && typeof log === 'object' ? log : distributionHistory[0] || null;
+  renderRewardLogsTable(activeRewardLog);
   modal.style.display = 'grid';
   document.body.style.overflow = 'hidden';
 }
@@ -1975,14 +1991,7 @@ async function loadDistributionHistoryFromSupabase() {
 }
 
 function toggleDistributionDetails() {
-  const panel = document.getElementById('distribution-history-panel');
-  const toggleBtn = document.getElementById('toggle-history-btn');
-  if (!panel) return;
-  const isVisible = panel.style.display !== 'none';
-  panel.style.display = isVisible ? 'none' : 'block';
-  if (toggleBtn) {
-    toggleBtn.textContent = isVisible ? 'SHOW LOGS' : 'HIDE LOGS';
-  }
+  // No inline history panel is used anymore.
 }
 
 async function confirmDistribution() {
@@ -2023,7 +2032,7 @@ async function confirmDistribution() {
 
     if (error) throw error;
 
-    distributionHistory.unshift({
+    const savedLog = {
       id: data.id,
       name: payload.name,
       created_by: payload.created_by,
@@ -2031,7 +2040,8 @@ async function confirmDistribution() {
       recipient_count: payload.recipient_count,
       total_quantity: payload.total_quantity,
       savedAt: data.created_at
-    });
+    };
+    distributionHistory.unshift(savedLog);
     saveDistributionHistory();
     renderDistributionPreview();
     renderDistributionHistory(document.getElementById('distribution-history-filter')?.value || '');
@@ -2402,7 +2412,7 @@ window.addEventListener("load", () => {
 
     const openRewardLogsModalBtn = document.getElementById("open-reward-logs-modal-btn");
     if (openRewardLogsModalBtn) {
-      openRewardLogsModalBtn.addEventListener("click", openRewardLogsModal);
+      openRewardLogsModalBtn.addEventListener("click", () => openRewardLogsModal());
     }
 
     const closeRewardLogsModalBtn = document.getElementById("close-reward-logs-modal-btn");
@@ -2413,16 +2423,6 @@ window.addEventListener("load", () => {
     const closeRewardLogsModalFooterBtn = document.getElementById("close-reward-logs-modal-footer-btn");
     if (closeRewardLogsModalFooterBtn) {
       closeRewardLogsModalFooterBtn.addEventListener("click", closeRewardLogsModal);
-    }
-
-    const toggleHistoryBtn = document.getElementById("toggle-history-btn");
-    if (toggleHistoryBtn) {
-      toggleHistoryBtn.addEventListener("click", toggleDistributionDetails);
-    }
-
-    const distributionHistoryFilter = document.getElementById('distribution-history-filter');
-    if (distributionHistoryFilter) {
-      distributionHistoryFilter.addEventListener('input', () => renderDistributionHistory(distributionHistoryFilter.value));
     }
 
     const logoutBtn = document.getElementById("logout-button");
