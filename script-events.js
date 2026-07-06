@@ -1671,6 +1671,7 @@ function loadItemDistribution() {
   if (statusEl) statusEl.textContent = 'Ready for item distribution.';
   if (preview) preview.innerHTML = '<p style="color:#ccc; margin:0;">No preview generated yet.</p>';
   if (panel) panel.innerHTML = '<p style="color:#ccc; margin:0;">Toggle details after distribution.</p>';
+  setDistributionMode('toggle');
   loadDistributionMembers();
 }
 

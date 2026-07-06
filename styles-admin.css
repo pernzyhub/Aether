@@ -416,7 +416,8 @@ body::before {
   border-color: #ffaa00;
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover,
+.btn-secondary.is-active {
   background: #ffaa00;
   color: #000;
   box-shadow: 0 0 25px rgba(255, 170, 0, 0.5);
