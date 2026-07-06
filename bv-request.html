@@ -23,45 +23,39 @@
   </header>
   <div id="adminPreviewBadge" style="display:none; position:fixed; top:76px; left:12px; background:#d4af37; color:#071; padding:6px 10px; border-radius:8px; z-index:99999; font-weight:700;">ADMIN PREVIEW MODE</div>
 
-  <div class="container request-page bv-request-layout bv-request-wider">
-    <div class="request-left-column">
-      <section class="card request-form-card request-column">
-        <h2>BV Request Submission</h2>
-        <p class="section-copy">Submit a Battle Value request for review, and track its progress below in the request history.</p>
-        <form id="bv-request-form" onsubmit="submitBVRequest(event)">
-          <div class="form-group">
-            <label for="bv-select">Request Type</label>
-            <select id="bv-select" required>
-              <option value="">Choose...</option>
-              <option value="standard">Standard</option>
-              <option value="event">Event</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <button type="submit" class="btn btn-primary">SUBMIT BV REQUEST</button>
-        </form>
-        <p id="bv-request-status" class="status-text"></p>
-      </section>
+  <div class="container request-page bv-request-layout bv-request-3col">
+    <section class="card request-form-card request-column">
+      <h2>BV Request</h2>
+      <form id="bv-request-form" onsubmit="submitBVRequest(event)">
+        <div class="form-group">
+          <label for="bv-select">Request Type</label>
+          <select id="bv-select" required>
+            <option value="">Choose...</option>
+            <option value="standard">Standard</option>
+            <option value="event">Event</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary">SUBMIT</button>
+      </form>
+      <p id="bv-request-status" class="status-text"></p>
 
-      <section class="card request-summary-card request-column bv-request-summary-section">
+      <div class="card request-summary-card request-column bv-request-summary-section compact-summary">
         <div class="card-heading">
-          <div>
-            <h2>BV Summary</h2>
-            <p class="section-copy">Your current BV requests are listed below. Once a request type is used, it cannot be requested again, even if it is pending or completed.</p>
-          </div>
+          <h2>BV Summary</h2>
           <span class="card-badge">SUMMARY</span>
         </div>
-        <p class="bv-summary-note">Example: if you pick <strong>Light Of Greed</strong>, you cannot request that exact BV reason again.</p>
         <div id="bv-summary-container" class="bv-request-summary-list"></div>
-      </section>
-    </div>
+        <div class="summary-actions">
+          <button type="button" class="btn btn-small btn-success">DONE</button>
+          <button type="button" class="btn btn-small btn-danger">CANCEL</button>
+        </div>
+      </div>
+    </section>
 
     <section class="card request-feed-card request-column bv-request-board-section">
       <div class="card-heading">
-        <div>
-          <h2>BV Request Board</h2>
-          <p class="section-copy">View your submitted requests and their current approval status.</p>
-        </div>
+        <h2>BV Request Board</h2>
         <div class="card-controls">
           <label class="control-label" for="bv-filter">Status</label>
           <select id="bv-filter" class="sort-select">
@@ -77,13 +71,31 @@
             <option value="amount_asc">BV Low → High</option>
           </select>
         </div>
-        <span class="card-badge">LIVE</span>
       </div>
       <div id="bv-requests-table" class="request-feed"></div>
       <div class="pagination-controls" style="display:flex; gap:8px; align-items:center; margin-top:12px;">
         <button id="bv-prev-page" class="btn btn-secondary">Prev</button>
         <span id="bv-page-indicator">Page 1</span>
         <button id="bv-next-page" class="btn btn-secondary">Next</button>
+      </div>
+    </section>
+
+    <section class="card request-form-card request-column bv-request-examples">
+      <h2>BV Examples</h2>
+      <div class="bv-example-group">
+        <div class="bv-example-title">Soul of Darkness</div>
+        <ol>
+          <li>pernzy</li>
+          <li>youglow</li>
+          <li>marko</li>
+        </ol>
+      </div>
+      <div class="bv-example-group">
+        <div class="bv-example-title">Light of Greed</div>
+        <ol>
+          <li>pernzy</li>
+          <li>kram</li>
+        </ol>
       </div>
     </section>
   </div>

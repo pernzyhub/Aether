@@ -49,42 +49,35 @@
       <p id="request-status" class="status-text"></p>
     </section>
 
-    <div class="request-right-column">
-      <section class="card request-feed-card request-column">
-        <div class="card-heading">
-          <h2>REQUEST FEED</h2>
-          <div class="card-controls">
-            <label class="control-label" for="request-filter">Filter</label>
-            <select id="request-filter" class="sort-select">
-              <option value="all">All</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Fulfilled</option>
-              <option value="denied">Denied</option>
-            </select>
-            <label class="control-label" for="request-sort">Sort</label>
-            <select id="request-sort" class="sort-select">
-              <option value="newest">Newest</option>
-              <option value="oldest">Oldest</option>
-            </select>
-          </div>
-          <span class="card-badge">LIVE</span>
+    <section class="card request-feed-card request-column">
+      <div class="card-heading">
+        <h2>REQUEST FEED</h2>
+        <div class="card-controls">
+          <label class="control-label" for="request-filter">Filter</label>
+          <select id="request-filter" class="sort-select">
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Fulfilled</option>
+            <option value="denied">Denied</option>
+          </select>
+          <label class="control-label" for="request-sort">Sort</label>
+          <select id="request-sort" class="sort-select">
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+          </select>
         </div>
-        <div id="my-requests" class="request-feed"></div>
-      </section>
+        <span class="card-badge">LIVE</span>
+      </div>
+      <div id="my-requests" class="request-feed"></div>
+    </section>
 
-      <section class="card request-summary-card request-column">
-        <div class="card-heading">
-          <h2>ITEM SUMMARY</h2>
-          <div class="card-controls summary-controls">
-            <select id="summary-select" class="sort-select summary-select" aria-label="Choose item summary">
-              <option value="">Loading...</option>
-            </select>
-          </div>
-          <span class="card-badge">GROUPED</span>
-        </div>
-        <div id="request-summary" class="request-summary"></div>
-      </section>
-    </div>
+    <section class="card request-summary-card request-column">
+      <div class="card-heading">
+        <h2>ITEM SUMMARY</h2>
+        <span class="card-badge">GROUPED</span>
+      </div>
+      <div id="request-summary" class="request-summary"></div>
+    </section>
   </div>
 
   <!-- Image Modal -->
