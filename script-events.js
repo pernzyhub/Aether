@@ -1526,23 +1526,25 @@ function updateDistributionMemberCount() {
 }
 
 function setDistributionMode(mode) {
+  distributionMode = mode === 'bulk' ? 'bulk' : 'toggle';
   const toggleControls = document.getElementById('distribution-toggle-controls');
   const bulkControls = document.getElementById('distribution-bulk-controls');
-  const toggleBtn = document.getElementById('distribution-mode-toggle-btn');
-  const bulkBtn = document.getElementById('distribution-mode-bulk-btn');
-  if (!toggleControls || !bulkControls || !toggleBtn || !bulkBtn) return;
+  const modeBtn = document.getElementById('distribution-mode-btn');
+  if (!toggleControls || !bulkControls || !modeBtn) return;
 
-  if (mode === 'bulk') {
+  if (distributionMode === 'bulk') {
     toggleControls.style.display = 'none';
     bulkControls.style.display = 'block';
-    toggleBtn.classList.remove('is-active');
-    bulkBtn.classList.add('is-active');
+    modeBtn.textContent = 'MODE: BULK';
   } else {
     toggleControls.style.display = 'block';
     bulkControls.style.display = 'none';
-    toggleBtn.classList.add('is-active');
-    bulkBtn.classList.remove('is-active');
+    modeBtn.textContent = 'MODE: TOGGLE';
   }
+}
+
+function toggleDistributionMode() {
+  setDistributionMode(distributionMode === 'bulk' ? 'toggle' : 'bulk');
 }
 
 function applyBulkMemberSelection() {
@@ -1944,14 +1946,9 @@ window.addEventListener("load", () => {
       });
     }
 
-    const distributionModeToggleBtn = document.getElementById("distribution-mode-toggle-btn");
-    if (distributionModeToggleBtn) {
-      distributionModeToggleBtn.addEventListener("click", () => setDistributionMode('toggle'));
-    }
-
-    const distributionModeBulkBtn = document.getElementById("distribution-mode-bulk-btn");
-    if (distributionModeBulkBtn) {
-      distributionModeBulkBtn.addEventListener("click", () => setDistributionMode('bulk'));
+    const distributionModeBtn = document.getElementById("distribution-mode-btn");
+    if (distributionModeBtn) {
+      distributionModeBtn.addEventListener("click", toggleDistributionMode);
     }
 
     const distributionBulkApplyBtn = document.getElementById("distribution-member-bulk-apply-btn");
