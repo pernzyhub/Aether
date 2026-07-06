@@ -132,13 +132,21 @@ async function loadBVRequests() {
   if (!container) return;
   container.innerHTML = '<p class="empty-state">Loading BV requests...</p>';
 
+  const memberSession = getMemberSession();
+  const userId = currentUser?.id || memberSession?.id;
+  if (!userId) {
+    container.innerHTML = '<p class="empty-state error">Unable to determine member identity.</p>';
+    return;
+  }
+
   const filter = document.getElementById('bv-filter')?.value || 'all';
   try {
-    let query = supabase.from('bv_requests').select('*, clan_users(ign)').order('created_at', { ascending: false }).limit(50);
-    if (filter !== 'all') query = query.eq('status', filter);
-    const { data, error } = await query;
+    const { data, error } = await supabase.rpc('get_bv_requests_for_user', { target_user_id: userId });
     if (error) throw error;
-    bvAllData = data || [];
+    bvAllData = Array.isArray(data) ? data : [];
+    if (filter !== 'all') {
+      bvAllData = bvAllData.filter((r) => r.status === filter);
+    }
     if (!bvAllData || bvAllData.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
