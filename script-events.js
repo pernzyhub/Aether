@@ -1858,6 +1858,29 @@ function renderDistributionDetails() {
   `).join('');
 }
 
+function renderDistributionHistory() {
+  const panel = document.getElementById('distribution-details-panel');
+  if (!panel) return;
+  if (!distributionHistory.length) {
+    panel.innerHTML = '<p style="color:#ccc; margin:0;">No reward logs saved yet.</p>';
+    return;
+  }
+
+  panel.innerHTML = distributionHistory.map((log, index) => `
+    <div style="padding:12px; border:1px solid #222; border-radius:8px; margin-bottom:12px; background:#080808; color:#fff;">
+      <div style="font-weight:bold; margin-bottom:6px;">${escapeHtml(log.name)}</div>
+      <div style="color:#aaa; margin-bottom:8px;">Saved: ${new Date(log.savedAt).toLocaleString()}</div>
+      <div style="font-size:13px; line-height:1.5;">
+        ${log.assignments.map(item => `
+          <div style="padding:6px; border-top:1px solid #1a1a1a;">
+            <strong>${escapeHtml(item.ign)}</strong> → ${escapeHtml(item.item)} <span style="color:#00ff88;">x${item.quantity}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
 function toggleDistributionDetails() {
   const panel = document.getElementById('distribution-details-panel');
   if (!panel) return;
@@ -1887,32 +1910,21 @@ function confirmDistribution() {
     assignments: distributionAssignments.map(entry => ({ memberId: entry.member.id, ign: entry.member.ign, item: entry.item, quantity: entry.quantity }))
   });
   renderDistributionPreview();
-  renderDistributionDetails();
+  renderDistributionHistory();
 
   if (statusEl) showStatus('item-distribution-status', 'Distribution confirmed and saved.', 'success');
 
-  // Clear selections and inputs after confirming
+  // Clear selections and inputs after confirming (preserve saved assignments and history)
   try {
-    // Clear assignment arrays and entries
-    distributionAssignments = [];
-    distributionItemEntries = [];
-    distributionSaved = false;
-
     // Clear item textarea and file input
     const textarea = document.getElementById('distribution-items-input');
     if (textarea) textarea.value = '';
     const fileInput = document.getElementById('distribution-items-file');
     if (fileInput) fileInput.value = '';
 
-    // Uncheck all member checkboxes
+    // Uncheck all member checkboxes (we keep the saved assignments/history intact)
     document.querySelectorAll('input[name="distribution-member"]').forEach(input => { input.checked = false; });
     updateDistributionMemberCount();
-
-    // Reset preview and details panels
-    const preview = document.getElementById('distribution-preview-list');
-    if (preview) preview.innerHTML = '<p style="color:#ccc; margin:0;">No assignments yet.</p>';
-    const panel = document.getElementById('distribution-details-panel');
-    if (panel) panel.innerHTML = '<p style="color:#ccc; margin:0;">Toggle details after distribution.</p>';
 
     // Disable confirm button briefly to avoid double submits
     const confirmBtn = document.getElementById('confirm-distribution-btn');
@@ -1946,7 +1958,7 @@ function loadItemDistribution() {
   const fileInput = document.getElementById('distribution-items-file');
   if (statusEl) statusEl.textContent = 'Ready for item distribution.';
   if (preview) preview.innerHTML = '<p style="color:#ccc; margin:0;">No preview generated yet.</p>';
-  if (panel) panel.innerHTML = '<p style="color:#ccc; margin:0;">Toggle details after distribution.</p>';
+  if (panel) renderDistributionHistory();
   if (textarea) textarea.value = '';
   if (fileInput) fileInput.value = '';
   distributionAssignments = [];
