@@ -199,7 +199,7 @@ body::before {
 }
 
 .container.bv-request-layout {
-  max-width: 1700px;
+  max-width: 1440px;
 }
 
 .request-page {
@@ -230,9 +230,9 @@ body::before {
 
 .bv-request-layout {
   display: grid;
-  grid-template-columns: repeat(3, minmax(280px, 1fr));
-  gap: 22px;
-  max-width: 1700px;
+  grid-template-columns: minmax(280px, 1fr) minmax(420px, 1.8fr) minmax(320px, 0.95fr);
+  gap: 24px;
+  max-width: 1440px;
 }
 
 .bv-request-3col .request-column {
@@ -267,33 +267,11 @@ body::before {
   border-radius: 8px;
 }
 
-.bv-request-examples {
-  min-height: 520px;
-}
 
-.bv-example-group {
-  margin-bottom: 20px;
-}
-
-.bv-example-title {
-  font-size: 0.95rem;
-  font-weight: 700;
-  margin-bottom: 10px;
-  color: #d4ffcc;
-}
-
-.bv-example-group ol {
-  padding-left: 20px;
-  color: #c9ffdf;
-  line-height: 1.55;
-}
-
-.bv-example-group li {
-  margin-bottom: 8px;
-}
 
 .bv-request-board-section {
-  min-width: 820px;
+  min-width: 0;
+  width: 100%;
 }
 
 .bv-request-board-section .request-feed {
@@ -301,6 +279,7 @@ body::before {
 }
 
 .bv-request-summary-section {
+  min-width: 0;
   min-height: 320px;
 }
 
@@ -488,6 +467,18 @@ body::before {
     }
   }
 
+  @media (max-width: 1280px) {
+    .bv-request-layout {
+      grid-template-columns: minmax(280px, 1fr) minmax(360px, 1.2fr) minmax(280px, 0.9fr);
+    }
+  }
+
+  @media (max-width: 1040px) {
+    .bv-request-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
   .bv-request-summary-card,
   .bv-request-history-card {
     background: rgba(5, 13, 8, 0.91);
@@ -529,67 +520,104 @@ body::before {
   }
 
   .bv-summary-row {
-    background: rgba(6, 18, 10, 0.95);
+    background: rgba(6, 20, 10, 0.96);
     border: 1px solid rgba(0, 255, 136, 0.18);
-    border-radius: 16px;
-    padding: 16px;
+    border-radius: 18px;
+    padding: 18px;
     display: grid;
-    gap: 10px;
+    gap: 12px;
   }
 
   .bv-summary-top {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
+    flex-wrap: wrap;
   }
 
   .bv-summary-reason {
     font-weight: 700;
-    color: #f9ffef;
+    color: #f7ffef;
     font-size: 1rem;
+    line-height: 1.3;
+    min-width: 0;
+    flex: 1 1 220px;
   }
 
   .bv-summary-status {
-    color: #c5ffd5;
+    color: #c8ffd9;
     text-transform: uppercase;
     font-size: 0.78rem;
     letter-spacing: 0.08em;
+    white-space: nowrap;
   }
 
-  .bv-summary-text {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
-    color: #d8ffdf;
-    font-size: 0.94rem;
+  .bv-summary-meta {
+    color: #dbeff1;
     line-height: 1.5;
+    font-size: 0.92rem;
+    margin-top: -2px;
   }
 
-  .bv-summary-text span {
-    display: inline-block;
+  .bv-summary-list {
+    display: grid;
+    gap: 12px;
+    margin-top: 10px;
   }
 
-  .bv-summary-created {
-    color: #98ffb1;
-    font-size: 0.82rem;
+  .bv-summary-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: rgba(0, 255, 136, 0.08);
+    border: 1px solid rgba(0, 255, 136, 0.14);
+  }
+
+  .bv-summary-item .bv-summary-person {
+    color: #e9ffea;
+    font-size: 0.96rem;
+    line-height: 1.4;
+    min-width: 0;
+    word-break: break-word;
   }
 
   .bv-summary-actions {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     flex-wrap: wrap;
+    justify-content: flex-end;
   }
 
   .bv-summary-actions .btn {
     width: auto;
+    padding: 7px 12px;
+    font-size: 0.82rem;
   }
 
   .bv-summary-actions .btn[disabled] {
-    opacity: 0.5;
+    opacity: 0.55;
     cursor: not-allowed;
+  }
+
+  .bv-request-board-section .card-heading {
+    gap: 10px;
+  }
+
+  .bv-request-board-section .card-controls {
+    gap: 10px;
+  }
+
+  .bv-request-board-section .sort-select,
+  .bv-request-board-section .control-label {
+    min-width: 140px;
+  }
+
+  .bv-request-board-section .request-feed {
+    padding-top: 10px;
   }
 
   .bv-request-board-section {
@@ -604,7 +632,7 @@ body::before {
   .bv-request-header,
   .bv-request-row {
     display: grid;
-    grid-template-columns: minmax(170px, 1fr) minmax(220px, 1.3fr) minmax(240px, 1.5fr);
+    grid-template-columns: minmax(140px, 1fr) minmax(180px, 1.5fr) minmax(240px, 1.7fr);
     gap: 14px;
     align-items: center;
   }

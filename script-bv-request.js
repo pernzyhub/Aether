@@ -257,7 +257,7 @@ function renderBVSummary(list) {
     return;
   }
 
-  const items = list.map(r => {
+  const grouped = list.reduce((acc, r) => {
     const rawReason = bvTypeMap.get(r.reason) || r.reason || 'Unknown';
     const reasonLabel = String(rawReason).replace(/-/g, ' ');
     const amount = Number(r.amount ?? r.request_amount ?? 0);
@@ -265,23 +265,44 @@ function renderBVSummary(list) {
     const statusLabel = (r.status || 'pending').toUpperCase();
     const isPending = statusLabel === 'PENDING';
 
-    return `
+    if (!acc[reasonLabel]) {
+      acc[reasonLabel] = {
+        reasonLabel,
+        summaryText,
+        statusLabel,
+        requests: []
+      };
+    }
+
+    acc[reasonLabel].requests.push({
+      id: r.id,
+      name: (r.clan_users?.ign || currentUser?.ign || 'You'),
+      isPending
+    });
+
+    return acc;
+  }, {});
+
+  const items = Object.values(grouped).map(group => `
       <div class="bv-summary-row">
         <div class="bv-summary-top">
-          <div class="bv-summary-reason">${escapeHtml(reasonLabel)}</div>
-          <div class="bv-summary-status">${escapeHtml(statusLabel)}</div>
+          <div class="bv-summary-reason">${escapeHtml(group.reasonLabel)}</div>
+          <div class="bv-summary-status">${escapeHtml(group.statusLabel)}</div>
         </div>
-        <div class="bv-summary-text">
-          <span>${escapeHtml(summaryText)}</span>
-          <span class="bv-summary-created">${formatDateTime(r.created_at)}</span>
-        </div>
-        <div class="bv-summary-actions">
-          <button type="button" class="btn btn-small btn-success" ${isPending ? '' : 'disabled'} onclick="handleBVAction('${r.id}','approved')">DONE</button>
-          <button type="button" class="btn btn-small btn-danger" ${isPending ? '' : 'disabled'} onclick="handleBVAction('${r.id}','denied')">CANCEL</button>
+        <div class="bv-summary-meta">${escapeHtml(group.summaryText)}</div>
+        <div class="bv-summary-list">
+          ${group.requests.map((req, index) => `
+            <div class="bv-summary-item">
+              <span class="bv-summary-person">${index + 1}. ${escapeHtml(req.name)}</span>
+              <div class="bv-summary-actions">
+                <button type="button" class="btn btn-small btn-success" ${req.isPending ? '' : 'disabled'} onclick="handleBVAction('${req.id}','approved')">DONE</button>
+                <button type="button" class="btn btn-small btn-danger" ${req.isPending ? '' : 'disabled'} onclick="handleBVAction('${req.id}','denied')">CANCEL</button>
+              </div>
+            </div>
+          `).join('')}
         </div>
       </div>
-    `;
-  }).join('');
+    `).join('');
 
   container.innerHTML = items;
 }
