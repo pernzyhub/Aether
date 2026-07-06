@@ -223,6 +223,12 @@
       <!-- Item Distribution Tab -->
       <div id="events-tab-item-distribution" class="events-tab-content">
         <p id="item-distribution-status" class="status-text"></p>
+        <div style="margin-bottom:14px; padding:12px; border:2px solid #ff6688; border-radius:10px; background:linear-gradient(135deg, #241018, #111);">
+          <div style="font-size:14px; font-weight:bold; color:#fff; margin-bottom:8px;">CSV IMPORT FOR ITEM LIST</div>
+          <input type="file" id="distribution-items-file" accept=".csv,text/csv" style="width:100%; margin-bottom:8px; color:#fff; background:#111; border:1px solid #555; padding:8px;" />
+          <button type="button" id="distribution-import-items-btn" class="btn btn-secondary" style="width:100%; margin-bottom:6px; background:#ff6688; color:#fff; font-weight:bold; padding:10px 12px;">IMPORT CSV FILE</button>
+          <div style="color:#aaa; font-size:12px; line-height:1.4;">Use a CSV with item names in column A and quantities in column B.</div>
+        </div>
         <div style="display: grid; grid-template-columns: 1.1fr 1fr 1.1fr 1fr; gap: 18px; align-items: start;">
           <div style="border:1px solid #444; border-radius:8px; padding:16px; background:#111;">
             <h3 style="margin-top:0; color:#ff6688;">PICK MEMBERS</h3>
