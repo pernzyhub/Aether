@@ -286,13 +286,18 @@ function renderBVSummary(list) {
     `;
   }).join('');
 
-  const approvedItems = list
+  const approvedPairSet = new Set();
+  list
     .filter((r) => String(r.status || '').toLowerCase() === 'approved')
-    .map((r) => {
+    .forEach((r) => {
       const title = getBVTitle(r.reason);
       const requestor = r.clan_users?.ign || 'Unknown';
-      return `<li>${escapeHtml(title)} - ${escapeHtml(requestor)}</li>`;
-    })
+      approvedPairSet.add(`${title} - ${requestor}`);
+    });
+
+  const approvedItems = Array.from(approvedPairSet)
+    .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+    .map((pair) => `<li>${escapeHtml(pair)}</li>`)
     .join('');
 
   const approvedHtml = approvedItems ? `
