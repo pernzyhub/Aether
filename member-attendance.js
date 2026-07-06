@@ -221,14 +221,14 @@ async function loadSheet() {
     table.style.minWidth = '1200px';
 
     const thead = document.createElement('thead');
-    let head = '<tr style="background:#111;color:#fff;position:sticky;top:0;">';
-    head += '<th style="padding:12px; text-align:left; min-width:140px; font-weight:700; font-size:13px;">Member</th>';
-    head += '<th style="padding:12px; text-align:center; font-size:12px; min-width:60px;">Points</th>';
-    head += '<th style="padding:12px; text-align:center; font-size:12px; min-width:60px;">Week</th>';
-    head += '<th style="padding:12px; text-align:center; font-size:12px; min-width:60px;">Month</th>';
+    let head = '<tr style="background:#111;color:#fff;">';
+    head += '<th style="padding:12px; text-align:left; min-width:140px; font-weight:700; font-size:13px; position:sticky; top:0; left:0; z-index:8; background:#111;">Member</th>';
+    head += '<th style="padding:12px; text-align:center; font-size:12px; min-width:60px; position:sticky; top:0; z-index:7; background:#111;">Points</th>';
+    head += '<th style="padding:12px; text-align:center; font-size:12px; min-width:60px; position:sticky; top:0; z-index:7; background:#111;">Week</th>';
+    head += '<th style="padding:12px; text-align:center; font-size:12px; min-width:60px; position:sticky; top:0; z-index:7; background:#111;">Month</th>';
     occurrenceList.forEach(o => {
       const displayDate = formatDate(o.dateTime);
-      head += `<th style="padding:12px; text-align:center; font-size:11px; min-width:120px; white-space:normal;"><div style="word-break:break-word;">${escapeHtml(o.eventName)}<br/><small style=\"color:#999; font-size:10px;\">${escapeHtml(displayDate)}</small></div></th>`;
+      head += `<th style="padding:12px; text-align:center; font-size:11px; min-width:120px; white-space:normal; word-break:break-word; position:sticky; top:0; z-index:7; background:#111;"><div style="word-break:break-word;">${escapeHtml(o.eventName)}<br/><small style=\"color:#999; font-size:10px;\">${escapeHtml(displayDate)}</small></div></th>`;
     });
     head += '</tr>';
     thead.innerHTML = head;
@@ -236,7 +236,7 @@ async function loadSheet() {
 
     const tbody = document.createElement('tbody');
     visibleUsers.forEach(u => {
-      let row = `<tr style="border-bottom:1px solid #222; background:#0a0a0a;"><td style="padding:12px; font-weight:600; color:#00ff88; font-size:13px;">${escapeHtml(u.ign || 'Unknown')}</td>`;
+      let row = `<tr style="border-bottom:1px solid #222; background:#0a0a0a;"><td style="padding:12px; position:sticky; left:0; z-index:6; background:#0a0a0a; font-weight:600; color:#00ff88; font-size:13px; text-align:left; min-width:140px; white-space:normal; word-break:break-word;">${escapeHtml(u.ign || 'Unknown')}</td>`;
       const prog = progressMap[u.id] || { totalPoints: 0, weekPoints: 0, weekAttended: 0, monthPoints: 0, monthAttended: 0 };
       row += `<td style="padding:12px; text-align:center; color:#fff; font-size:13px;">${prog.totalPoints}</td>`;
       row += `<td style="padding:12px; text-align:center; color:#b8ffb8; font-size:12px;">${prog.weekAttended}/${prog.weekPoints}</td>`;
