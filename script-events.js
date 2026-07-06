@@ -1935,7 +1935,7 @@ function toggleDistributionDetails() {
   }
 }
 
-function confirmDistribution() {
+async function confirmDistribution() {
   const statusEl = document.getElementById('item-distribution-status');
   if (!distributionAssignments.length) {
     if (statusEl) showStatus('item-distribution-status', 'No distribution assignments to confirm.', 'error');
