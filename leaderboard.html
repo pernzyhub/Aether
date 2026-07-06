@@ -384,8 +384,26 @@
     let currentPeriod = 'month';
     let currentUserId = null;
 
+    function isHiddenAdminAccount(memberLike) {
+      const ign = typeof memberLike?.clan_users?.ign === 'string'
+        ? memberLike.clan_users.ign.trim().toLowerCase()
+        : typeof memberLike?.clan_users?.[0]?.ign === 'string'
+          ? memberLike.clan_users[0].ign.trim().toLowerCase()
+          : '';
+      const userId = typeof memberLike?.user_id === 'string'
+        ? memberLike.user_id
+        : typeof memberLike?.clan_users?.id === 'string'
+          ? memberLike.clan_users.id
+          : typeof memberLike?.clan_users?.[0]?.id === 'string'
+            ? memberLike.clan_users[0].id
+            : '';
+
+      return ign === 'adminpernzy' || userId === 'fec85282-b333-4625-b482-b398e0506218';
+    }
+
     function isVisibleMember(memberLike) {
-      return memberLike?.clan_users?.is_hidden_from_members !== true
+      return !isHiddenAdminAccount(memberLike)
+        && memberLike?.clan_users?.is_hidden_from_members !== true
         && memberLike?.clan_users?.[0]?.is_hidden_from_members !== true;
     }
 

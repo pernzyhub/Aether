@@ -276,46 +276,46 @@
           </div>
         </div>
 
-        <div id="reward-logs-list-modal" style="display:none; position:fixed; inset:0; z-index:10000; background:rgba(0,0,0,0.9); align-items:center; justify-content:center; padding:18px;">
-          <div style="width:100%; max-width:calc(100% - 36px); background:#101010; border:1px solid #333; border-radius:14px; overflow:hidden; display:flex; flex-direction:column; max-height:calc(100vh - 36px); min-height:calc(100vh - 36px);">
-            <div style="padding:20px 24px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; background:#120f16;">
+        <div id="reward-logs-list-modal" style="display:none; position:fixed; inset:0; z-index:10000; background:rgba(0,0,0,0.92); align-items:center; justify-content:center; padding:10px;">
+          <div style="width:100%; max-width:calc(100% - 20px); background:#101010; border:1px solid #333; border-radius:12px; overflow:hidden; display:flex; flex-direction:column; max-height:calc(100vh - 20px); min-height:calc(100vh - 20px);">
+            <div style="padding:14px 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; background:#120f16; gap:12px;">
               <div>
-                <div style="font-size:22px; font-weight:bold; color:#fff; margin-bottom:4px;">Reward Logs</div>
+                <div style="font-size:20px; font-weight:bold; color:#fff; margin-bottom:4px;">Reward Logs</div>
                 <div style="font-size:13px; color:#aaa;">Click a saved log to open the full details.</div>
               </div>
-              <button type="button" id="close-reward-logs-list-modal-btn" class="btn btn-secondary" style="background:#333; color:#fff; padding:10px 14px;">Close</button>
+              <button type="button" id="close-reward-logs-list-modal-btn" class="btn btn-secondary" style="background:#333; color:#fff; padding:8px 12px;">Close</button>
             </div>
-            <div id="reward-logs-list-container" style="padding:20px; overflow:auto; flex:1; display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:16px;"></div>
+            <div id="reward-logs-list-container" style="padding:14px; overflow:auto; flex:1; display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:12px;"></div>
           </div>
         </div>
 
-        <div id="reward-log-detail-modal" style="display:none; position:fixed; inset:0; z-index:10001; background:rgba(0,0,0,0.92); align-items:center; justify-content:center; padding:12px;">
-          <div style="width:100%; max-width:calc(100% - 24px); height:calc(100% - 24px); background:#101010; border:1px solid #333; border-radius:14px; overflow:hidden; display:flex; flex-direction:column;">
-            <div style="padding:18px 22px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; background:#120f16;">
+        <div id="reward-log-detail-modal" style="display:none; position:fixed; inset:0; z-index:10001; background:rgba(0,0,0,0.92); align-items:center; justify-content:center; padding:10px;">
+          <div style="width:100%; max-width:calc(100% - 20px); height:calc(100vh - 20px); background:#101010; border:1px solid #333; border-radius:12px; overflow:hidden; display:flex; flex-direction:column;">
+            <div style="padding:14px 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; background:#120f16; gap:12px;">
               <div>
-                <div style="font-size:13px; color:#7bf59f; font-weight:700; letter-spacing:1px; margin-bottom:6px;">DETAIL VIEW</div>
-                <div id="reward-log-detail-title" style="font-size:24px; font-weight:bold; color:#fff; margin-bottom:4px;">Reward Log</div>
-                <div id="reward-log-detail-subtitle" style="font-size:14px; color:#aaa;">Saved: none</div>
-                <div id="reward-log-detail-note" style="font-size:13px; color:#7bf59f; margin-top:6px;">Click the gray button first, then tag it as Distributed or Pending.</div>
+                <div style="font-size:12px; color:#7bf59f; font-weight:700; letter-spacing:1px; margin-bottom:5px;">DETAIL VIEW</div>
+                <div id="reward-log-detail-title" style="font-size:22px; font-weight:bold; color:#fff; margin-bottom:4px;">Reward Log</div>
+                <div id="reward-log-detail-subtitle" style="font-size:13px; color:#aaa;">Saved: none</div>
+                <div id="reward-log-detail-note" style="font-size:12px; color:#7bf59f; margin-top:5px;">Click the gray button first, then tag it as Distributed or Pending.</div>
               </div>
-              <button type="button" id="close-reward-log-detail-modal-btn" class="btn btn-secondary" style="background:#333; color:#fff; padding:10px 14px;">Close</button>
+              <button type="button" id="close-reward-log-detail-modal-btn" class="btn btn-secondary" style="background:#333; color:#fff; padding:8px 12px;">Close</button>
             </div>
-            <div id="reward-log-detail-table-container" style="padding:20px; overflow:auto; flex:1; min-height:0;">
+            <div id="reward-log-detail-table-container" style="padding:14px; overflow:auto; flex:1; min-height:0;">
               <table id="reward-log-detail-table" style="width:100%; border-collapse:collapse; color:#fff; min-width:1120px;">
                 <thead>
                   <tr style="background:#111; color:#fff; text-align:left;">
-                    <th style="padding:14px 12px; border-bottom:1px solid #222;">Item</th>
-                    <th style="padding:14px 12px; border-bottom:1px solid #222;">Quantity</th>
-                    <th style="padding:14px 12px; border-bottom:1px solid #222;">Winner</th>
-                    <th style="padding:14px 12px; border-bottom:1px solid #222; width:220px;">Status</th>
+                    <th style="padding:10px 8px; border-bottom:1px solid #222;">Item</th>
+                    <th style="padding:10px 8px; border-bottom:1px solid #222;">Quantity</th>
+                    <th style="padding:10px 8px; border-bottom:1px solid #222;">Winner</th>
+                    <th style="padding:10px 8px; border-bottom:1px solid #222; width:220px;">Status</th>
                   </tr>
                 </thead>
                 <tbody id="reward-log-detail-table-body"></tbody>
               </table>
             </div>
-            <div style="padding:16px; border-top:1px solid #222; background:#0c0b0f; display:flex; justify-content:space-between; gap:10px;">
-              <button type="button" id="back-to-reward-logs-list-modal-btn" class="btn btn-secondary" style="background:#555; color:#fff; padding:12px 18px;">Back</button>
-              <button type="button" id="close-reward-log-detail-modal-footer-btn" class="btn btn-secondary" style="background:#333; color:#fff; padding:12px 18px;">Close</button>
+            <div style="padding:12px 14px; border-top:1px solid #222; background:#0c0b0f; display:flex; justify-content:space-between; gap:10px;">
+              <button type="button" id="back-to-reward-logs-list-modal-btn" class="btn btn-secondary" style="background:#555; color:#fff; padding:10px 14px;">Back</button>
+              <button type="button" id="close-reward-log-detail-modal-footer-btn" class="btn btn-secondary" style="background:#333; color:#fff; padding:10px 14px;">Close</button>
             </div>
           </div>
         </div>
