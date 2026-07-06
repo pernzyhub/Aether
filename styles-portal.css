@@ -1276,19 +1276,21 @@ body::before {
 
 .portal-grid {
   display: grid;
-    grid-template-columns: minmax(340px, 1.2fr) minmax(340px, 1.2fr) minmax(320px, 0.8fr);
-    gap: 24px;
-    align-items: start;
-  }
+  grid-template-columns: minmax(380px, 1.5fr) minmax(380px, 1.5fr) minmax(320px, 0.9fr);
+  gap: 24px;
+  align-items: start;
+}
 
-  .portal-grid section.card,
-  .portal-grid > div {
-    min-width: 0;
-  }
+.portal-grid section.card,
+.portal-grid > div {
+  min-width: 0;
+}
 
-  @media (max-width: 1200px) {
-    .portal-grid {
-      grid-template-columns: minmax(340px, 1.3fr) minmax(280px, 1fr);
+@media (max-width: 1200px) {
+  .portal-grid {
+    grid-template-columns: minmax(360px, 1.5fr) minmax(320px, 1fr);
+  }
+}
 
 @media (max-width: 900px) {
   .container {
