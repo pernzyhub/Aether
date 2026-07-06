@@ -47,7 +47,11 @@ async function checkAuthLocal() {
   // try to load clan_user to get ign
   try {
     const { data: clanUser } = await supabase.from('clan_users').select('id, ign, is_active').eq('id', currentUser.id).maybeSingle();
-    if (clanUser && clanUser.is_active === false) {
+    if (!clanUser) {
+      alert('No member profile was found. Contact an admin to complete your account.');
+      return false;
+    }
+    if (clanUser.is_active === false) {
       alert('Your account is inactive. Contact an admin.');
       return false;
     }
