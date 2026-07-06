@@ -569,7 +569,8 @@ async function loadMyRequests() {
       groupedSummary.set(itemName, group);
     });
 
-    const summaryGroups = Array.from(groupedSummary.values()).sort((a, b) => b.total - a.total);
+    // sort groups from smallest total requested to largest
+    const summaryGroups = Array.from(groupedSummary.values()).sort((a, b) => a.total - b.total);
     const topGroup = summaryGroups[0];
     const maxTotal = topGroup?.total || 1;
 
@@ -600,7 +601,8 @@ async function loadMyRequests() {
     const filteredGroups = selectedItem === "all" ? summaryGroups : summaryGroups.filter(g => g.itemName === selectedItem);
 
     const summaryMarkup = filteredGroups.map((group, index) => {
-      const sortedMembers = [...group.members].filter(m => m.quantity > 0).sort((a, b) => b.quantity - a.quantity);
+      // list members from smallest requested quantity to largest
+      const sortedMembers = [...group.members].filter(m => m.quantity > 0).sort((a, b) => a.quantity - b.quantity);
       
       // Skip if no members with positive quantity
       if (sortedMembers.length === 0) return "";
@@ -654,6 +656,12 @@ window.addEventListener("load", () => {
       loadItems();
       loadMyRequests();
       setActiveNavLink();
+      // Subscribe to item_requests changes so summary auto-refreshes when admins update
+      try {
+        subscribeToRequestChanges();
+      } catch (e) {
+        // ignore
+      }
     }
   }, 80);
 });
@@ -683,3 +691,37 @@ document.getElementById("image-modal").addEventListener("click", (e) => {
     document.getElementById("image-modal").classList.remove("show");
   }
 });
+
+// Subscribe to request changes (realtime if available, otherwise polling)
+function subscribeToRequestChanges() {
+  try {
+    // Supabase JS v2 realtime
+    if (typeof supabase.channel === 'function') {
+      const chan = supabase.channel('public:item_requests_changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'item_requests' }, () => {
+          // refresh requests and summary
+          loadRequests().catch(() => {});
+        });
+      chan.subscribe();
+      return;
+    }
+    // Supabase JS v1 realtime
+    if (typeof supabase.from === 'function') {
+      try {
+        supabase.from('item_requests').on('*', () => {
+          loadRequests().catch(() => {});
+        }).subscribe();
+        return;
+      } catch (e) {
+        // fallback to polling below
+      }
+    }
+  } catch (e) {
+    // fall through to polling
+  }
+
+  // Polling fallback: refresh every 15 seconds
+  setInterval(() => {
+    loadRequests().catch(() => {});
+  }, 15000);
+}
