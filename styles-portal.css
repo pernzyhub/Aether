@@ -214,8 +214,10 @@ body::before {
 }
 
 .request-page.request-items-layout {
-  grid-template-columns: minmax(300px, 1fr) minmax(520px, 1.6fr) minmax(320px, 0.9fr);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(280px, 1fr));
   gap: 22px;
+  max-width: 1700px;
 }
 
 .request-page.request-items-layout .request-column {
@@ -223,12 +225,14 @@ body::before {
 }
 
 .request-page.request-items-layout .request-summary-card {
-  min-height: 360px;
+  min-height: 320px;
 }
 
 .bv-request-layout {
-  grid-template-columns: minmax(320px, 1fr) minmax(620px, 1.7fr) minmax(300px, 0.85fr);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(280px, 1fr));
   gap: 22px;
+  max-width: 1700px;
 }
 
 .bv-request-3col .request-column {
