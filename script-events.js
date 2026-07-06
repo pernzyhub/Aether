@@ -1642,16 +1642,17 @@ function parseDistributionItemEntries(raw) {
     .map(line => line.trim())
     .filter(line => line.length > 0)
     .map(line => {
-      const exactMatch = line.match(/^(.+?)\s*(?:,|;|\||:|x|×)\s*(\d+)$/i);
-      if (exactMatch) {
-        const item = exactMatch[1].trim();
-        const quantity = Number.parseInt(exactMatch[2], 10);
+      const parts = line.split(/\s*(?:,|;|\||:)\s*/).map(part => part.trim()).filter(part => part.length > 0);
+      if (parts.length >= 2) {
+        const item = parts[0];
+        const quantity = Number.parseInt(parts[1], 10);
+        const winners = parts[2] ? Number.parseInt(parts[2], 10) : 1;
         if (item && Number.isInteger(quantity) && quantity > 0) {
-          return { item, quantity };
+          return { item, quantity, winners: Number.isInteger(winners) && winners > 0 ? winners : 1 };
         }
       }
 
-      return { item: line, quantity: 1 };
+      return { item: line, quantity: 1, winners: 1 };
     })
     .filter(entry => entry.item && entry.quantity > 0);
 }
@@ -1665,6 +1666,8 @@ function parseDistributionCsvItems(text) {
   const normalizedHeaders = headers.map(header => header.trim().toLowerCase().replace(/[^a-z0-9]+/g, ''));
   const itemIndex = normalizedHeaders.findIndex(header => header.includes('item') || header.includes('name'));
   const quantityIndex = normalizedHeaders.findIndex(header => header.includes('quantity') || header.includes('qty') || header.includes('amount') || header.includes('count'));
+  const winnerIndex = normalizedHeaders.findIndex(header => header.includes('winner') || header.includes('recipient'));
+  const resolvedWinnerIndex = winnerIndex >= 0 ? winnerIndex : (headers.length > 2 ? 2 : -1);
 
   if (itemIndex === -1 || quantityIndex === -1) {
     throw new Error('CSV must include item and quantity columns.');
@@ -1674,8 +1677,13 @@ function parseDistributionCsvItems(text) {
     .map(row => {
       const item = String(row[itemIndex] ?? '').trim();
       const quantity = Number.parseInt(String(row[quantityIndex] ?? '').trim(), 10);
+      const winnerCount = resolvedWinnerIndex >= 0 ? Number.parseInt(String(row[resolvedWinnerIndex] ?? '').trim(), 10) : 1;
       if (!item || !Number.isInteger(quantity) || quantity <= 0) return null;
-      return { item, quantity };
+      return {
+        item,
+        quantity,
+        winners: Number.isInteger(winnerCount) && winnerCount > 0 ? winnerCount : 1
+      };
     })
     .filter(Boolean);
 }
@@ -1704,7 +1712,7 @@ async function importDistributionItemsCsv() {
     distributionItemEntries = entries;
     const textarea = document.getElementById('distribution-items-input');
     if (textarea) {
-      textarea.value = entries.map(entry => `${entry.item} | ${entry.quantity}`).join('\n');
+      textarea.value = entries.map(entry => `${entry.item} | ${entry.quantity} | ${entry.winners}`).join('\n');
     }
     if (statusEl) showStatus('item-distribution-status', `Imported ${entries.length} item${entries.length === 1 ? '' : 's'} from CSV.`, 'success');
   } catch (err) {
@@ -1737,25 +1745,30 @@ function distributeItems() {
   const recipientTotals = Array(recipientCount).fill(0);
   const assignments = [];
 
-  items.forEach(entry => {
-    const baseQuantity = Math.floor(entry.quantity / recipientCount);
-    const remainder = entry.quantity % recipientCount;
+  items.forEach((entry, itemIndex) => {
+    const winnerCount = Math.min(Math.max(entry.winners || 1, 1), recipientCount);
+    const baseQuantity = Math.floor(entry.quantity / winnerCount);
+    const remainder = entry.quantity % winnerCount;
+    const winnerIndices = Array.from({ length: recipientCount }, (_, idx) => idx)
+      .sort((a, b) => recipientTotals[a] - recipientTotals[b] || ((a + itemIndex) % recipientCount) - ((b + itemIndex) % recipientCount))
+      .slice(0, winnerCount);
 
-    for (let index = 0; index < recipientCount; index += 1) {
+    winnerIndices.forEach(winnerIndex => {
       if (baseQuantity > 0) {
         assignments.push({
-          member: selectedMembers[index],
+          member: selectedMembers[winnerIndex],
           item: entry.item,
           quantity: baseQuantity,
           saved: false
         });
-        recipientTotals[index] += baseQuantity;
+        recipientTotals[winnerIndex] += baseQuantity;
       }
-    }
+    });
 
     for (let remainderIndex = 0; remainderIndex < remainder; remainderIndex += 1) {
       const targetIndex = Array.from({ length: recipientCount }, (_, idx) => idx)
-        .sort((a, b) => recipientTotals[a] - recipientTotals[b] || ((a + remainderIndex) % recipientCount) - ((b + remainderIndex) % recipientCount))[0];
+        .filter(idx => winnerIndices.includes(idx))
+        .sort((a, b) => recipientTotals[a] - recipientTotals[b] || ((a + itemIndex + remainderIndex) % recipientCount) - ((b + itemIndex + remainderIndex) % recipientCount))[0];
       assignments.push({
         member: selectedMembers[targetIndex],
         item: entry.item,
@@ -1786,7 +1799,7 @@ function renderDistributionPreview() {
     <table style="width:100%; border-collapse:collapse; color:#fff; font-size:13px;">
       <thead>
         <tr style="background:#1a1a1a; text-align:left;">
-          <th style="padding:8px; border-bottom:1px solid #333;">Recipient</th>
+          <th style="padding:8px; border-bottom:1px solid #333;">Winner</th>
           <th style="padding:8px; border-bottom:1px solid #333;">Item</th>
           <th style="padding:8px; border-bottom:1px solid #333;">Assigned Quantity</th>
         </tr>
