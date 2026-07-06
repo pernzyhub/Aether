@@ -621,6 +621,169 @@ function parseBulkPaste() {
   showStatus("bulk-status", `Selected ${matched.length} members from paste.`, "success");
 }
 
+function parseCsvRow(line) {
+  const values = [];
+  let match;
+  const regex = /(?:\s*"([^"]*)"\s*|\s*([^,]+)\s*)(?:,|$)/g;
+  while ((match = regex.exec(line)) !== null) {
+    values.push(match[1] !== undefined ? match[1] : (match[2] !== undefined ? match[2].trim() : ''));
+    if (match[0].length === 0) break;
+  }
+  return values;
+}
+
+function parseCsvText(text) {
+  const lines = text.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
+  if (lines.length === 0) return { headers: [], rows: [] };
+  const headers = parseCsvRow(lines[0]).map(header => header.trim().toLowerCase());
+  const rows = lines.slice(1).map(line => parseCsvRow(line));
+  return { headers, rows };
+}
+
+function normalizeBoolean(value) {
+  if (typeof value !== 'string') return false;
+  const normalized = value.trim().toLowerCase();
+  return ['true', 'yes', '1', 'y'].includes(normalized);
+}
+
+function escapeCsvValue(value) {
+  const str = value == null ? '' : String(value);
+  if (/[",
+]/.test(str)) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
+function getBulkCsvStatus(msg, type = 'info') {
+  const status = document.getElementById('bulk-csv-status');
+  if (status) {
+    status.textContent = msg;
+    status.className = `status-text ${type}`;
+  }
+}
+
+function downloadBulkAttendanceTemplate() {
+  const headers = ['IGN', 'Event', 'Date', 'Points', 'Attended'];
+  const exampleRow = ['PlayerOne', 'Weekly Raid', '2026-07-06', '10', 'TRUE'];
+  const csv = [headers.map(escapeCsvValue).join(','), exampleRow.map(escapeCsvValue).join(',')].join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.setAttribute('download', 'attendance-import-template.csv');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+async function importBulkAttendanceCsv() {
+  const fileInput = document.getElementById('bulk-csv-file');
+  if (!fileInput || fileInput.files.length === 0) {
+    getBulkCsvStatus('Please select a CSV file to import.', 'error');
+    return;
+  }
+
+  const file = fileInput.files[0];
+  const text = await file.text();
+  const { headers, rows } = parseCsvText(text);
+  if (headers.length === 0) {
+    getBulkCsvStatus('CSV file is empty or missing headers.', 'error');
+    return;
+  }
+
+  const requiredColumns = ['ign', 'event', 'date'];
+  const missingHeader = requiredColumns.find(col => !headers.includes(col));
+  if (missingHeader) {
+    getBulkCsvStatus(`Missing required column: ${missingHeader}`, 'error');
+    return;
+  }
+
+  const headerIndex = headers.reduce((map, name, index) => { map[name] = index; return map; }, {});
+  if (!allMembers || allMembers.length === 0) {
+    await loadBulkMembers();
+  }
+
+  const eventOptions = Array.from(document.getElementById('bulk-event-select')?.options || []).map(option => ({ id: option.value, label: option.textContent.trim() })).filter(opt => opt.id);
+  const attendanceRecords = [];
+  const missingMembers = [];
+  const missingEvents = [];
+
+  rows.forEach(row => {
+    const ign = row[headerIndex['ign']]?.trim();
+    const eventName = row[headerIndex['event']]?.trim();
+    const dateValue = row[headerIndex['date']]?.trim();
+    const pointsValue = headerIndex['points'] !== undefined ? row[headerIndex['points']]?.trim() : '';
+    const attendedValue = headerIndex['attended'] !== undefined ? row[headerIndex['attended']]?.trim() : 'TRUE';
+
+    if (!ign || !eventName || !dateValue) {
+      return;
+    }
+
+    const member = allMembers.find(member => member.ign.trim().toLowerCase() === ign.toLowerCase());
+    if (!member) {
+      if (!missingMembers.includes(ign)) missingMembers.push(ign);
+      return;
+    }
+
+    const eventMatch = eventOptions.find(opt => opt.label.toLowerCase().startsWith(eventName.toLowerCase()) || opt.label.toLowerCase() === eventName.toLowerCase() || opt.id === eventName);
+    if (!eventMatch) {
+      if (!missingEvents.includes(eventName)) missingEvents.push(eventName);
+      return;
+    }
+
+    const attendanceDate = new Date(dateValue);
+    if (Number.isNaN(attendanceDate.getTime())) {
+      return;
+    }
+
+    const points = Number.isNaN(parseInt(pointsValue, 10)) ? null : parseInt(pointsValue, 10);
+    const attended = normalizeBoolean(attendedValue);
+    const monthYear = `${attendanceDate.getFullYear()}-${String(attendanceDate.getMonth() + 1).padStart(2, '0')}`;
+
+    attendanceRecords.push({
+      event_id: eventMatch.id,
+      user_id: member.id,
+      attended,
+      points_awarded: attended ? (points ?? null) : 0,
+      attendance_date: attendanceDate.toISOString(),
+      month_year: monthYear,
+      updated_at: new Date().toISOString()
+    });
+  });
+
+  if (missingMembers.length > 0) {
+    getBulkCsvStatus(`Missing members not found: ${missingMembers.join(', ')}`, 'error');
+    return;
+  }
+
+  if (missingEvents.length > 0) {
+    getBulkCsvStatus(`Events not found: ${missingEvents.join(', ')}`, 'error');
+    return;
+  }
+
+  if (attendanceRecords.length === 0) {
+    getBulkCsvStatus('No valid attendance rows found in CSV.', 'error');
+    return;
+  }
+
+  try {
+    getBulkCsvStatus(`Importing ${attendanceRecords.length} attendance rows...`, '');
+    const { data: imported, error: importError } = await supabase
+      .from('attendance')
+      .upsert(attendanceRecords, { onConflict: 'event_id,user_id,attendance_date' })
+      .select('id');
+
+    if (importError) throw importError;
+
+    getBulkCsvStatus(`Imported ${imported.length} attendance records.`, 'success');
+    fileInput.value = '';
+    loadBulkMembers();
+    loadAttendance();
+  } catch (err) {
+    getBulkCsvStatus(`Import failed: ${err.message}`, 'error');
+  }
+}
+
 function toggleAllBulkMembers(selectAll) {
   const memberIds = allMembers.map(member => member.id);
   selectedMembers = selectAll ? memberIds : [];

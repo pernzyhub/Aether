@@ -192,6 +192,7 @@
                 <p style="margin:0 0 10px; color:#aaa; font-size:13px; line-height:1.4;">Download a sample CSV file to match your old attendance log. Then fill values and upload the file here.</p>
                 <button type="button" class="btn btn-secondary" style="background: #00ff88; color: #000; font-weight: bold; padding: 10px 15px; margin-bottom: 10px; width: 100%;" onclick="downloadBulkAttendanceTemplate()">DOWNLOAD CSV TEMPLATE</button>
                 <input type="file" id="bulk-csv-file" accept=".csv" style="width:100%; color:#fff; background:#111; border:1px solid #555; padding:10px;" />
+                <button type="button" class="btn btn-secondary" onclick="importBulkAttendanceCsv()" style="background: #ff6688; color: #fff; font-weight: bold; padding: 10px 15px; margin-top: 10px; width: 100%;">IMPORT CSV</button>
                 <div id="bulk-csv-status" class="status-text" style="margin-top:10px; color:#ccc;"></div>
                 <div style="margin-top:8px; color:#aaa; font-size:12px;">
                   Expected columns: <strong>IGN, Event, Date, Points, Attended</strong><br />
