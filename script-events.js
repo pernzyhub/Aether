@@ -1467,6 +1467,7 @@ let distributionMembers = [];
 let distributionAssignments = [];
 let distributionSaved = false;
 let distributionHistory = [];
+let distributionItemEntries = [];
 
 function loadDistributionMembers() {
   const container = document.getElementById('distribution-members-list');
@@ -1635,9 +1636,80 @@ function clearDistributionImportArea() {
   if (statusEl) statusEl.textContent = 'Import area cleared.';
 }
 
+function parseDistributionItemEntries(raw) {
+  return raw
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(line => line.length > 0)
+    .map(line => {
+      const exactMatch = line.match(/^(.+?)\s*(?:,|;|\||:|x|×)\s*(\d+)$/i);
+      if (exactMatch) {
+        const item = exactMatch[1].trim();
+        const quantity = Number.parseInt(exactMatch[2], 10);
+        if (item && Number.isInteger(quantity) && quantity > 0) {
+          return { item, quantity };
+        }
+      }
+
+      return { item: line, quantity: 1 };
+    })
+    .filter(entry => entry.item && entry.quantity > 0);
+}
+
+function parseDistributionCsvItems(text) {
+  const { headers, rows } = parseCsvText(text);
+  if (!headers.length) {
+    throw new Error('CSV file is empty or missing headers.');
+  }
+
+  const normalizedHeaders = headers.map(header => header.trim().toLowerCase().replace(/[^a-z0-9]+/g, ''));
+  const itemIndex = normalizedHeaders.findIndex(header => header.includes('item') || header.includes('name'));
+  const quantityIndex = normalizedHeaders.findIndex(header => header.includes('quantity') || header.includes('qty') || header.includes('amount') || header.includes('count'));
+
+  if (itemIndex === -1 || quantityIndex === -1) {
+    throw new Error('CSV must include item and quantity columns.');
+  }
+
+  return rows
+    .map(row => {
+      const item = String(row[itemIndex] ?? '').trim();
+      const quantity = Number.parseInt(String(row[quantityIndex] ?? '').trim(), 10);
+      if (!item || !Number.isInteger(quantity) || quantity <= 0) return null;
+      return { item, quantity };
+    })
+    .filter(Boolean);
+}
+
 function parseDistributionItems() {
   const raw = document.getElementById('distribution-items-input')?.value || '';
-  return raw.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
+  return parseDistributionItemEntries(raw);
+}
+
+async function importDistributionItemsCsv() {
+  const fileInput = document.getElementById('distribution-items-file');
+  const statusEl = document.getElementById('item-distribution-status');
+  if (!fileInput || !fileInput.files.length) {
+    if (statusEl) showStatus('item-distribution-status', 'Please choose a CSV file to import.', 'error');
+    return;
+  }
+
+  try {
+    const file = fileInput.files[0];
+    const text = await file.text();
+    const entries = parseDistributionCsvItems(text);
+    if (!entries.length) {
+      throw new Error('No valid item rows were found in the CSV.');
+    }
+
+    distributionItemEntries = entries;
+    const textarea = document.getElementById('distribution-items-input');
+    if (textarea) {
+      textarea.value = entries.map(entry => `${entry.item} | ${entry.quantity}`).join('\n');
+    }
+    if (statusEl) showStatus('item-distribution-status', `Imported ${entries.length} item${entries.length === 1 ? '' : 's'} from CSV.`, 'success');
+  } catch (err) {
+    if (statusEl) showStatus('item-distribution-status', `CSV import failed: ${err.message}`, 'error');
+  }
 }
 
 function distributeItems() {
@@ -1655,16 +1727,51 @@ function distributeItems() {
     return;
   }
 
-  distributionAssignments = selectedMembers.map((member, index) => ({
-    member,
-    item: items[index % items.length],
-    saved: false
-  }));
+  const recipientCount = selectedMembers.length;
+  const totalQuantity = items.reduce((sum, entry) => sum + entry.quantity, 0);
+  if (totalQuantity <= 0) {
+    if (statusEl) showStatus('item-distribution-status', 'Please enter at least one positive quantity.', 'error');
+    return;
+  }
+
+  const recipientTotals = Array(recipientCount).fill(0);
+  const assignments = [];
+
+  items.forEach(entry => {
+    const baseQuantity = Math.floor(entry.quantity / recipientCount);
+    const remainder = entry.quantity % recipientCount;
+
+    for (let index = 0; index < recipientCount; index += 1) {
+      if (baseQuantity > 0) {
+        assignments.push({
+          member: selectedMembers[index],
+          item: entry.item,
+          quantity: baseQuantity,
+          saved: false
+        });
+        recipientTotals[index] += baseQuantity;
+      }
+    }
+
+    for (let remainderIndex = 0; remainderIndex < remainder; remainderIndex += 1) {
+      const targetIndex = Array.from({ length: recipientCount }, (_, idx) => idx)
+        .sort((a, b) => recipientTotals[a] - recipientTotals[b] || ((a + remainderIndex) % recipientCount) - ((b + remainderIndex) % recipientCount))[0];
+      assignments.push({
+        member: selectedMembers[targetIndex],
+        item: entry.item,
+        quantity: 1,
+        saved: false
+      });
+      recipientTotals[targetIndex] += 1;
+    }
+  });
+
+  distributionAssignments = assignments;
   distributionSaved = false;
   renderDistributionPreview();
   renderDistributionDetails();
 
-  if (statusEl) showStatus('item-distribution-status', 'Preview created. Confirm to save final distribution.', 'info');
+  if (statusEl) showStatus('item-distribution-status', `Balanced preview created for ${totalQuantity} total item quantity across ${recipientCount} recipients.`, 'info');
 }
 
 function renderDistributionPreview() {
@@ -1675,11 +1782,26 @@ function renderDistributionPreview() {
     return;
   }
 
-  preview.innerHTML = distributionAssignments.map((entry, idx) => `
-    <div style="padding:10px 0; border-bottom:1px solid #222; color:#fff;">
-      <strong>${idx + 1}.</strong> ${escapeHtml(entry.member.ign)} → <span style="color:#00ff88;">${escapeHtml(entry.item)}</span>
-    </div>
-  `).join('');
+  preview.innerHTML = `
+    <table style="width:100%; border-collapse:collapse; color:#fff; font-size:13px;">
+      <thead>
+        <tr style="background:#1a1a1a; text-align:left;">
+          <th style="padding:8px; border-bottom:1px solid #333;">Recipient</th>
+          <th style="padding:8px; border-bottom:1px solid #333;">Item</th>
+          <th style="padding:8px; border-bottom:1px solid #333;">Assigned Quantity</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${distributionAssignments.map(entry => `
+          <tr style="border-bottom:1px solid #222;">
+            <td style="padding:8px;">${escapeHtml(entry.member.ign)}</td>
+            <td style="padding:8px; color:#00ff88;">${escapeHtml(entry.item)}</td>
+            <td style="padding:8px;">${entry.quantity}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
 }
 
 function renderDistributionDetails() {
@@ -1694,6 +1816,7 @@ function renderDistributionDetails() {
     <div style="padding:10px; border:1px solid #222; border-radius:6px; margin-bottom:10px; background:#080808; color:#fff;">
       <div style="margin-bottom:6px; font-weight:bold;">${escapeHtml(entry.member.ign)}</div>
       <div>Item: <strong style="color:#00ff88;">${escapeHtml(entry.item)}</strong></div>
+      <div>Assigned Quantity: <strong>${entry.quantity}</strong></div>
       <div>Status: <strong>${entry.saved ? 'Saved' : 'Pending'}</strong></div>
     </div>
   `).join('');
@@ -1725,7 +1848,7 @@ function confirmDistribution() {
   distributionHistory.push({
     name: logName.trim(),
     savedAt: new Date().toISOString(),
-    assignments: distributionAssignments.map(entry => ({ memberId: entry.member.id, ign: entry.member.ign, item: entry.item }))
+    assignments: distributionAssignments.map(entry => ({ memberId: entry.member.id, ign: entry.member.ign, item: entry.item, quantity: entry.quantity }))
   });
   renderDistributionPreview();
   renderDistributionDetails();
@@ -1738,9 +1861,15 @@ function loadItemDistribution() {
   const statusEl = document.getElementById('item-distribution-status');
   const preview = document.getElementById('distribution-preview-list');
   const panel = document.getElementById('distribution-details-panel');
+  const textarea = document.getElementById('distribution-items-input');
+  const fileInput = document.getElementById('distribution-items-file');
   if (statusEl) statusEl.textContent = 'Ready for item distribution.';
   if (preview) preview.innerHTML = '<p style="color:#ccc; margin:0;">No preview generated yet.</p>';
   if (panel) panel.innerHTML = '<p style="color:#ccc; margin:0;">Toggle details after distribution.</p>';
+  if (textarea) textarea.value = '';
+  if (fileInput) fileInput.value = '';
+  distributionAssignments = [];
+  distributionItemEntries = [];
   setDistributionMode('toggle');
   loadDistributionMembers();
 }
@@ -1991,6 +2120,11 @@ window.addEventListener("load", () => {
     const distributeItemsBtn = document.getElementById("distribute-items-btn");
     if (distributeItemsBtn) {
       distributeItemsBtn.addEventListener("click", distributeItems);
+    }
+
+    const importDistributionItemsBtn = document.getElementById("distribution-import-items-btn");
+    if (importDistributionItemsBtn) {
+      importDistributionItemsBtn.addEventListener("click", importDistributionItemsCsv);
     }
 
     const confirmDistributionBtn = document.getElementById("confirm-distribution-btn");
