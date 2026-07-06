@@ -1716,6 +1716,11 @@ body::before {
   border-color: #00ffaa;
 }
 
+.form-group select option:disabled {
+  color: #999 !important;
+  background: rgba(0, 0, 0, 0.85) !important;
+}
+
 .btn {
   font-family: 'Courier New', Courier, monospace;
   font-size: 1rem;

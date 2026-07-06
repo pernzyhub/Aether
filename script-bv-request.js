@@ -9,6 +9,7 @@ const isAdminPreview = isAdminPreviewMode();
 let bvAllDataRaw = [];
 let bvAllData = [];
 let requestedBVTypes = new Set();
+let approvedBVTypes = new Set();
 let bvCurrentPage = 1;
 const bvPageSize = 10;
 let bvSort = 'newest';
@@ -181,7 +182,16 @@ async function loadBVRequests() {
   bvAllDataRaw = Array.isArray(data) ? data : [];
   bvAllDataRaw = Array.from(new Map(bvAllDataRaw.map((r) => [r.id, r])).values());
 
-  requestedBVTypes = new Set(bvAllDataRaw.filter((r) => r.user_id === userId).map((r) => r.reason));
+  const userRequests = bvAllDataRaw.filter((r) => r.user_id === userId);
+  requestedBVTypes = new Set(userRequests
+    .filter((r) => {
+      const status = String(r.status || 'pending').toLowerCase();
+      return status === 'pending';
+    })
+    .map((r) => r.reason));
+  approvedBVTypes = new Set(userRequests
+    .filter((r) => String(r.status || '').toLowerCase() === 'approved')
+    .map((r) => r.reason));
   updateBVTypeOptions();
 
   renderBVSummary(bvAllDataRaw);
@@ -383,14 +393,45 @@ function updateBVTypeOptions() {
   const select = document.getElementById('bv-select');
   if (!select) return;
 
-  Array.from(select.options).forEach(option => {
-    if (!option.value) return;
-    option.disabled = requestedBVTypes.has(option.value);
-    option.textContent = bvTypeMap.get(option.value) || option.textContent.replace(/-/g, ' ');
-    if (option.disabled) {
-      option.textContent = `${option.textContent} (requested)`;
-    }
+  const options = Array.from(select.options);
+  const placeholder = options.find(option => !option.value) || options[0];
+  const items = options.filter(option => option.value).map(option => {
+    const normalizedText = bvTypeMap.get(option.value) || option.textContent.replace(/-/g, ' ');
+    const isRequested = requestedBVTypes.has(option.value);
+    const isApproved = approvedBVTypes.has(option.value);
+    return {
+      value: option.value,
+      text: isApproved
+        ? `${normalizedText} (approved)`
+        : isRequested
+          ? `${normalizedText} (requested)`
+          : normalizedText,
+      disabled: isRequested || isApproved,
+      hidden: isApproved
+    };
   });
+
+  const availableOptions = items.filter(item => !item.disabled);
+  const requestedOptions = items.filter(item => item.disabled && !item.hidden);
+  const approvedOptions = items.filter(item => item.hidden);
+
+  select.innerHTML = '';
+  if (placeholder) {
+    select.appendChild(placeholder.cloneNode(true));
+  }
+
+  [...availableOptions, ...requestedOptions, ...approvedOptions].forEach(item => {
+    const option = document.createElement('option');
+    option.value = item.value;
+    option.textContent = item.text;
+    if (item.disabled) option.disabled = true;
+    if (item.hidden) option.hidden = true;
+    select.appendChild(option);
+  });
+
+  if (select.value && select.selectedOptions[0]?.disabled) {
+    select.value = '';
+  }
 }
 
 function updatePagination(total=0) {
