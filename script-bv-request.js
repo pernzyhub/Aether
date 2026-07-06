@@ -73,7 +73,7 @@ async function submitBVRequest(e) {
     const userId = currentUser?.id || null;
     if (!userId) throw new Error('No user session found.');
 
-    const { error } = await supabase.from('bv_requests').insert([{ user_id: userId, amount: 0, reason: selection, status: 'pending' }]);
+    const { data, error } = await supabase.rpc('create_bv_request', { target_user_id: userId, request_reason: selection, request_amount: 0, request_status: 'pending' });
     if (error) throw error;
     statusEl.textContent = 'BV request submitted!'; statusEl.className = 'status-text success';
     document.getElementById('bv-request-form').reset();

@@ -12,24 +12,17 @@ CREATE TABLE IF NOT EXISTS public.bv_requests (
 
 ALTER TABLE public.bv_requests ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can create BV requests when active"
+-- Allow inserts via RPC function (SECURITY DEFINER handles auth)
+CREATE POLICY "Allow RPC inserts"
   ON public.bv_requests
   FOR INSERT
-  TO authenticated
-  WITH CHECK (
-    auth.uid() = user_id
-    AND EXISTS (
-      SELECT 1 FROM public.clan_users
-      WHERE id = auth.uid()
-        AND is_active = TRUE
-    )
-  );
+  WITH CHECK (true);
 
 CREATE POLICY "Users can view their own BV requests"
   ON public.bv_requests
   FOR SELECT
   TO authenticated
-  USING (auth.uid() = user_id);
+  USING (auth.uid() = user_id OR public.is_admin());
 
 CREATE POLICY "Admins can manage BV requests"
   ON public.bv_requests
