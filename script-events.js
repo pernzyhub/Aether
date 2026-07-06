@@ -1918,9 +1918,14 @@ function renderRewardLogsList() {
   }
 
   listContainer.innerHTML = distributionHistory.map((log, index) => `
-    <button type="button" class="reward-log-summary-btn" data-index="${index}" style="text-align:left; width:100%; padding:16px; background:#111; border:1px solid #222; border-radius:8px; color:#fff;">
-      <div style="font-weight:bold; font-size:15px;">Reward Log ${escapeHtml(log.name)}</div>
-      <div style="font-size:13px; color:#aaa; margin-top:6px;">Saved: ${new Date(log.savedAt || log.created_at).toLocaleString()}</div>
+    <button type="button" class="reward-log-summary-btn" data-index="${index}" style="text-align:left; width:100%; padding:18px 16px; background:#111; border:1px solid #222; border-radius:10px; color:#fff; cursor:pointer;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+        <div>
+          <div style="font-weight:bold; font-size:15px;">${escapeHtml(log.name)}</div>
+          <div style="font-size:13px; color:#aaa; margin-top:6px;">Saved: ${new Date(log.savedAt || log.created_at).toLocaleString()}</div>
+        </div>
+        <span style="font-size:12px; color:#00ff88; font-weight:700;">VIEW</span>
+      </div>
     </button>
   `).join('');
 
@@ -1929,7 +1934,10 @@ function renderRewardLogsList() {
     if (!button) return;
     const index = Number(button.dataset.index);
     const log = distributionHistory[index];
-    if (log) openRewardLogDetailModal(log);
+    if (log) {
+      closeRewardLogsListModal();
+      openRewardLogDetailModal(log);
+    }
   };
 }
 
