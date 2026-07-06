@@ -186,6 +186,8 @@ async function loadBVRequests() {
       return;
     }
 
+    // Remove any duplicate requests by ID before rendering.
+    bvAllData = Array.from(new Map(bvAllData.map((r) => [r.id, r])).values());
     renderBVSummary(bvAllData);
     applyBVSortAndRender();
   } catch (err) {
@@ -213,7 +215,7 @@ function applyBVSortAndRender() {
     const reasonLabel = String(rawReason).replace(/-/g, ' ');
     const amount = Number(r.amount ?? r.request_amount ?? 0);
     const summaryText = amount > 0 ? `${amount} BV requested` : 'Review pending';
-    const statusLabel = (r.status || 'pending').toUpperCase();
+    const statusText = formatBVStatus(String(r.status || 'pending').toLowerCase());
 
     return `
       <div class="bv-request-row">
@@ -226,7 +228,7 @@ function applyBVSortAndRender() {
           <div class="bv-summary-card">
             <div class="bv-summary-title">BV SUMMARY</div>
             <div class="bv-summary-main">${escapeHtml(summaryText)}</div>
-            <div class="bv-summary-meta">${escapeHtml(statusLabel)}</div>
+            <div class="bv-summary-meta status-${escapeHtml(String(r.status || 'pending').toLowerCase())}">${escapeHtml(statusText)}</div>
           </div>
         </div>
       </div>
@@ -262,19 +264,27 @@ function renderBVSummary(list) {
     const reasonLabel = String(rawReason).replace(/-/g, ' ');
     const amount = Number(r.amount ?? r.request_amount ?? 0);
     const summaryText = amount > 0 ? `${amount} BV requested` : 'Review pending';
-    const statusLabel = (r.status || 'pending').toUpperCase();
-    const isPending = statusLabel === 'PENDING';
+    const statusClass = String(r.status || 'pending').toLowerCase();
+    const statusLabel = formatBVStatus(statusClass);
+    const isPending = statusClass === 'pending';
 
     if (!acc[reasonLabel]) {
       acc[reasonLabel] = {
         reasonLabel,
         summaryText,
         statusLabel,
+        statusClass,
         requests: []
       };
     }
 
-    acc[reasonLabel].requests.push({
+    const group = acc[reasonLabel];
+    if (group.statusClass === 'pending' && statusClass !== 'pending') {
+      group.statusClass = statusClass;
+      group.statusLabel = formatBVStatus(statusClass);
+    }
+
+    group.requests.push({
       id: r.id,
       name: (r.clan_users?.ign || currentUser?.ign || 'You'),
       isPending
@@ -287,7 +297,7 @@ function renderBVSummary(list) {
       <div class="bv-summary-row">
         <div class="bv-summary-top">
           <div class="bv-summary-reason">${escapeHtml(group.reasonLabel)}</div>
-          <div class="bv-summary-status">${escapeHtml(group.statusLabel)}</div>
+          <div class="bv-summary-status status-${escapeHtml(group.statusClass)}">${escapeHtml(group.statusLabel)}</div>
         </div>
         <div class="bv-summary-meta">${escapeHtml(group.summaryText)}</div>
         <div class="bv-summary-list">
@@ -295,8 +305,8 @@ function renderBVSummary(list) {
             <div class="bv-summary-item">
               <span class="bv-summary-person">${index + 1}. ${escapeHtml(req.name)}</span>
               <div class="bv-summary-actions">
-                <button type="button" class="btn btn-small btn-success" ${req.isPending ? '' : 'disabled'} onclick="handleBVAction('${req.id}','approved')">DONE</button>
-                <button type="button" class="btn btn-small btn-danger" ${req.isPending ? '' : 'disabled'} onclick="handleBVAction('${req.id}','denied')">CANCEL</button>
+                <button type="button" class="btn btn-small btn-success bv-summary-action" data-request-id="${req.id}" data-action="approved" ${req.isPending ? '' : 'disabled'}>DONE</button>
+                <button type="button" class="btn btn-small btn-danger bv-summary-action" data-request-id="${req.id}" data-action="denied" ${req.isPending ? '' : 'disabled'}>CANCEL</button>
               </div>
             </div>
           `).join('')}
@@ -305,6 +315,7 @@ function renderBVSummary(list) {
     `).join('');
 
   container.innerHTML = items;
+  attachBVSummaryActionHandlers();
 }
 
 async function updateBVRequestStatus(requestId, newStatus) {
@@ -345,6 +356,29 @@ async function handleBVAction(requestId, newStatus) {
       statusEl.className = 'status-text error';
     }
   }
+}
+
+function attachBVSummaryActionHandlers() {
+  const container = document.getElementById('bv-summary-container');
+  if (!container) return;
+
+  container.querySelectorAll('.bv-summary-action').forEach(button => {
+    button.addEventListener('click', (event) => {
+      const target = event.currentTarget;
+      const requestId = target.dataset.requestId;
+      const action = target.dataset.action;
+      if (!requestId || !action) return;
+      handleBVAction(requestId, action);
+    });
+  });
+}
+
+function formatBVStatus(status) {
+  const normalized = String(status || 'pending').toLowerCase();
+  if (normalized === 'denied') return 'Rejected';
+  if (normalized === 'approved') return 'Approved';
+  if (normalized === 'canceled' || normalized === 'cancelled') return 'Cancelled';
+  return 'Pending';
 }
 
 function updateBVTypeOptions() {
@@ -388,8 +422,11 @@ function escapeHtml(text) {
 window.submitBVRequest = submitBVRequest;
 window.openImageModal = (src) => {
   const modal = document.getElementById('image-modal'); if (!modal) return;
-  const modalImage = document.getElementById('modal-image'); modalImage.src = src; modal.classList.add('show');
+  const modalImage = document.getElementById('modal-image'); modalImage.src = src;
+  modal.classList.add('show');
 };
+
+window.handleBVAction = handleBVAction;
 
 window.addEventListener('load', () => {
   setTimeout(async () => {
