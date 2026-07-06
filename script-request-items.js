@@ -406,7 +406,7 @@ function attachRequestSortHandler() {
     filterEl.addEventListener("change", () => loadMyRequests());
   }
   if (summarySelect) {
-    summarySelect.addEventListener("change", () => loadMyRequests());
+    summarySelect.addEventListener("change", () => loadRequestSummary());
   }
 }
 
@@ -529,113 +529,8 @@ async function loadMyRequests() {
       `;
     }).join("");
 
-    const groupedSummary = new Map();
-
-    // Build the summary from ALL pending requests (ignore the feed filter)
-    let pendingRequests = [];
-    try {
-      const { data: allPending, error: pendingError } = await supabase
-        .from("item_requests")
-        .select("*, items!inner(name)")
-        .eq("status", "pending");
-
-      if (!pendingError && Array.isArray(allPending)) {
-        pendingRequests = allPending.filter((req) => memberNames.has(req.user_id));
-      } else {
-        // Fallback to using the already-fetched requests if the separate query fails
-        pendingRequests = visibleRequests.filter(req => (req.status || "pending") === "pending");
-      }
-    } catch (e) {
-      pendingRequests = visibleRequests.filter(req => (req.status || "pending") === "pending");
-    }
-
-    pendingRequests.forEach(req => {
-      const itemName = req.items?.name || "Unknown Item";
-      const memberName = memberNames.get(req.user_id) || "Unknown Member";
-      const originalQty = Number(req.requested_quantity ?? req.quantity ?? 1);
-      const remainingQty = Math.max(0, Number(req.quantity ?? 0));
-      const fulfilledQty = Math.max(0, originalQty - remainingQty);
-      const group = groupedSummary.get(itemName) || { itemName, total: 0, members: [] };
-      const existingMember = group.members.find(member => member.name === memberName);
-
-      if (existingMember) {
-        existingMember.quantity += remainingQty;
-        existingMember.fulfilled += fulfilledQty;
-      } else {
-        group.members.push({ name: memberName, quantity: remainingQty, fulfilled: fulfilledQty });
-      }
-
-      group.total += remainingQty;
-      groupedSummary.set(itemName, group);
-    });
-
-    // sort groups from smallest total requested to largest
-    const summaryGroups = Array.from(groupedSummary.values()).sort((a, b) => a.total - b.total);
-    const topGroup = summaryGroups[0];
-    const maxTotal = topGroup?.total || 1;
-
-    // Populate summary dropdown with item names
-    const summarySelect = document.getElementById("summary-select");
-    if (summarySelect) {
-      // Save current selection
-      const currentSelection = summarySelect.value || "all";
-      
-      summarySelect.innerHTML = '<option value="all">All Items</option>';
-      summaryGroups.forEach(group => {
-        const option = document.createElement("option");
-        option.value = group.itemName;
-        option.textContent = group.itemName;
-        summarySelect.appendChild(option);
-      });
-      
-      // Restore selection if it still exists, otherwise default to "all"
-      if (summaryGroups.some(g => g.itemName === currentSelection)) {
-        summarySelect.value = currentSelection;
-      } else {
-        summarySelect.value = "all";
-      }
-    }
-
-    // Get selected item from dropdown
-    const selectedItem = summarySelect?.value || "all";
-    const filteredGroups = selectedItem === "all" ? summaryGroups : summaryGroups.filter(g => g.itemName === selectedItem);
-
-    const summaryMarkup = filteredGroups.map((group, index) => {
-      // list members from smallest requested quantity to largest
-      const sortedMembers = [...group.members].filter(m => m.quantity > 0).sort((a, b) => a.quantity - b.quantity);
-      
-      // Skip if no members with positive quantity
-      if (sortedMembers.length === 0) return "";
-      
-      const meterWidth = Math.max(16, Math.round((group.total / maxTotal) * 100));
-      const isFeatured = index === 0 && topGroup;
-
-      return `
-        <div class="summary-card${isFeatured ? " summary-card--featured" : ""}">
-          <div class="summary-card-top">
-            <div>
-              <div class="summary-item-name">${isFeatured ? "★ " : ""}${escapeHtml(group.itemName)}</div>
-              <div class="summary-item-total"><span class="count-up" data-target="${group.total}">0</span> total requested</div>
-            </div>
-            <span class="summary-badge">${isFeatured ? "TOP" : `${sortedMembers.length} members`}</span>
-          </div>
-          <div class="summary-meter">
-            <div class="summary-meter-bar" style="width: ${meterWidth}%;"></div>
-          </div>
-          <div class="summary-member-list">
-            ${sortedMembers.map(member => `
-              <div class="summary-member">
-                <span>${escapeHtml(member.name)}</span>
-                <strong><span class="count-up" data-target="${member.quantity}">0</span> / <span class="count-up" data-target="${member.fulfilled + member.quantity}">0</span></strong>
-              </div>
-            `).join("")}
-          </div>
-        </div>
-      `;
-    }).join("");
-
-    summaryContainer.innerHTML = summaryMarkup || '<p class="empty-state">No active requests for this item.</p>';
-    animateCountUp(summaryContainer.querySelectorAll(".count-up"));
+    // generate summary separately so it can be reloaded without refiltering the feed
+    await loadRequestSummary();
   } catch (err) {
     container.innerHTML = `<p class="empty-state error">Error loading requests: ${err.message}</p>`;
     summaryContainer.innerHTML = `<p class="empty-state error">Summary unavailable.</p>`;
@@ -646,6 +541,113 @@ function escapeHtml(text) {
   const div = document.createElement("div");
   div.textContent = text;
   return div.innerHTML;
+}
+
+// Load only the request summary (groups and member quantities)
+async function loadRequestSummary() {
+  const summaryContainer = document.getElementById("request-summary");
+  if (!summaryContainer) return;
+  summaryContainer.innerHTML = '<p class="empty-state">Building summary...</p>';
+
+  try {
+    // Fetch all pending requests and associated item names
+    const { data: pendingAll, error: pendingErr } = await supabase
+      .from('item_requests')
+      .select('*, items!inner(name)')
+      .eq('status', 'pending');
+
+    if (pendingErr || !Array.isArray(pendingAll) || pendingAll.length === 0) {
+      summaryContainer.innerHTML = '<p class="empty-state">No active requests for summary.</p>';
+      return;
+    }
+
+    // Build member name map (filter hidden members)
+    const userIds = [...new Set(pendingAll.map(r => r.user_id).filter(Boolean))];
+    let memberNames = new Map();
+    if (userIds.length > 0) {
+      const { data: clanUsers, error: clanErr } = await supabase
+        .from('clan_users')
+        .select('id, ign, is_hidden_from_members')
+        .in('id', userIds);
+      if (!clanErr && Array.isArray(clanUsers)) {
+        clanUsers.filter(u => u.is_hidden_from_members !== true).forEach(u => memberNames.set(u.id, u.ign || 'Unknown Member'));
+      }
+    }
+
+    const groupedSummary = new Map();
+    const pendingRequests = pendingAll.filter(req => memberNames.has(req.user_id));
+
+    pendingRequests.forEach(req => {
+      const itemName = req.items?.name || 'Unknown Item';
+      const memberName = memberNames.get(req.user_id) || 'Unknown Member';
+      const originalQty = Number(req.requested_quantity ?? req.quantity ?? 1);
+      const remainingQty = Math.max(0, Number(req.quantity ?? 0));
+      const fulfilledQty = Math.max(0, originalQty - remainingQty);
+      const group = groupedSummary.get(itemName) || { itemName, total: 0, members: [] };
+      const existingMember = group.members.find(m => m.name === memberName);
+      if (existingMember) {
+        existingMember.quantity += remainingQty;
+        existingMember.fulfilled += fulfilledQty;
+      } else {
+        group.members.push({ name: memberName, quantity: remainingQty, fulfilled: fulfilledQty });
+      }
+      group.total += remainingQty;
+      groupedSummary.set(itemName, group);
+    });
+
+    // sort groups ascending
+    const summaryGroups = Array.from(groupedSummary.values()).sort((a, b) => a.total - b.total);
+    const topGroup = summaryGroups[0];
+    const maxTotal = topGroup?.total || 1;
+
+    // populate summary-select without clobbering existing selection if possible
+    const summarySelect = document.getElementById('summary-select');
+    if (summarySelect) {
+      const prev = summarySelect.value || 'all';
+      summarySelect.innerHTML = '<option value="all">All Items</option>';
+      summaryGroups.forEach(g => {
+        const opt = document.createElement('option'); opt.value = g.itemName; opt.textContent = g.itemName; summarySelect.appendChild(opt);
+      });
+      if (summaryGroups.some(g => g.itemName === prev)) summarySelect.value = prev; else summarySelect.value = 'all';
+    }
+
+    const selectedItem = summarySelect?.value || 'all';
+    const filteredGroups = selectedItem === 'all' ? summaryGroups : summaryGroups.filter(g => g.itemName === selectedItem);
+
+    const summaryMarkup = filteredGroups.map((group, index) => {
+      const sortedMembers = [...group.members].filter(m => m.quantity > 0).sort((a, b) => a.quantity - b.quantity);
+      if (sortedMembers.length === 0) return '';
+      const meterWidth = Math.max(16, Math.round((group.total / maxTotal) * 100));
+      const isFeatured = index === 0 && topGroup;
+      return `
+        <div class="summary-card${isFeatured ? ' summary-card--featured' : ''}">
+          <div class="summary-card-top">
+            <div>
+              <div class="summary-item-name">${isFeatured ? '★ ' : ''}${escapeHtml(group.itemName)}</div>
+              <div class="summary-item-total"><span class="count-up" data-target="${group.total}">0</span> total requested</div>
+            </div>
+            <span class="summary-badge">${isFeatured ? 'TOP' : `${sortedMembers.length} members`}</span>
+          </div>
+          <div class="summary-meter">
+            <div class="summary-meter-bar" style="width: ${meterWidth}%;"></div>
+          </div>
+          <div class="summary-member-list">
+            ${sortedMembers.map(member => `
+              <div class="summary-member">
+                <span>${escapeHtml(member.name)}</span>
+                <strong><span class="count-up" data-target="${member.quantity}">0</span> / <span class="count-up" data-target="${member.fulfilled + member.quantity}">0</span></strong>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    summaryContainer.innerHTML = summaryMarkup || '<p class="empty-state">No active requests for this item.</p>';
+    animateCountUp(summaryContainer.querySelectorAll('.count-up'));
+  } catch (err) {
+    summaryContainer.innerHTML = `<p class="empty-state error">Summary unavailable: ${err.message}</p>`;
+  }
 }
 
 window.addEventListener("load", () => {
