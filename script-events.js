@@ -1805,7 +1805,7 @@ function distributeItems() {
   distributionAssignments = assignments;
   distributionSaved = false;
   renderDistributionPreview();
-  renderDistributionDetails();
+  renderDistributionHistory(document.getElementById('distribution-history-filter')?.value || '');
 
   if (statusEl) showStatus('item-distribution-status', `Balanced preview created for ${totalQuantity} total item quantity across ${recipientCount} recipients.`, 'info');
 }
@@ -1858,15 +1858,34 @@ function renderDistributionDetails() {
   `).join('');
 }
 
-function renderDistributionHistory() {
-  const panel = document.getElementById('distribution-details-panel');
+function renderDistributionHistory(filter = '') {
+  const panel = document.getElementById('distribution-history-panel');
   if (!panel) return;
+
+  const query = String(filter || '').trim().toLowerCase();
+  const filteredHistory = query ? distributionHistory.filter(log => {
+    return log.name.toLowerCase().includes(query) ||
+      log.assignments.some(item =>
+        item.ign.toLowerCase().includes(query) ||
+        item.item.toLowerCase().includes(query)
+      );
+  }) : distributionHistory;
+
   if (!distributionHistory.length) {
     panel.innerHTML = '<p style="color:#ccc; margin:0;">No reward logs saved yet.</p>';
     return;
   }
 
-  panel.innerHTML = distributionHistory.map((log, index) => `
+  if (!filteredHistory.length) {
+    panel.innerHTML = '<p style="color:#ccc; margin:0;">No saved reward logs match that search.</p>';
+    return;
+  }
+
+  panel.innerHTML = `
+    <div style="margin-bottom:12px; color:#aaa; font-size:13px;">
+      Showing ${filteredHistory.length} of ${distributionHistory.length} saved reward log${distributionHistory.length === 1 ? '' : 's'}.
+    </div>
+  ` + filteredHistory.map((log) => `
     <div style="padding:12px; border:1px solid #222; border-radius:8px; margin-bottom:12px; background:#080808; color:#fff;">
       <div style="font-weight:bold; margin-bottom:6px;">${escapeHtml(log.name)}</div>
       <div style="color:#aaa; margin-bottom:8px;">Saved: ${new Date(log.savedAt).toLocaleString()}</div>
@@ -1881,10 +1900,35 @@ function renderDistributionHistory() {
   `).join('');
 }
 
+function saveDistributionHistory() {
+  try {
+    localStorage.setItem('distributionHistory', JSON.stringify(distributionHistory));
+  } catch (err) {
+    console.warn('Unable to persist reward logs to localStorage:', err);
+  }
+}
+
+function loadDistributionHistoryFromStorage() {
+  try {
+    const raw = localStorage.getItem('distributionHistory');
+    if (raw) {
+      distributionHistory = JSON.parse(raw) || [];
+    }
+  } catch (err) {
+    console.warn('Unable to load reward logs from localStorage:', err);
+    distributionHistory = [];
+  }
+}
+
 function toggleDistributionDetails() {
-  const panel = document.getElementById('distribution-details-panel');
+  const panel = document.getElementById('distribution-history-panel');
+  const toggleBtn = document.getElementById('toggle-user-details-btn');
   if (!panel) return;
-  panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+  const isVisible = panel.style.display !== 'none';
+  panel.style.display = isVisible ? 'none' : 'block';
+  if (toggleBtn) {
+    toggleBtn.textContent = isVisible ? 'SHOW LOGS' : 'HIDE LOGS';
+  }
 }
 
 function confirmDistribution() {
@@ -1909,8 +1953,9 @@ function confirmDistribution() {
     savedAt: new Date().toISOString(),
     assignments: distributionAssignments.map(entry => ({ memberId: entry.member.id, ign: entry.member.ign, item: entry.item, quantity: entry.quantity }))
   });
+  saveDistributionHistory();
   renderDistributionPreview();
-  renderDistributionHistory();
+  renderDistributionHistory(document.getElementById('distribution-history-filter')?.value || '');
 
   if (statusEl) showStatus('item-distribution-status', 'Distribution confirmed and saved.', 'success');
 
@@ -1953,12 +1998,13 @@ function loadItemDistribution() {
   console.log('loadItemDistribution() called');
   const statusEl = document.getElementById('item-distribution-status');
   const preview = document.getElementById('distribution-preview-list');
-  const panel = document.getElementById('distribution-details-panel');
+  const panel = document.getElementById('distribution-history-panel');
   const textarea = document.getElementById('distribution-items-input');
   const fileInput = document.getElementById('distribution-items-file');
   if (statusEl) statusEl.textContent = 'Ready for item distribution.';
   if (preview) preview.innerHTML = '<p style="color:#ccc; margin:0;">No preview generated yet.</p>';
-  if (panel) renderDistributionHistory();
+  loadDistributionHistoryFromStorage();
+  if (panel) renderDistributionHistory(document.getElementById('distribution-history-filter')?.value || '');
   if (textarea) textarea.value = '';
   if (fileInput) fileInput.value = '';
   distributionAssignments = [];
@@ -2273,6 +2319,11 @@ window.addEventListener("load", () => {
     const toggleUserDetailsBtn = document.getElementById("toggle-user-details-btn");
     if (toggleUserDetailsBtn) {
       toggleUserDetailsBtn.addEventListener("click", toggleDistributionDetails);
+    }
+
+    const distributionHistoryFilter = document.getElementById('distribution-history-filter');
+    if (distributionHistoryFilter) {
+      distributionHistoryFilter.addEventListener('input', () => renderDistributionHistory(distributionHistoryFilter.value));
     }
 
     const logoutBtn = document.getElementById("logout-button");
