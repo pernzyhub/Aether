@@ -263,6 +263,7 @@ function renderBVSummary(list) {
     const amount = Number(r.amount ?? r.request_amount ?? 0);
     const summaryText = amount > 0 ? `${amount} BV requested` : 'Review pending';
     const statusLabel = (r.status || 'pending').toUpperCase();
+    const isPending = statusLabel === 'PENDING';
 
     return `
       <div class="bv-summary-row">
@@ -271,12 +272,55 @@ function renderBVSummary(list) {
           <div class="bv-summary-status">${escapeHtml(statusLabel)}</div>
         </div>
         <div class="bv-summary-meta">${escapeHtml(summaryText)}</div>
-        <div class="bv-summary-created">${formatDateTime(r.created_at)}</div>
+        <div class="bv-summary-actions">
+          <button type="button" class="btn btn-small btn-success" ${isPending ? '' : 'disabled'} onclick="handleBVAction('${r.id}','approved')">DONE</button>
+          <button type="button" class="btn btn-small btn-danger" ${isPending ? '' : 'disabled'} onclick="handleBVAction('${r.id}','denied')">CANCEL</button>
+        </div>
       </div>
     `;
   }).join('');
 
   container.innerHTML = items;
+}
+
+async function updateBVRequestStatus(requestId, newStatus) {
+  const memberSession = getMemberSession();
+  const userId = currentUser?.id || memberSession?.id;
+  if (!userId || !requestId) {
+    throw new Error('Unable to identify request owner.');
+  }
+
+  const { error } = await supabase.rpc('update_bv_request_status', {
+    target_request_id: requestId,
+    target_user_id: userId,
+    target_status: newStatus
+  });
+
+  if (error) {
+    throw error;
+  }
+}
+
+async function handleBVAction(requestId, newStatus) {
+  const statusEl = document.getElementById('bv-request-status');
+  if (statusEl) {
+    statusEl.textContent = `Setting request ${newStatus === 'approved' ? 'DONE' : 'CANCEL'}...`;
+    statusEl.className = 'status-text';
+  }
+
+  try {
+    await updateBVRequestStatus(requestId, newStatus);
+    if (statusEl) {
+      statusEl.textContent = 'Request updated.';
+      statusEl.className = 'status-text success';
+    }
+    loadBVRequests();
+  } catch (err) {
+    if (statusEl) {
+      statusEl.textContent = `Unable to update request: ${err.message}`;
+      statusEl.className = 'status-text error';
+    }
+  }
 }
 
 function updateBVTypeOptions() {

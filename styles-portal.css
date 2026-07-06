@@ -561,6 +561,21 @@ body::before {
     font-size: 0.96rem;
   }
 
+  .bv-summary-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .bv-summary-actions .btn {
+    width: auto;
+  }
+
+  .bv-summary-actions .btn[disabled] {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
   .bv-summary-created {
     color: #98ffb1;
     font-size: 0.82rem;
