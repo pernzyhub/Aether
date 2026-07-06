@@ -106,8 +106,15 @@ async function addBVType(e) {
     if (error) throw error;
     document.getElementById('bv-type-form')?.reset();
     loadAdminBVTypes();
-  } catch (err) { alert('Error adding type: '+err.message); }
+  } catch (err) {
+    let msg = 'Error adding type: ' + err.message;
+    if (err.message && /row-level security/i.test(err.message)) {
+      msg += '\n\nThis usually means your DB has RLS enabled and the current role cannot insert into `bv_request_types`. Run the migrations and ensure the admin role or RLS policies allow inserts, or run this change from a privileged SQL editor.';
+    }
+    alert(msg);
+  }
 }
+
 
 async function editBVType(id) {
   const item = adminBVTypes.find(t => t.id === id);
@@ -214,18 +221,9 @@ window.addEventListener('load', () => setTimeout(() => {
   try { 
     loadAdminBVRequests();
     
-    const refresh = document.getElementById('bv-requests-refresh-btn');
-    if (refresh) refresh.addEventListener('click', () => loadAdminBVRequests());
-    const exportBtn = document.getElementById('bv-requests-export');
-    if (exportBtn) exportBtn.addEventListener('click', () => exportAdminPendingCsv());
+    // Refresh button removed from UI
     const typeForm = document.getElementById('bv-type-form'); if (typeForm) typeForm.addEventListener('submit', addBVType);
   } catch(e){ }
 }, 120));
 
-function exportAdminPendingCsv() {
-  const rows = adminPending.map(r => [r.clan_users?.ign || '', r.reason || '', r.status || '', r.created_at || '']);
-  const csv = [['IGN','Selection','Status','Created']].concat(rows).map(row => row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = 'admin_bv_pending.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-}
+// exportAdminPendingCsv removed — export button disabled per admin preference
