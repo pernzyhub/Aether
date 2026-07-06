@@ -396,6 +396,80 @@ async function loadEvents() {
   }
 }
 
+/* BV Module: portal inline BV request, live list, and summary */
+async function submitPortalBVRequest(e) {
+  e.preventDefault();
+  const amountInput = document.getElementById('portal-bv-amount');
+  const type = document.getElementById('portal-bv-type')?.value || 'standard';
+  const notes = document.getElementById('portal-bv-notes')?.value || null;
+  const statusEl = document.getElementById('portal-bv-status');
+  const amount = Number(amountInput?.value || 0);
+  if (!amount || amount <= 0) { statusEl.textContent = 'Enter a valid BV amount.'; statusEl.className = 'status-text error'; return; }
+
+  statusEl.textContent = 'Submitting...'; statusEl.className = 'status-text';
+  try {
+    const userId = currentUser?.id;
+    if (!userId) throw new Error('No user session');
+    const { error } = await supabase.from('bv_requests').insert([{ user_id: userId, amount, reason: `${type} - ${notes || ''}`, status: 'pending' }]);
+    if (error) throw error;
+    statusEl.textContent = 'Submitted!'; statusEl.className = 'status-text success';
+    loadBVPortalList(); loadBVPortalSummary();
+    document.getElementById('portal-bv-form').reset();
+  } catch (err) {
+    statusEl.textContent = 'Error: ' + err.message; statusEl.className = 'status-text error';
+  }
+}
+
+async function loadBVPortalList() {
+  const container = document.getElementById('bv-portal-list');
+  if (!container) return;
+  container.innerHTML = '<p class="empty-state">Loading...</p>';
+  try {
+    const { data, error } = await supabase.from('bv_requests').select('*, clan_users(ign)').order('created_at', { ascending: false }).limit(30);
+    if (error) throw error;
+    if (!data || data.length === 0) { container.innerHTML = '<p class="empty-state">No requests found.</p>'; return; }
+    container.innerHTML = data.map(r => `
+      <div class="list-item compact">
+        <div class="list-item-content compact">
+          <div class="list-item-title compact">${escapeHtml(r.clan_users?.ign || 'Unknown')} • ${Number(r.amount)} BV</div>
+          <div class="list-item-meta">${escapeHtml(r.reason || '')} • ${escapeHtml((r.status||'').toUpperCase())}</div>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    container.innerHTML = `<p class="status-text error">Error loading BV requests: ${err.message}</p>`;
+  }
+}
+
+async function loadBVPortalSummary() {
+  const container = document.getElementById('bv-portal-summary');
+  if (!container) return;
+  container.innerHTML = '<p class="empty-state">Building summary...</p>';
+  try {
+    const { data, error } = await supabase.from('bv_requests').select('user_id, amount, status, clan_users(ign)').eq('status','pending');
+    if (error) throw error;
+    if (!data || data.length === 0) { container.innerHTML = '<p class="empty-state">No pending BV requests.</p>'; return; }
+    // group by ign
+    const totals = {};
+    data.forEach(r => { const name = r.clan_users?.ign || 'Unknown'; totals[name] = (totals[name]||0) + (r.amount || 0); });
+    const rows = Object.entries(totals).sort((a,b)=> b[1]-a[1]).map(([name, total]) => `<div style="display:flex; justify-content:space-between; padding:6px 0;"><span>${escapeHtml(name)}</span><strong>${total} BV</strong></div>`).join('');
+    container.innerHTML = `<div>${rows}</div>`;
+  } catch (err) {
+    container.innerHTML = `<p class="empty-state error">Summary error: ${err.message}</p>`;
+  }
+}
+
+function showBVModule() {
+  document.querySelector('main .container > div')?.parentElement?.querySelectorAll(':scope > *').forEach(el => el.style.display = 'none');
+  const module = document.getElementById('bv-module'); if (module) module.style.display = 'block';
+}
+
+function hideBVModule() {
+  const module = document.getElementById('bv-module'); if (module) module.style.display = 'none';
+  // show the main grid again (first child inside main container)
+  const mainGrid = document.querySelector('main .container > div'); if (mainGrid) mainGrid.style.display = '';
+}
+
 // Compute next occurrence for an event record from DB
 function computeNextOccurrenceForEvent(event) {
   try {
@@ -602,8 +676,27 @@ window.addEventListener("load", () => {
     loadUpcomingEvent();
     loadMemberAttendance();
     setActiveNavLink();
+    // Note: BV nav link now navigates to the dedicated BV page (`/bv-request.html`).
+    const amountSelect = document.getElementById('portal-bv-amount-select');
+    const amountInput = document.getElementById('portal-bv-amount');
+    if (amountSelect && amountInput) {
+      amountSelect.addEventListener('change', (e) => {
+        if (e.target.value === 'other') {
+          amountInput.value = '';
+          amountInput.focus();
+        } else {
+          amountInput.value = Number(e.target.value);
+        }
+      });
+    }
   }, 80);
 });
+
+window.submitPortalBVRequest = submitPortalBVRequest;
+window.loadBVPortalList = loadBVPortalList;
+window.loadBVPortalSummary = loadBVPortalSummary;
+window.showBVModule = showBVModule;
+window.hideBVModule = hideBVModule;
 
 window.addEventListener("storage", (event) => {
   if (event.key === "aether_announcements_cache") {

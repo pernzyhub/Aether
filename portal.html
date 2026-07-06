@@ -16,6 +16,7 @@
       <div class="header-menu">
         <a href="/portal.html" class="nav-link nav-link-pill active">HOME</a>
         <a href="/request-items.html" class="nav-link nav-link-pill">REQUESTS</a>
+        <a id="bv-nav-link" href="/bv-request.html" class="nav-link nav-link-pill">BV REQUEST</a>
         <a href="/member-attendance.html" class="nav-link nav-link-pill">ATTENDANCE</a>
         <a href="/leaderboard.html" class="nav-link nav-link-pill">LEADERBOARD</a>
         <a href="/settings.html" class="nav-link nav-link-pill">SETTINGS</a>
@@ -69,6 +70,52 @@
           <div id="events-list" class="events-list">
             <p>Loading events...</p>
           </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- BV Module (hidden by default) -->
+    <div id="bv-module" style="display:none; margin-top:18px;">
+      <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:18px;">
+        <section class="card">
+          <h2>BV REQUEST</h2>
+          <form id="portal-bv-form" onsubmit="submitPortalBVRequest(event)">
+            <div class="form-group">
+              <label for="portal-bv-type">Type</label>
+              <select id="portal-bv-type">
+                <option value="standard">Standard</option>
+                <option value="event">Event</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="portal-bv-amount">BV Amount</label>
+              <select id="portal-bv-amount-select">
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="other">Other...</option>
+              </select>
+              <input type="number" id="portal-bv-amount" min="1" value="10" style="margin-top:8px; width:100%;" />
+            </div>
+            <div class="form-group">
+              <label for="portal-bv-notes">Notes (optional)</label>
+              <textarea id="portal-bv-notes"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">SUBMIT</button>
+            <p id="portal-bv-status" class="status-text"></p>
+          </form>
+        </section>
+
+        <section class="card">
+          <h2>LIVE BV REQUESTS</h2>
+          <div id="bv-portal-list"><p class="empty-state">Loading...</p></div>
+        </section>
+
+        <section class="card">
+          <h2>BV SUMMARY</h2>
+          <div id="bv-portal-summary"><p class="empty-state">Loading summary...</p></div>
         </section>
       </div>
     </div>
