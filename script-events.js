@@ -23,6 +23,14 @@ function filterVisibleMembers(users) {
   return (users || []).filter((user) => !isHiddenAdminAccount(user) && user.is_hidden_from_members !== true);
 }
 
+async function fetchClanUsersWithOptionalHidden(selectWithHidden, selectWithoutHidden, applyQuery = (query) => query) {
+  let { data, error } = await applyQuery(supabase.from("clan_users").select(selectWithHidden));
+  if (error && /is_hidden_from_members|column .* does not exist/i.test(error.message)) {
+    ({ data, error } = await applyQuery(supabase.from("clan_users").select(selectWithoutHidden)));
+  }
+  return { data, error };
+}
+
 async function checkAuth() {
   const { data: sessionData } = await supabase.auth.getSession();
   const user = sessionData?.session?.user;
@@ -535,11 +543,11 @@ async function loadBulkMembers() {
   container.innerHTML = "<p>Loading members...</p>";
 
   try {
-    const { data: members, error } = await supabase
-      .from("clan_users")
-      .select("id, ign, is_hidden_from_members")
-      .eq("is_active", true)
-      .order("ign");
+    const { data: members, error } = await fetchClanUsersWithOptionalHidden(
+      "id, ign, is_hidden_from_members",
+      "id, ign",
+      (query) => query.eq("is_active", true).order("ign")
+    );
 
     if (error) throw error;
 
@@ -789,10 +797,11 @@ async function loadAttendance() {
 
     if (attendanceError) throw attendanceError;
 
-    const { data: users, error: usersError } = await supabase
-      .from("clan_users")
-      .select("id, ign, is_active, is_hidden_from_members")
-      .order("ign", { ascending: true });
+    const { data: users, error: usersError } = await fetchClanUsersWithOptionalHidden(
+      "id, ign, is_active, is_hidden_from_members",
+      "id, ign, is_active",
+      (query) => query.order("ign", { ascending: true })
+    );
 
     if (usersError) throw usersError;
 
@@ -1261,10 +1270,11 @@ async function loadMembersSheet() {
   statusEl.textContent = 'Loading members...';
 
   try {
-    const { data: users, error: usersErr } = await supabase
-      .from('clan_users')
-      .select('id, ign, is_active, is_hidden_from_members')
-      .order('ign');
+    const { data: users, error: usersErr } = await fetchClanUsersWithOptionalHidden(
+      'id, ign, is_active, is_hidden_from_members',
+      'id, ign, is_active',
+      (query) => query.order('ign')
+    );
     if (usersErr) throw usersErr;
     const visibleUsers = filterVisibleMembers(users || []);
     // Determine months range from UI
