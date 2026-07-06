@@ -990,8 +990,10 @@ function normalizeIgn(value) {
 function downloadRequestsCsvGuide() {
   const headers = ['IGN', 'Item', 'Quantity'];
   const example = ['ExamplePlayer', 'Epic Promotional Stone', '1'];
-  const csv = [headers.join(','), example.join(',')].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const csv = [headers.join(','), example.join('\n')].join('\n');
+  // Prepend UTF-8 BOM so Excel/Windows treats the file as UTF-8
+  const csvWithBom = '\uFEFF' + csv;
+  const blob = new Blob([csvWithBom], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
   link.download = 'request-import-guide.csv';
@@ -1033,6 +1035,8 @@ function detectCsvDelimiter(line) {
 }
 
 function parseRequestCsv(raw) {
+  // strip UTF-8 BOM if present and normalize input
+  raw = String(raw || '').replace(/^\uFEFF/, '');
   const lines = raw.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
   if (!lines.length) return [];
 
@@ -1112,7 +1116,9 @@ function exportSelectedRequestsToCsv() {
   });
 
   const csv = ['IGN,Item,Quantity', ...rows].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  // Prepend BOM to preserve unicode characters when opened in Excel on Windows
+  const csvWithBom = '\uFEFF' + csv;
+  const blob = new Blob([csvWithBom], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
   link.download = 'selected-requests.csv';
