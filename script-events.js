@@ -256,6 +256,7 @@ async function loadEvents() {
             </div>
             <div class="list-item-meta">
               ${event.description ? escapeHtml(event.description) : 'No description'}
+              ${event.event_code ? `| Code: ${escapeHtml(event.event_code)}` : ''}
               ${event.event_date ? `| Date: ${escapeHtml(formatDateTime(event.event_date))}` : ''}
               ${event.is_recurring ? `| Recurring: ${event.recurrence_type}` : ''}
             </div>
@@ -357,6 +358,7 @@ async function createEvent(e) {
   e.preventDefault();
   const typeId = document.getElementById("event-type-select").value;
   const name = document.getElementById("event-name").value.trim();
+  const code = normalizeEventCode(document.getElementById("event-code").value);
   const description = document.getElementById("event-description").value.trim();
   const points = parseInt(document.getElementById("event-points").value);
   const eventDate = document.getElementById("event-date").value;
@@ -393,6 +395,7 @@ async function createEvent(e) {
       .insert([{
         event_type_id: typeId || null,
         name,
+        event_code: code || null,
         description: description || null,
         points,
         event_date: eventDate || null,
@@ -447,6 +450,7 @@ async function editEvent(eventId) {
   const newName = prompt("Enter new event name:", event.name);
   if (!newName) return;
 
+  const newCode = normalizeEventCode(prompt("Enter event code (optional):", event.event_code || ""));
   const newPoints = prompt("Enter new points:", event.points);
 
   showStatus("events-status", "Updating event...", "");
@@ -456,6 +460,7 @@ async function editEvent(eventId) {
       .from("events")
       .update({
         name: newName,
+        event_code: newCode || null,
         points: parseInt(newPoints) || 0,
         updated_at: new Date().toISOString()
       })
@@ -520,7 +525,7 @@ async function loadBulkEventSelect() {
   try {
     const { data: events, error } = await supabase
       .from("events")
-      .select("id, name, points")
+      .select("id, name, points, event_code")
       .eq("is_active", true)
       .order("name");
 
@@ -529,7 +534,11 @@ async function loadBulkEventSelect() {
     const selectEl = document.getElementById("bulk-event-select");
     if (selectEl) {
       selectEl.innerHTML = '<option value="">Select event...</option>' +
-        (events || []).map(e => `<option value="${e.id}">${escapeHtml(e.name)} (${e.points} pts)</option>`).join("");
+        (events || []).map(e => {
+          const codeLabel = e.event_code ? ` [${escapeHtml(e.event_code)}]` : '';
+          const codeAttr = e.event_code ? ` data-code="${escapeHtml(e.event_code)}"` : '';
+          return `<option value="${e.id}"${codeAttr}>${escapeHtml(e.name)}${codeLabel} (${e.points} pts)</option>`;
+        }).join("");
     }
   } catch (err) {
     console.error("Error loading bulk event select:", err);
@@ -646,6 +655,11 @@ function normalizeBoolean(value) {
   return ['true', 'yes', '1', 'y'].includes(normalized);
 }
 
+function normalizeEventCode(value) {
+  if (typeof value !== 'string') return '';
+  return value.trim().toUpperCase();
+}
+
 function escapeCsvValue(value) {
   const str = value == null ? '' : String(value);
   if (/[",\r\n]/.test(str)) {
@@ -663,8 +677,8 @@ function getBulkCsvStatus(msg, type = 'info') {
 }
 
 function downloadBulkAttendanceTemplate() {
-  const headers = ['IGN', 'Event', 'Date', 'Points', 'Attended'];
-  const exampleRow = ['PlayerOne', 'Weekly Raid', '2026-07-06', '10', 'TRUE'];
+  const headers = ['IGN', 'EventCode', 'Event', 'Date', 'Points', 'Attended'];
+  const exampleRow = ['PlayerOne', 'SI01', 'Weekly Raid', '2026-07-06', '10', 'TRUE'];
   const csv = [headers.map(escapeCsvValue).join(','), exampleRow.map(escapeCsvValue).join(',')].join('\r\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
@@ -690,31 +704,43 @@ async function importBulkAttendanceCsv() {
     return;
   }
 
-  const requiredColumns = ['ign', 'event', 'date'];
-  const missingHeader = requiredColumns.find(col => !headers.includes(col));
+  const normalizedHeaders = headers.map(header => header.trim().toLowerCase().replace(/[_ ]+/g, ''));
+  const requiredColumns = ['ign', 'date'];
+  const requiredCodeOrName = ['eventcode', 'event'];
+  const missingHeader = requiredColumns.find(col => !normalizedHeaders.includes(col));
   if (missingHeader) {
     getBulkCsvStatus(`Missing required column: ${missingHeader}`, 'error');
     return;
   }
+  const missingEventHeader = requiredCodeOrName.every(col => !normalizedHeaders.includes(col));
+  if (missingEventHeader) {
+    getBulkCsvStatus('CSV must include either EventCode or Event column.', 'error');
+    return;
+  }
 
-  const headerIndex = headers.reduce((map, name, index) => { map[name] = index; return map; }, {});
+  const headerIndex = normalizedHeaders.reduce((map, name, index) => { map[name] = index; return map; }, {});
   if (!allMembers || allMembers.length === 0) {
     await loadBulkMembers();
   }
 
-  const eventOptions = Array.from(document.getElementById('bulk-event-select')?.options || []).map(option => ({ id: option.value, label: option.textContent.trim() })).filter(opt => opt.id);
+  const eventOptions = Array.from(document.getElementById('bulk-event-select')?.options || []).map(option => ({
+    id: option.value,
+    label: option.textContent.trim(),
+    code: option.dataset.code ? option.dataset.code.trim().toUpperCase() : ''
+  })).filter(opt => opt.id);
   const attendanceRecords = [];
   const missingMembers = [];
   const missingEvents = [];
 
   rows.forEach(row => {
     const ign = row[headerIndex['ign']]?.trim();
-    const eventName = row[headerIndex['event']]?.trim();
+    const eventCode = headerIndex['eventcode'] !== undefined ? row[headerIndex['eventcode']]?.trim() : '';
+    const eventName = headerIndex['event'] !== undefined ? row[headerIndex['event']]?.trim() : '';
     const dateValue = row[headerIndex['date']]?.trim();
     const pointsValue = headerIndex['points'] !== undefined ? row[headerIndex['points']]?.trim() : '';
     const attendedValue = headerIndex['attended'] !== undefined ? row[headerIndex['attended']]?.trim() : 'TRUE';
 
-    if (!ign || !eventName || !dateValue) {
+    if (!ign || (!eventCode && !eventName) || !dateValue) {
       return;
     }
 
@@ -724,9 +750,20 @@ async function importBulkAttendanceCsv() {
       return;
     }
 
-    const eventMatch = eventOptions.find(opt => opt.label.toLowerCase().startsWith(eventName.toLowerCase()) || opt.label.toLowerCase() === eventName.toLowerCase() || opt.id === eventName);
+    let eventMatch = null;
+    if (eventCode) {
+      const normalizedCode = normalizeEventCode(eventCode);
+      eventMatch = eventOptions.find(opt => opt.code && opt.code === normalizedCode);
+      if (!eventMatch) {
+        eventMatch = eventOptions.find(opt => opt.label.toUpperCase().includes(normalizedCode));
+      }
+    }
+    if (!eventMatch && eventName) {
+      eventMatch = eventOptions.find(opt => opt.label.toLowerCase().startsWith(eventName.toLowerCase()) || opt.label.toLowerCase() === eventName.toLowerCase() || opt.id === eventName);
+    }
     if (!eventMatch) {
-      if (!missingEvents.includes(eventName)) missingEvents.push(eventName);
+      const missingText = eventCode || eventName || 'Unknown event';
+      if (!missingEvents.includes(missingText)) missingEvents.push(missingText);
       return;
     }
 

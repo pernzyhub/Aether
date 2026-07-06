@@ -66,6 +66,11 @@
             <input type="text" id="event-name" class="input" placeholder="Enter event name" required />
           </div>
           <div class="form-group">
+            <label>Event Code</label>
+            <input type="text" id="event-code" class="input" placeholder="e.g., SI01" />
+            <small style="color:#aaa; display:block; margin-top:6px;">Optional code helps with CSV import/export and lookup.</small>
+          </div>
+          <div class="form-group">
             <label>Description</label>
             <textarea id="event-description" class="input" placeholder="Enter event description" rows="3"></textarea>
           </div>
@@ -195,10 +200,10 @@
                 <button type="button" id="bulk-import-csv-btn" class="btn btn-secondary" style="background: #ff6688; color: #fff; font-weight: bold; padding: 10px 15px; margin-top: 10px; width: 100%;">IMPORT CSV</button>
                 <div id="bulk-csv-status" class="status-text" style="margin-top:10px; color:#ccc;"></div>
                 <div style="margin-top:8px; color:#aaa; font-size:12px;">
-                  Expected columns: <strong>IGN, Event, Date, Points, Attended</strong><br />
+                  Expected columns: <strong>IGN, EventCode, Date, Points, Attended</strong><br />
                   Date format: <strong>YYYY-MM-DD</strong><br />
                   Attended values: <strong>TRUE/FALSE</strong><br />
-                  Event may be either the exact event name or the event ID from the dropdown.
+                  EventCode can be used instead of event name; if both are present, code is matched first.
                 </div>
               </div>
               
