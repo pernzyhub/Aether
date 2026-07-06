@@ -231,6 +231,24 @@ body::before {
   margin-left: auto;
 }
 
+#bv-export-csv {
+  display: none !important;
+}
+
+.section-copy {
+  color: #91ffb7;
+  font-size: 0.88rem;
+  margin-top: 6px;
+  max-width: 420px;
+  line-height: 1.4;
+}
+
+.empty-state-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
 .control-label {
   color: #00cc66;
   font-size: 0.8rem;

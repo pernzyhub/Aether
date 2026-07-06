@@ -139,7 +139,16 @@ async function loadBVRequests() {
     const { data, error } = await query;
     if (error) throw error;
     bvAllData = data || [];
-    if (!bvAllData || bvAllData.length === 0) { container.innerHTML = '<p class="empty-state">No BV requests found.</p>'; updatePagination(); return; }
+    if (!bvAllData || bvAllData.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-title">No BV requests found</div>
+          <p>Submit a BV request above to see it listed here for review.</p>
+        </div>
+      `;
+      updatePagination(0);
+      return;
+    }
 
     applyBVSortAndRender();
   } catch (err) {
@@ -185,6 +194,16 @@ function updatePagination(total=0) {
   const indicator = document.getElementById('bv-page-indicator');
   const prev = document.getElementById('bv-prev-page');
   const next = document.getElementById('bv-next-page');
+  const hasResults = total > 0;
+
+  if (indicator) indicator.style.display = hasResults ? '' : 'none';
+  if (prev) prev.style.display = hasResults ? '' : 'none';
+  if (next) next.style.display = hasResults ? '' : 'none';
+
+  if (!hasResults) {
+    return;
+  }
+
   const pages = Math.max(1, Math.ceil((total || bvAllData.length) / bvPageSize));
   if (indicator) indicator.textContent = `Page ${bvCurrentPage} / ${pages}`;
   if (prev) prev.disabled = bvCurrentPage <= 1;
