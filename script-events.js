@@ -1903,25 +1903,40 @@ function loadDistributionHistoryFromStorage() {
   }
 }
 
-function renderRewardLogsTable(log) {
-  const body = document.getElementById('reward-logs-table-body');
-  const titleEl = document.getElementById('reward-logs-modal-title');
-  const subtitleEl = document.getElementById('reward-logs-modal-subtitle');
-  if (!body || !titleEl || !subtitleEl) return;
+function renderRewardLogsList() {
+  const listContainer = document.getElementById('reward-logs-list-container');
+  if (!listContainer) return;
 
-  if (!log) {
-    if (!distributionHistory.length) {
-      titleEl.textContent = 'Reward Log';
-      subtitleEl.textContent = 'Saved: none';
-      body.innerHTML = `
-        <tr>
-          <td colspan="5" style="padding:16px; color:#ccc; text-align:center;">No reward logs available.</td>
-        </tr>
-      `;
-      return;
-    }
-    log = distributionHistory[0];
+  if (!distributionHistory.length) {
+    listContainer.innerHTML = `
+      <div style="padding:20px; background:#0b0b0b; border:1px solid #222; color:#ccc; border-radius:8px; text-align:center;">
+        No saved reward logs available.
+      </div>
+    `;
+    return;
   }
+
+  listContainer.innerHTML = distributionHistory.map((log, index) => `
+    <button type="button" class="reward-log-summary-btn" data-index="${index}" style="text-align:left; width:100%; padding:16px; background:#111; border:1px solid #222; border-radius:8px; color:#fff;">
+      <div style="font-weight:bold; font-size:15px;">Reward Log ${escapeHtml(log.name)}</div>
+      <div style="font-size:13px; color:#aaa; margin-top:6px;">Saved: ${new Date(log.savedAt || log.created_at).toLocaleString()}</div>
+    </button>
+  `).join('');
+
+  listContainer.querySelectorAll('.reward-log-summary-btn').forEach(button => {
+    button.addEventListener('click', (event) => {
+      const index = Number(event.currentTarget.dataset.index);
+      const log = distributionHistory[index];
+      if (log) openRewardLogDetailModal(log);
+    });
+  });
+}
+
+function renderRewardLogDetailTable(log) {
+  const body = document.getElementById('reward-log-detail-table-body');
+  const titleEl = document.getElementById('reward-log-detail-title');
+  const subtitleEl = document.getElementById('reward-log-detail-subtitle');
+  if (!body || !titleEl || !subtitleEl) return;
 
   titleEl.textContent = `Reward Log ${escapeHtml(log.name)}`;
   subtitleEl.textContent = `Saved: ${new Date(log.savedAt || log.created_at).toLocaleString()}`;
@@ -1952,17 +1967,31 @@ function renderRewardLogsTable(log) {
   `).join('');
 }
 
-function openRewardLogsModal(log) {
-  const modal = document.getElementById('reward-logs-modal');
+function openRewardLogsModal() {
+  const modal = document.getElementById('reward-logs-list-modal');
   if (!modal) return;
-  activeRewardLog = log && typeof log === 'object' ? log : distributionHistory[0] || null;
-  renderRewardLogsTable(activeRewardLog);
+  renderRewardLogsList();
   modal.style.display = 'grid';
   document.body.style.overflow = 'hidden';
 }
 
-function closeRewardLogsModal() {
-  const modal = document.getElementById('reward-logs-modal');
+function closeRewardLogsListModal() {
+  const modal = document.getElementById('reward-logs-list-modal');
+  if (!modal) return;
+  modal.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function openRewardLogDetailModal(log) {
+  const modal = document.getElementById('reward-log-detail-modal');
+  if (!modal) return;
+  renderRewardLogDetailTable(log);
+  modal.style.display = 'grid';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeRewardLogDetailModal() {
+  const modal = document.getElementById('reward-log-detail-modal');
   if (!modal) return;
   modal.style.display = 'none';
   document.body.style.overflow = '';
@@ -2415,14 +2444,24 @@ window.addEventListener("load", () => {
       openRewardLogsModalBtn.addEventListener("click", () => openRewardLogsModal());
     }
 
-    const closeRewardLogsModalBtn = document.getElementById("close-reward-logs-modal-btn");
-    if (closeRewardLogsModalBtn) {
-      closeRewardLogsModalBtn.addEventListener("click", closeRewardLogsModal);
+    const closeRewardLogsListModalBtn = document.getElementById("close-reward-logs-list-modal-btn");
+    if (closeRewardLogsListModalBtn) {
+      closeRewardLogsListModalBtn.addEventListener("click", closeRewardLogsListModal);
     }
 
-    const closeRewardLogsModalFooterBtn = document.getElementById("close-reward-logs-modal-footer-btn");
-    if (closeRewardLogsModalFooterBtn) {
-      closeRewardLogsModalFooterBtn.addEventListener("click", closeRewardLogsModal);
+    const closeRewardLogsListModalFooterBtn = document.getElementById("close-reward-logs-list-modal-footer-btn");
+    if (closeRewardLogsListModalFooterBtn) {
+      closeRewardLogsListModalFooterBtn.addEventListener("click", closeRewardLogsListModal);
+    }
+
+    const closeRewardLogDetailModalBtn = document.getElementById("close-reward-log-detail-modal-btn");
+    if (closeRewardLogDetailModalBtn) {
+      closeRewardLogDetailModalBtn.addEventListener("click", closeRewardLogDetailModal);
+    }
+
+    const closeRewardLogDetailModalFooterBtn = document.getElementById("close-reward-log-detail-modal-footer-btn");
+    if (closeRewardLogDetailModalFooterBtn) {
+      closeRewardLogDetailModalFooterBtn.addEventListener("click", closeRewardLogDetailModal);
     }
 
     const logoutBtn = document.getElementById("logout-button");
