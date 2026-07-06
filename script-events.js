@@ -2017,6 +2017,11 @@ function openRewardLogDetailModal(log) {
   closeRewardLogsListModal();
   modal.style.display = 'grid';
   document.body.style.overflow = 'hidden';
+  console.log('Reward log detail modal opened for:', log.name);
+  const detailNote = document.getElementById('reward-log-detail-note');
+  if (detailNote) {
+    detailNote.textContent = 'Editable status buttons: green = Distributed, red = Pending.';
+  }
 }
 
 function closeRewardLogDetailModal() {
