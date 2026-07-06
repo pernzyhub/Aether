@@ -99,6 +99,43 @@ async function checkAuth() {
   if (welcomeEl) {
     welcomeEl.textContent = `WELCOME, ${user.user_metadata?.full_name || user.email}`;
   }
+
+  try {
+    const { data: existing, error: existingError } = await supabase
+      .from("clan_users")
+      .select("id, ign, is_active")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (existingError && existingError.code !== "PGRST116") {
+      throw existingError;
+    }
+
+    if (existing) {
+      if (existing.is_active === false) {
+        const { error: updateError } = await supabase
+          .from("clan_users")
+          .update({ is_active: true, updated_at: new Date().toISOString() })
+          .eq("id", user.id);
+        if (updateError) throw updateError;
+      }
+    } else {
+      const ign = user.user_metadata?.full_name || user.user_metadata?.name || user.email || null;
+      const { error: insertError } = await supabase
+        .from("clan_users")
+        .insert([{
+          id: user.id,
+          ign,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }]);
+      if (insertError) throw insertError;
+    }
+  } catch (err) {
+    console.warn("Unable to auto-heal admin clan_users profile:", err?.message || err);
+  }
+
   return true;
 }
 
@@ -641,9 +678,12 @@ async function loadUsers() {
         <div class="list-item-actions">
           <button class="btn btn-secondary" onclick="changeUserPassword('${user.id}')">CHANGE PASSWORD</button>
           <button class="btn btn-secondary" onclick="changeUserIgn('${user.id}', '${escapeHtml(user.ign || '')}')">CHANGE IGN</button>
-          <button class="btn ${user.is_active ? 'btn-danger' : 'btn-success'}" onclick="toggleUserStatus('${user.id}', ${!user.is_active})">
-            ${user.is_active ? 'DEACTIVATE' : 'ACTIVATE'}
-          </button>
+          ${user.id === currentUser?.id
+            ? `<button class="btn btn-secondary" disabled title="Cannot change your own status">SIGNED IN</button>`
+            : `<button class="btn ${user.is_active ? 'btn-danger' : 'btn-success'}" onclick="toggleUserStatus('${user.id}', ${!user.is_active})">
+                ${user.is_active ? 'DEACTIVATE' : 'ACTIVATE'}
+              </button>`
+          }
           ${user.id === currentUser?.id ?
             `<button class="btn btn-danger" disabled title="Cannot delete the signed-in admin">DELETE</button>` :
             `<button class="btn btn-danger" onclick="deleteUser('${user.id}')">DELETE</button>`
