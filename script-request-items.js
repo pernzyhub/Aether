@@ -574,12 +574,24 @@ async function loadRequestSummary() {
     const userIds = [...new Set(pendingAll.map(r => r.user_id).filter(Boolean))];
     let memberNames = new Map();
     if (userIds.length > 0) {
-      const { data: clanUsers, error: clanErr } = await supabase
+      let clanUsers;
+      let clanErr;
+      ({ data: clanUsers, error: clanErr } = await supabase
         .from('clan_users')
         .select('id, ign, is_hidden_from_members')
-        .in('id', userIds);
+        .in('id', userIds));
+
+      if (clanErr && /is_hidden_from_members|column .* does not exist/i.test(clanErr.message)) {
+        ({ data: clanUsers, error: clanErr } = await supabase
+          .from('clan_users')
+          .select('id, ign')
+          .in('id', userIds));
+      }
+
       if (!clanErr && Array.isArray(clanUsers)) {
-        clanUsers.filter(u => u.is_hidden_from_members !== true).forEach(u => memberNames.set(u.id, u.ign || 'Unknown Member'));
+        clanUsers
+          .filter(u => u.is_hidden_from_members !== true)
+          .forEach(u => memberNames.set(u.id, u.ign || 'Unknown Member'));
       }
     }
 
