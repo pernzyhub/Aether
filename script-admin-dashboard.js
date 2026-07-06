@@ -69,6 +69,12 @@ function applyEditorCommand(command, value, editorId) {
   }
 }
 
+function insertFontSizeSelection(selectEl, editorId) {
+  const selectedText = window.getSelection()?.toString() || 'Text';
+  const html = `<span style="font-size:${selectEl.value}">${selectedText}</span>`;
+  applyEditorCommand('insertHTML', html, editorId);
+}
+
 function attachEditorUploadHandlers() {
   document.querySelectorAll('.editor-file-input').forEach(input => {
     input.addEventListener('change', function () {
@@ -457,7 +463,7 @@ async function addItem(event) {
     } else {
       const { error: insertError } = await supabase
         .from("items")
-        .insert([{ name, description, created_by: currentUser.id }]);
+        .insert([{ name, description, created_by: currentUser?.id ?? null }]);
       error = insertError;
     }
 
@@ -1281,6 +1287,7 @@ window.addEventListener("load", () => {
 
 window.setActiveModule = setActiveModule;
 window.applyEditorCommand = applyEditorCommand;
+window.insertFontSizeSelection = insertFontSizeSelection;
 window.bulkRegisterMembers = bulkRegisterMembers;
 window.adminLogout = adminLogout;
 window.navigateToFrontPage = navigateToFrontPage;
@@ -1299,6 +1306,7 @@ window.postAnnouncement = postAnnouncement;
 window.deleteAnnouncement = deleteAnnouncement;
 window.postRule = postRule;
 window.deleteRule = deleteRule;
+window.addItem = addItem;
 window.editItem = editItem;
 window.deleteItem = deleteItem;
 window.logout = logout;
