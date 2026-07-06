@@ -24,67 +24,47 @@
   <div id="adminPreviewBadge" style="display:none; position:fixed; top:76px; left:12px; background:#d4af37; color:#071; padding:6px 10px; border-radius:8px; z-index:99999; font-weight:700;">ADMIN PREVIEW MODE</div>
 
   <div class="container request-page bv-request-layout">
-    <div class="request-left-column">
-      <section class="card request-form-card request-column">
-        <h2>BV Request Submission</h2>
-        <p class="section-copy">Submit a Battle Value request for review, and track its progress below in the request history.</p>
-        <form id="bv-request-form" onsubmit="submitBVRequest(event)">
-          <div class="form-group">
-            <label for="bv-select">Request Type</label>
-            <select id="bv-select" required>
-              <option value="">Choose...</option>
-              <option value="standard">Standard</option>
-              <option value="event">Event</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <button type="submit" class="btn btn-primary">SUBMIT BV REQUEST</button>
-        </form>
-        <p id="bv-request-status" class="status-text"></p>
-      </section>
-
-      <section class="card request-summary-card request-column">
-        <div class="card-heading">
-          <div>
-            <h2>BV Summary</h2>
-            <p class="section-copy">Your current BV requests are listed below. Once a request type is used, it cannot be requested again—even if it is pending or completed.</p>
-          </div>
-          <span class="card-badge">SUMMARY</span>
+    <section class="card request-form-card request-column">
+      <h2>BV Request Submission</h2>
+      <p class="section-copy">Submit a Battle Value request for review, and track its progress below in the request history.</p>
+      <form id="bv-request-form" onsubmit="submitBVRequest(event)">
+        <div class="form-group">
+          <label for="bv-select">Request Type</label>
+          <select id="bv-select" required>
+            <option value="">Choose...</option>
+            <option value="standard">Standard</option>
+            <option value="event">Event</option>
+            <option value="other">Other</option>
+          </select>
         </div>
-        <div id="bv-summary-container" class="bv-request-summary-list"></div>
-        <p class="bv-summary-note">Example: if you pick <strong>Light Of Greed</strong>, you cannot request that exact BV reason again while it exists in your request history.</p>
-      </section>
-    </div>
+        <button type="submit" class="btn btn-primary">SUBMIT BV REQUEST</button>
+      </form>
+      <p id="bv-request-status" class="status-text"></p>
+    </section>
 
-    <section class="card request-feed-card request-column">
+    <section class="card request-summary-card request-column bv-request-panel">
       <div class="card-heading">
         <div>
-          <h2>BV Request History</h2>
-          <p class="section-copy">View your submitted requests and their current approval status.</p>
+          <h2>BV Request Board</h2>
+          <p class="section-copy">Below is your request list and summary. Once a specific BV reason is requested, it cannot be submitted again while it remains in your history.</p>
         </div>
-        <div class="card-controls">
-          <label class="control-label" for="bv-filter">Status</label>
-          <select id="bv-filter" class="sort-select">
-            <option value="all">All</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="denied">Denied</option>
-          </select>
-          <label class="control-label" for="bv-sort">Sort</label>
-          <select id="bv-sort" class="sort-select">
-            <option value="newest">Newest</option>
-            <option value="oldest">Oldest</option>
-            <option value="amount_desc">BV High → Low</option>
-            <option value="amount_asc">BV Low → High</option>
-          </select>
-        </div>
-        <span class="card-badge">LIVE</span>
+        <span class="card-badge">SUMMARY</span>
       </div>
-      <div id="bv-requests-table" class="request-feed"></div>
-      <div class="pagination-controls" style="display:flex; gap:8px; align-items:center; margin-top:12px;">
-        <button id="bv-prev-page" class="btn btn-secondary">Prev</button>
-        <span id="bv-page-indicator">Page 1</span>
-        <button id="bv-next-page" class="btn btn-secondary">Next</button>
+      <p class="bv-summary-note">Example: if you pick <strong>Light Of Greed</strong>, you cannot request that exact BV reason again—even if it is pending or completed.</p>
+      <div class="bv-panel-grid">
+        <div class="bv-request-summary-card">
+          <div class="bv-summary-heading">BV Summary</div>
+          <div id="bv-summary-container" class="bv-request-summary-list"></div>
+        </div>
+        <div class="bv-request-history-card">
+          <div class="bv-summary-heading">Request List</div>
+          <div id="bv-requests-table" class="request-feed"></div>
+          <div class="pagination-controls" style="display:flex; gap:8px; align-items:center; margin-top:12px;">
+            <button id="bv-prev-page" class="btn btn-secondary">Prev</button>
+            <span id="bv-page-indicator">Page 1</span>
+            <button id="bv-next-page" class="btn btn-secondary">Next</button>
+          </div>
+        </div>
       </div>
     </section>
   </div>
