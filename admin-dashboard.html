@@ -205,19 +205,28 @@
         </div>
 
         <div class="module-panel" data-module="requests">
+          <section class="card">
+            <h2>REQUESTS CSV IMPORT / EXPORT</h2>
+            <div style="border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:16px; background:#120b12; margin-bottom:16px;">
+              <p style="margin:0 0 12px; color:#ccc;">Use the CSV guide to avoid import conflicts. Download the template, fill your request list, then import the file. Export selected requests to CSV when needed.</p>
+              <div style="display:grid; grid-template-columns: 1fr auto; gap:12px; margin-bottom:12px;">
+                <button type="button" id="requests-download-template-btn" class="btn btn-secondary" style="padding:14px 16px; min-width:140px;">DOWNLOAD CSV GUIDE</button>
+                <label for="requests-import-file" style="display:flex; flex-direction:column; gap:6px;">
+                  <span style="color:#aaa; font-size:13px;">Select CSV file to import</span>
+                  <input type="file" id="requests-import-file" accept=".csv" style="color:#fff; background:#111; border:1px solid #444; padding:10px;" />
+                </label>
+              </div>
+              <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px;">
+                <button type="button" id="requests-import-file-btn" class="btn btn-primary" style="flex:1; min-width:140px;">IMPORT CSV</button>
+                <button type="button" id="requests-export-csv-btn" class="btn btn-secondary" style="flex:1; min-width:140px;">EXPORT SELECTED CSV</button>
+                <button type="button" id="requests-clear-import-btn" class="btn btn-danger" style="flex:1; min-width:140px;">CLEAR</button>
+              </div>
+              <div id="requests-import-status" style="color:#ccc; font-size:13px; min-height:18px;"></div>
+            </div>
+          </section>
           <div class="dashboard-grid">
             <section class="card">
               <h2>MANAGE ITEM REQUESTS</h2>
-              <div style="border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:16px; background:#120b12; margin-bottom:16px;">
-                <label style="display:block; margin-bottom:10px; color:#fff; font-weight:bold; letter-spacing:0.04em;">IMPORT REQUEST LIST</label>
-                <textarea id="requests-import-input" class="input" placeholder="Paste Discord request list here. One IGN per line or comma-separated." style="width:100%; min-height:110px; resize:vertical; margin-bottom:12px;"></textarea>
-                <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:8px;">
-                  <button type="button" id="requests-import-btn" class="btn btn-secondary" style="flex:1; min-width:120px;">IMPORT REQUESTS</button>
-                  <button type="button" id="requests-export-btn" class="btn btn-secondary" style="flex:1; min-width:120px;">EXPORT SELECTED</button>
-                  <button type="button" id="requests-clear-import-btn" class="btn btn-danger" style="flex:1; min-width:120px;">CLEAR</button>
-                </div>
-                <div id="requests-import-status" style="color:#ccc; font-size:13px; min-height:18px;"></div>
-              </div>
               <div id="requests-list"></div>
             </section>
             <section class="card">

@@ -941,7 +941,7 @@ async function renderRequests(requests, container, isHistory = false) {
     const displayClass = (storedStatus === 'approved' || remainingQty === 0) ? 'approved' : storedStatus;
     const displayText = displayClass === 'approved' ? 'FULFILLED' : displayClass.toUpperCase();
     return `
-      <div class="list-item compact ${isDone ? 'completed' : ''}" data-id="${req.id}" data-ign="${escapeHtml(ign.toLowerCase())}">
+      <div class="list-item compact ${isDone ? 'completed' : ''}" data-id="${req.id}" data-ign="${escapeHtml(ign.toLowerCase())}" data-item="${escapeHtml(req.items.name)}" data-requestedqty="${requestedQty}">
         <div class="list-item-content compact" style="display:flex; align-items:flex-start; gap:10px;">
           <label style="display:flex; align-items:center; margin:0; color:#ccc; font-size:13px;">
             <input type="checkbox" name="request-select" value="${escapeHtml(ign.toLowerCase())}" style="margin-right:8px;" />
@@ -1299,14 +1299,19 @@ window.addEventListener("load", () => {
       attachEditorUploadHandlers();
       setAccountsTab('register');
 
-      const requestsImportBtn = document.getElementById('requests-import-btn');
-      if (requestsImportBtn) {
-        requestsImportBtn.addEventListener('click', importRequestsFromDiscord);
+      const requestsGuideBtn = document.getElementById('requests-download-template-btn');
+      if (requestsGuideBtn) {
+        requestsGuideBtn.addEventListener('click', downloadRequestsCsvGuide);
       }
 
-      const requestsExportBtn = document.getElementById('requests-export-btn');
-      if (requestsExportBtn) {
-        requestsExportBtn.addEventListener('click', exportSelectedRequests);
+      const requestsImportFileBtn = document.getElementById('requests-import-file-btn');
+      if (requestsImportFileBtn) {
+        requestsImportFileBtn.addEventListener('click', importRequestsFromCsv);
+      }
+
+      const requestsExportCsvBtn = document.getElementById('requests-export-csv-btn');
+      if (requestsExportCsvBtn) {
+        requestsExportCsvBtn.addEventListener('click', exportSelectedRequestsToCsv);
       }
 
       const requestsClearImportBtn = document.getElementById('requests-clear-import-btn');
