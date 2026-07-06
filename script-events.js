@@ -1462,6 +1462,7 @@ function setEventsTab(tabName) {
 }
 
 /* ITEM DISTRIBUTION */
+let distributionMode = 'toggle';
 let distributionMembers = [];
 let distributionAssignments = [];
 let distributionSaved = false;
