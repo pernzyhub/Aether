@@ -1547,9 +1547,16 @@ function toggleDistributionMode() {
   setDistributionMode(distributionMode === 'bulk' ? 'toggle' : 'bulk');
 }
 
+function parseDistributionNames(raw) {
+  return raw
+    .split(/[\r\n,]+/)
+    .map(line => line.trim())
+    .filter(line => line.length > 0);
+}
+
 function applyBulkMemberSelection() {
   const raw = document.getElementById('distribution-member-bulk-input')?.value || '';
-  const names = raw.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
+  const names = parseDistributionNames(raw);
   const selected = new Set(names.map(n => n.toLowerCase()));
   let matched = 0;
 
@@ -1565,6 +1572,66 @@ function applyBulkMemberSelection() {
   updateDistributionMemberCount();
   const statusEl = document.getElementById('item-distribution-status');
   if (statusEl) showStatus('item-distribution-status', `Selected ${matched} members from bulk entry.`, 'success');
+}
+
+function importDistributionMembers() {
+  const raw = document.getElementById('distribution-member-import-input')?.value || '';
+  const names = parseDistributionNames(raw);
+  const statusEl = document.getElementById('distribution-member-import-status');
+  if (!statusEl) return;
+
+  if (!names.length) {
+    statusEl.textContent = 'Paste request names from Discord before importing.';
+    return;
+  }
+
+  const lookup = new Set(names.map(name => name.toLowerCase()));
+  let matched = 0;
+  const notFound = new Set(names.map(name => name.toLowerCase()));
+
+  distributionMembers.forEach(member => {
+    const checkbox = document.querySelector(`input[name="distribution-member"][value="${member.id}"]`);
+    if (!checkbox) return;
+    if (lookup.has(member.ign.toLowerCase())) {
+      checkbox.checked = true;
+      matched += 1;
+      notFound.delete(member.ign.toLowerCase());
+    }
+  });
+
+  updateDistributionMemberCount();
+  statusEl.textContent = `Imported ${matched} member${matched === 1 ? '' : 's'}. ${notFound.size ? `${notFound.size} not found in clan list.` : 'All names matched.'}`;
+}
+
+function exportSelectedDistributionMembers() {
+  const selectedMembers = getSelectedDistributionMembers();
+  const statusEl = document.getElementById('distribution-member-import-status');
+  const outputEl = document.getElementById('distribution-member-import-input');
+  if (!statusEl || !outputEl) return;
+
+  if (!selectedMembers.length) {
+    statusEl.textContent = 'Select at least one member to export.';
+    return;
+  }
+
+  const exportText = selectedMembers.map(member => member.ign).join('\n');
+  outputEl.value = exportText;
+  statusEl.textContent = `Exported ${selectedMembers.length} selected member${selectedMembers.length === 1 ? '' : 's'}.`;
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(exportText).then(() => {
+      statusEl.textContent += ' Copied to clipboard.';
+    }).catch(() => {
+      // ignore clipboard failures silently
+    });
+  }
+}
+
+function clearDistributionImportArea() {
+  const inputEl = document.getElementById('distribution-member-import-input');
+  const statusEl = document.getElementById('distribution-member-import-status');
+  if (inputEl) inputEl.value = '';
+  if (statusEl) statusEl.textContent = 'Import area cleared.';
 }
 
 function parseDistributionItems() {
@@ -1954,6 +2021,21 @@ window.addEventListener("load", () => {
     const distributionBulkApplyBtn = document.getElementById("distribution-member-bulk-apply-btn");
     if (distributionBulkApplyBtn) {
       distributionBulkApplyBtn.addEventListener("click", applyBulkMemberSelection);
+    }
+
+    const distributionImportBtn = document.getElementById("distribution-member-import-btn");
+    if (distributionImportBtn) {
+      distributionImportBtn.addEventListener("click", importDistributionMembers);
+    }
+
+    const distributionExportBtn = document.getElementById("distribution-member-export-btn");
+    if (distributionExportBtn) {
+      distributionExportBtn.addEventListener("click", exportSelectedDistributionMembers);
+    }
+
+    const distributionClearImportBtn = document.getElementById("distribution-member-clear-import-btn");
+    if (distributionClearImportBtn) {
+      distributionClearImportBtn.addEventListener("click", clearDistributionImportArea);
     }
 
     const toggleUserDetailsBtn = document.getElementById("toggle-user-details-btn");
