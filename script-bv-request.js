@@ -436,6 +436,14 @@ window.addEventListener('load', () => {
     document.getElementById('bv-sort')?.addEventListener('change', (e) => { bvSort = e.target.value || 'newest'; bvCurrentPage = 1; applyBVSortAndRender(); });
     document.getElementById('bv-prev-page')?.addEventListener('click', () => { bvCurrentPage = Math.max(1, bvCurrentPage - 1); applyBVSortAndRender(); });
     document.getElementById('bv-next-page')?.addEventListener('click', () => { bvCurrentPage = bvCurrentPage + 1; applyBVSortAndRender(); });
+    document.body.addEventListener('click', (event) => {
+      const button = event.target.closest('.bv-summary-action');
+      if (!button) return;
+      const requestId = button.dataset.requestId;
+      const action = button.dataset.action;
+      if (!requestId || !action) return;
+      handleBVAction(requestId, action);
+    });
     loadBVTypes();
     loadBVRequests();
     setActiveNavLink && setActiveNavLink();

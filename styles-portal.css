@@ -839,37 +839,42 @@ body::before {
   background: linear-gradient(180deg, #00ff88, #007c41);
 }
 
-  .bv-request-grid {
-    display: grid;
-    gap: 8px;
+  .bv-request-board-section .bv-request-grid,
+  .bv-request-board-section .request-feed .bv-request-grid {
+    display: grid !important;
+    gap: 8px !important;
   }
 
-  .bv-request-header,
-  .bv-request-row {
-    display: grid;
-    grid-template-columns: minmax(140px, 1fr) minmax(170px, 1.8fr) minmax(180px, 1.1fr);
-    gap: 10px;
-    align-items: center;
+  .bv-request-board-section .bv-request-header,
+  .bv-request-board-section .bv-request-row,
+  .bv-request-board-section .request-feed .bv-request-header,
+  .bv-request-board-section .request-feed .bv-request-row {
+    display: grid !important;
+    grid-template-columns: minmax(140px, 1fr) minmax(170px, 1.8fr) minmax(180px, 1.1fr) !important;
+    gap: 10px !important;
+    align-items: center !important;
   }
 
-  .bv-request-header {
-    padding: 12px 14px;
-    border-radius: 14px;
-    background: rgba(0, 255, 136, 0.06);
-    border: 1px solid rgba(0, 255, 136, 0.18);
-    color: #c5ffdc;
-    font-size: 0.76rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+  .bv-request-board-section .bv-request-header,
+  .bv-request-board-section .request-feed .bv-request-header {
+    padding: 12px 14px !important;
+    border-radius: 14px !important;
+    background: rgba(0, 255, 136, 0.06) !important;
+    border: 1px solid rgba(0, 255, 136, 0.18) !important;
+    color: #c5ffdc !important;
+    font-size: 0.76rem !important;
+    letter-spacing: 0.12em !important;
+    text-transform: uppercase !important;
   }
 
-  .bv-request-row {
-    padding: 12px 14px;
-    border-radius: 18px;
-    background: rgba(8, 18, 12, 0.92);
-    border: 1px solid rgba(0, 255, 136, 0.12);
-    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.1);
-    transition: transform 180ms ease, border-color 180ms ease;
+  .bv-request-board-section .bv-request-row,
+  .bv-request-board-section .request-feed .bv-request-row {
+    padding: 12px 14px !important;
+    border-radius: 18px !important;
+    background: rgba(8, 18, 12, 0.92) !important;
+    border: 1px solid rgba(0, 255, 136, 0.12) !important;
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.1) !important;
+    transition: transform 180ms ease, border-color 180ms ease !important;
   }
 
   .bv-request-row:hover {
