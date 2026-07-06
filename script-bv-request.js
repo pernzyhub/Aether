@@ -271,7 +271,10 @@ function renderBVSummary(list) {
           <div class="bv-summary-reason">${escapeHtml(reasonLabel)}</div>
           <div class="bv-summary-status">${escapeHtml(statusLabel)}</div>
         </div>
-        <div class="bv-summary-meta">${escapeHtml(summaryText)}</div>
+        <div class="bv-summary-text">
+          <span>${escapeHtml(summaryText)}</span>
+          <span class="bv-summary-created">${formatDateTime(r.created_at)}</span>
+        </div>
         <div class="bv-summary-actions">
           <button type="button" class="btn btn-small btn-success" ${isPending ? '' : 'disabled'} onclick="handleBVAction('${r.id}','approved')">DONE</button>
           <button type="button" class="btn btn-small btn-danger" ${isPending ? '' : 'disabled'} onclick="handleBVAction('${r.id}','denied')">CANCEL</button>
