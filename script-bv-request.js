@@ -202,21 +202,37 @@ function applyBVSortAndRender() {
   const rows = pageItems.map(r => {
     const rawReason = bvTypeMap.get(r.reason) || r.reason || 'Unknown';
     const reasonLabel = String(rawReason).replace(/-/g, ' ');
+    const amount = Number(r.amount ?? r.request_amount ?? 0);
+    const summaryText = amount > 0 ? `${amount} BV requested` : 'Review pending';
+    const statusLabel = (r.status || 'pending').toUpperCase();
+
     return `
-      <tr>
-        <td>${escapeHtml(currentUser?.ign || 'You')}</td>
-        <td>${escapeHtml(reasonLabel)}</td>
-        <td>${escapeHtml((r.status || 'pending').toUpperCase())}</td>
-        <td>${formatDateTime(r.created_at)}</td>
-      </tr>
+      <div class="bv-request-row">
+        <div class="bv-request-cell bv-request-person">
+          <div class="bv-request-member">${escapeHtml(currentUser?.ign || 'You')}</div>
+          <div class="bv-request-created">${formatDateTime(r.created_at)}</div>
+        </div>
+        <div class="bv-request-cell bv-request-reason">${escapeHtml(reasonLabel)}</div>
+        <div class="bv-request-cell bv-request-summary">
+          <div class="bv-summary-card">
+            <div class="bv-summary-title">BV SUMMARY</div>
+            <div class="bv-summary-main">${escapeHtml(summaryText)}</div>
+            <div class="bv-summary-meta">${escapeHtml(statusLabel)}</div>
+          </div>
+        </div>
+      </div>
     `;
   }).join('');
 
   container.innerHTML = `
-    <table class="compact-table">
-      <thead><tr><th>IGN</th><th>Reason</th><th>Status</th><th>Created</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
+    <div class="bv-request-grid">
+      <div class="bv-request-header">
+        <div>IGN</div>
+        <div>Reason</div>
+        <div>BV SUMMARY</div>
+      </div>
+      ${rows}
+    </div>
   `;
 
   updatePagination(total);
