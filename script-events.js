@@ -1918,13 +1918,21 @@ function renderRewardLogsList() {
   }
 
   listContainer.innerHTML = distributionHistory.map((log, index) => `
-    <button type="button" class="reward-log-summary-btn" data-index="${index}" style="text-align:left; width:100%; padding:18px 16px; background:#111; border:1px solid #222; border-radius:10px; color:#fff; cursor:pointer;">
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+    <button type="button" class="reward-log-summary-btn" data-index="${index}" style="text-align:left; width:100%; padding:22px 20px; background:#111; border:1px solid #222; border-radius:12px; color:#fff; cursor:pointer; min-height:150px; display:flex; flex-direction:column; justify-content:space-between;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
         <div>
-          <div style="font-weight:bold; font-size:15px;">${escapeHtml(log.name)}</div>
-          <div style="font-size:13px; color:#aaa; margin-top:6px;">Saved: ${new Date(log.savedAt || log.created_at).toLocaleString()}</div>
+          <div style="font-weight:bold; font-size:16px; margin-bottom:8px;">${escapeHtml(log.name)}</div>
+          <div style="font-size:13px; color:#aaa; margin-bottom:10px;">Saved: ${new Date(log.savedAt || log.created_at).toLocaleString()}</div>
+          <div style="font-size:13px; color:#ddd; line-height:1.5; max-width:calc(100% - 120px);">
+            ${escapeHtml(log.assignments?.length ? `${log.assignments.length} assignments` : 'No assignments yet')} • ${escapeHtml(String(log.recipient_count || log.assignments?.length || 0))} recipients • ${escapeHtml(String(log.total_quantity || log.assignments?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0))} total items
+          </div>
         </div>
-        <span style="font-size:12px; color:#00ff88; font-weight:700;">OPEN</span>
+        <span style="font-size:12px; color:#00ff88; font-weight:700; white-space:nowrap;">OPEN</span>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;">
+        <span style="font-size:12px; color:#7bf59f; background:#122613; padding:6px 10px; border-radius:999px;">${escapeHtml(log.recipient_count ? `${log.recipient_count} recipients` : `${log.assignments?.length || 0} recipients`)}</span>
+        <span style="font-size:12px; color:#7fb8ff; background:#10182b; padding:6px 10px; border-radius:999px;">${escapeHtml(log.total_quantity ? `${log.total_quantity} total quantity` : `${log.assignments?.reduce((sum, item) => sum + (item.quantity || 0), 0)} total quantity`)}</span>
+        <span style="font-size:12px; color:#ffb86c; background:#2b1f10; padding:6px 10px; border-radius:999px;">${escapeHtml(log.assignments?.length ? `${log.assignments.length} rows` : '0 rows')}</span>
       </div>
     </button>
   `).join('');
