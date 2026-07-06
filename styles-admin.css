@@ -544,6 +544,29 @@ body::before {
   gap: 6px;
 }
 
+.module-panel[data-module="bvrequests"] .list-item {
+  background: rgba(255, 255, 255, 0.08);
+  border-left-color: #00ff88;
+}
+
+.module-panel[data-module="bvrequests"] .list-item-title,
+.module-panel[data-module="bvrequests"] .list-item-meta,
+.module-panel[data-module="bvrequests"] .list-item-text {
+  color: #f5f5f5;
+}
+
+.module-panel[data-module="bvrequests"] .list-item-meta {
+  color: #d7d7d7;
+}
+
+.module-panel[data-module="bvrequests"] .list-item-actions.compact button {
+  min-width: 56px;
+}
+
+.module-panel[data-module="bvrequests"] #bv-types-admin-list {
+  color: #f2f2f2;
+}
+
 .btn-xs {
   font-family: 'Courier New', Courier, monospace;
   font-size: 0.75rem;
