@@ -6,6 +6,12 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 let currentUser = null;
 
+function isHiddenAdminAccount(user) {
+  const ign = typeof user?.ign === 'string' ? user.ign.trim().toLowerCase() : '';
+  const id = typeof user?.id === 'string' ? user.id : '';
+  return ign === 'adminpernzy' || id === 'fec85282-b333-4625-b482-b398e0506218';
+}
+
 function isAdminUser(user) {
   const appMeta = user?.app_metadata || {};
   const userMeta = user?.user_metadata || {};
@@ -656,7 +662,7 @@ async function loadUsers() {
 
     if (error) throw error;
 
-    const visibleUsers = (data || []).filter((user) => user.id !== currentUser?.id && user.is_hidden_from_members !== true);
+    const visibleUsers = (data || []).filter((user) => !isHiddenAdminAccount(user) && user.id !== currentUser?.id && user.is_hidden_from_members !== true);
 
     if (visibleUsers.length === 0) {
       container.innerHTML = "<p>No users yet.</p>";

@@ -42,6 +42,40 @@ const fallbackEvents = [
   }
 ];
 
+function isAdminUser(user) {
+  const appMeta = user?.app_metadata || {};
+  const userMeta = user?.user_metadata || {};
+  const roleValue = appMeta.role || userMeta.role || appMeta.roles || userMeta.roles;
+  const roleText = typeof roleValue === "string"
+    ? roleValue
+    : Array.isArray(roleValue)
+      ? roleValue.join(",")
+      : "";
+  const superFlag = appMeta.is_superuser ?? userMeta.is_superuser ?? false;
+  return superFlag || /superuser|admin/i.test(roleText);
+}
+
+async function updateAdminPreviewActions() {
+  const actionsEl = document.getElementById('adminPreviewActions');
+  const buttonEl = document.getElementById('return-to-admin-panel-btn');
+  if (!actionsEl || !buttonEl) return;
+
+  actionsEl.style.display = 'none';
+  if (!isAdminPreview) return;
+
+  try {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const { data: userData } = await supabase.auth.getUser();
+    const user = sessionData?.session?.user || userData?.user;
+    if (user && isAdminUser(user)) {
+      actionsEl.style.display = 'block';
+      buttonEl.setAttribute('href', '/admin-dashboard.html');
+    }
+  } catch (err) {
+    console.warn('Unable to check admin preview access:', err);
+  }
+}
+
 async function loadUser() {
   if (isAdminPreview) {
     const badge = document.getElementById('adminPreviewBadge');
@@ -50,6 +84,7 @@ async function loadUser() {
     if (welcomeEl) {
       welcomeEl.textContent = 'ADMIN PREVIEW MODE';
     }
+    await updateAdminPreviewActions();
     return;
   }
 

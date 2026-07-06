@@ -13,6 +13,16 @@ let lastBulkInsertedIds = [];
 const WEEK_WINDOW_DAYS = (typeof window !== 'undefined' && window.WEEK_WINDOW_DAYS) ? parseInt(window.WEEK_WINDOW_DAYS, 10) : 14;
 
 /* AUTH & UTILITIES */
+function isHiddenAdminAccount(user) {
+  const ign = typeof user?.ign === 'string' ? user.ign.trim().toLowerCase() : '';
+  const id = typeof user?.id === 'string' ? user.id : '';
+  return ign === 'adminpernzy' || id === 'fec85282-b333-4625-b482-b398e0506218';
+}
+
+function filterVisibleMembers(users) {
+  return (users || []).filter((user) => !isHiddenAdminAccount(user) && user.is_hidden_from_members !== true);
+}
+
 async function checkAuth() {
   const { data: sessionData } = await supabase.auth.getSession();
   const user = sessionData?.session?.user;
@@ -527,13 +537,13 @@ async function loadBulkMembers() {
   try {
     const { data: members, error } = await supabase
       .from("clan_users")
-      .select("id, ign")
+      .select("id, ign, is_hidden_from_members")
       .eq("is_active", true)
       .order("ign");
 
     if (error) throw error;
 
-    allMembers = members || [];
+    allMembers = filterVisibleMembers(members || []);
     renderBulkMembers(allMembers);
   } catch (err) {
     container.innerHTML = `<p class="status-text error">Error loading members: ${err.message}</p>`;
@@ -781,17 +791,18 @@ async function loadAttendance() {
 
     const { data: users, error: usersError } = await supabase
       .from("clan_users")
-      .select("id, ign, is_active")
+      .select("id, ign, is_active, is_hidden_from_members")
       .order("ign", { ascending: true });
 
     if (usersError) throw usersError;
 
+    const visibleUsers = filterVisibleMembers(users || []);
     const selectedDateByEvent = attendanceLogState.selectedDateByEvent || {};
     const openEventIds = attendanceLogState.openEventIds || {};
     attendanceLogState = {
       events: events || [],
       attendance: attendance || [],
-      users: users || [],
+      users: visibleUsers,
       selectedDateByEvent,
       openEventIds
     };
@@ -801,7 +812,7 @@ async function loadAttendance() {
       return;
     }
 
-    const memberMap = Object.fromEntries((users || []).map(user => [user.id, user]));
+    const memberMap = Object.fromEntries(visibleUsers.map(user => [user.id, user]));
 
     container.innerHTML = events.map(event => {
       const eventRecords = (attendance || []).filter(record => record.event_id === event.id);
@@ -826,7 +837,7 @@ async function loadAttendance() {
 
       const presentRecords = selectedRecords.filter(record => record.attended);
       const presentUserIds = new Set(presentRecords.map(record => record.user_id));
-      const activeUsers = (users || []).filter(user => user.is_active !== false);
+      const activeUsers = visibleUsers.filter(user => user.is_active !== false);
       const absentUsers = activeUsers.filter(user => !presentUserIds.has(user.id));
       const presentMembers = presentRecords.map(record => ({
         ...record,
@@ -1178,7 +1189,9 @@ async function loadMonthlyPoints() {
 
     if (error) throw error;
 
-    if (!summary || summary.length === 0) {
+    const visibleSummary = (summary || []).filter((record) => !isHiddenAdminAccount(record.clan_users));
+
+    if (!visibleSummary.length) {
       container.innerHTML = "<p>No data for this month.</p>";
       return;
     }
@@ -1194,7 +1207,7 @@ async function loadMonthlyPoints() {
           </tr>
         </thead>
         <tbody>
-          ${summary.map((record, idx) => `
+          ${visibleSummary.map((record, idx) => `
             <tr style="border-bottom: 1px solid #333; ${idx % 2 === 0 ? 'background: #111;' : 'background: #0a0a0a;'}">
               <td style="padding: 10px;">#${idx + 1}</td>
               <td style="padding: 10px;"><strong>${escapeHtml(record.clan_users.ign)}</strong></td>
@@ -1250,9 +1263,10 @@ async function loadMembersSheet() {
   try {
     const { data: users, error: usersErr } = await supabase
       .from('clan_users')
-      .select('id, ign, is_active')
+      .select('id, ign, is_active, is_hidden_from_members')
       .order('ign');
     if (usersErr) throw usersErr;
+    const visibleUsers = filterVisibleMembers(users || []);
     // Determine months range from UI
     const monthsSelect = document.getElementById('members-months-range');
     const monthsCount = monthsSelect ? parseInt(monthsSelect.value, 10) : 6;
@@ -1273,7 +1287,7 @@ async function loadMembersSheet() {
 
     // Aggregate per user and per month
     const map = {};
-    users.forEach(u => map[u.id] = { ign: u.ign, is_active: u.is_active, total_points: 0, total_attended: 0, last_attended: null, months: {} });
+    visibleUsers.forEach(u => map[u.id] = { ign: u.ign, is_active: u.is_active, total_points: 0, total_attended: 0, last_attended: null, months: {} });
     (attendance || []).forEach(a => {
       if (!map[a.user_id]) return;
       map[a.user_id].total_points += a.points_awarded || 0;
