@@ -7,6 +7,7 @@ const isAdminPreview = isAdminPreviewMode();
 
 // UI state
 let bvAllData = [];
+let requestedBVTypes = new Set();
 let bvCurrentPage = 1;
 const bvPageSize = 10;
 let bvSort = 'newest';
@@ -76,6 +77,9 @@ async function submitBVRequest(e) {
 
   statusEl.textContent = 'Submitting BV request...'; statusEl.className = 'status-text';
   try {
+    if (requestedBVTypes.has(selection)) {
+      throw new Error('You have already requested this BV reason. You cannot request it again.');
+    }
     const userId = currentUser?.id || null;
     if (!userId) throw new Error('No user session found.');
 
@@ -117,6 +121,7 @@ async function loadBVTypes() {
     });
 
     bvTypeMap = new Map(types.map((t) => [t.key, t.label]));
+    updateBVTypeOptions();
   } catch (e) {
     console.warn('Could not load BV types:', e.message);
     select.innerHTML = '<option value="">Choose...</option>' + BV_TYPE_FALLBACKS.map(t => `<option value="${t.key}">${t.label}</option>`).join('');
@@ -163,6 +168,9 @@ async function loadBVRequests() {
       }
     }
 
+    requestedBVTypes = new Set(bvAllData.map((r) => r.reason));
+    updateBVTypeOptions();
+
     if (filter !== 'all') {
       bvAllData = bvAllData.filter((r) => r.status === filter);
     }
@@ -178,6 +186,7 @@ async function loadBVRequests() {
       return;
     }
 
+    renderBVSummary(bvAllData);
     applyBVSortAndRender();
   } catch (err) {
     container.innerHTML = `<p class="empty-state error">Error loading BV requests: ${err.message}</p>`;
@@ -235,7 +244,53 @@ function applyBVSortAndRender() {
     </div>
   `;
 
+  renderBVSummary(bvAllData);
   updatePagination(total);
+}
+
+function renderBVSummary(list) {
+  const container = document.getElementById('bv-summary-container');
+  if (!container) return;
+
+  if (!list || list.length === 0) {
+    container.innerHTML = '<p class="empty-state">No requests yet. Submit a BV request to create one.</p>';
+    return;
+  }
+
+  const items = list.map(r => {
+    const rawReason = bvTypeMap.get(r.reason) || r.reason || 'Unknown';
+    const reasonLabel = String(rawReason).replace(/-/g, ' ');
+    const amount = Number(r.amount ?? r.request_amount ?? 0);
+    const summaryText = amount > 0 ? `${amount} BV requested` : 'Review pending';
+    const statusLabel = (r.status || 'pending').toUpperCase();
+
+    return `
+      <div class="bv-summary-row">
+        <div class="bv-summary-top">
+          <div class="bv-summary-reason">${escapeHtml(reasonLabel)}</div>
+          <div class="bv-summary-status">${escapeHtml(statusLabel)}</div>
+        </div>
+        <div class="bv-summary-meta">${escapeHtml(summaryText)}</div>
+        <div class="bv-summary-created">${formatDateTime(r.created_at)}</div>
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = items;
+}
+
+function updateBVTypeOptions() {
+  const select = document.getElementById('bv-select');
+  if (!select) return;
+
+  Array.from(select.options).forEach(option => {
+    if (!option.value) return;
+    option.disabled = requestedBVTypes.has(option.value);
+    option.textContent = bvTypeMap.get(option.value) || option.textContent.replace(/-/g, ' ');
+    if (option.disabled) {
+      option.textContent = `${option.textContent} (requested)`;
+    }
+  });
 }
 
 function updatePagination(total=0) {

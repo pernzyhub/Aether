@@ -23,24 +23,38 @@
   </header>
   <div id="adminPreviewBadge" style="display:none; position:fixed; top:76px; left:12px; background:#d4af37; color:#071; padding:6px 10px; border-radius:8px; z-index:99999; font-weight:700;">ADMIN PREVIEW MODE</div>
 
-  <div class="container request-page">
-    <section class="card request-form-card request-column">
-      <h2>BV Request Submission</h2>
-      <p class="section-copy">Submit a Battle Value request for review, and track its progress below in the request history.</p>
-      <form id="bv-request-form" onsubmit="submitBVRequest(event)">
-        <div class="form-group">
-          <label for="bv-select">Request Type</label>
-          <select id="bv-select" required>
-            <option value="">Choose...</option>
-            <option value="standard">Standard</option>
-            <option value="event">Event</option>
-            <option value="other">Other</option>
-          </select>
+  <div class="container request-page bv-request-layout">
+    <div class="request-left-column">
+      <section class="card request-form-card request-column">
+        <h2>BV Request Submission</h2>
+        <p class="section-copy">Submit a Battle Value request for review, and track its progress below in the request history.</p>
+        <form id="bv-request-form" onsubmit="submitBVRequest(event)">
+          <div class="form-group">
+            <label for="bv-select">Request Type</label>
+            <select id="bv-select" required>
+              <option value="">Choose...</option>
+              <option value="standard">Standard</option>
+              <option value="event">Event</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary">SUBMIT BV REQUEST</button>
+        </form>
+        <p id="bv-request-status" class="status-text"></p>
+      </section>
+
+      <section class="card request-summary-card request-column">
+        <div class="card-heading">
+          <div>
+            <h2>BV Summary</h2>
+            <p class="section-copy">Your current BV requests are listed below. Once a request type is used, it cannot be requested again—even if it is pending or completed.</p>
+          </div>
+          <span class="card-badge">SUMMARY</span>
         </div>
-        <button type="submit" class="btn btn-primary">SUBMIT BV REQUEST</button>
-      </form>
-      <p id="bv-request-status" class="status-text"></p>
-    </section>
+        <div id="bv-summary-container" class="bv-request-summary-list"></div>
+        <p class="bv-summary-note">Example: if you pick <strong>Light Of Greed</strong>, you cannot request that exact BV reason again while it exists in your request history.</p>
+      </section>
+    </div>
 
     <section class="card request-feed-card request-column">
       <div class="card-heading">
