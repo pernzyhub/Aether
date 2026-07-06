@@ -44,33 +44,67 @@ function renderAdminBVTypes() {
   if (!el) return;
   if (!adminBVTypes || adminBVTypes.length === 0) { el.innerHTML = '<p class="empty-state">No BV types defined.</p>'; return; }
   el.innerHTML = adminBVTypes.map(t => `
-    <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 4px; border-bottom:1px solid #111;">
-      <div style="display:flex; gap:8px; align-items:center;">
-        <strong style="min-width:100px;">${escapeHtml(t.key)}</strong>
-        <span>${escapeHtml(t.label)}</span>
+    <div id="bv-type-${t.id}" style="display:flex; justify-content:space-between; align-items:center; padding:6px 4px; border-bottom:1px solid #111;">
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <div style="font-weight:700;">${escapeHtml(t.label)}</div>
+        <div style="color:#aaa; font-size:0.9rem;">${escapeHtml(t.description || '')}</div>
       </div>
       <div style="display:flex; gap:6px; align-items:center;">
         <label style="display:flex; align-items:center; gap:6px;">
           <input type="checkbox" ${t.is_active ? 'checked' : ''} onchange="toggleBVTypeActive('${t.id}', this.checked)" /> Active
         </label>
-        <button class="btn-xs btn-danger" onclick="deleteBVType('${t.id}')">DEL</button>
+        <button class="btn-xs" onclick="editBVType('${t.id}')">Edit</button>
+        <button class="btn-xs btn-danger" onclick="deleteBVType('${t.id}')">Delete</button>
       </div>
     </div>
   `).join('');
 }
 
+function slugify(text) {
+  return (text||'').toString().toLowerCase().trim().replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-').replace(/-+/g,'-');
+}
+
 async function addBVType(e) {
   e && e.preventDefault && e.preventDefault();
-  const key = document.getElementById('bv-type-key')?.value?.trim();
-  const label = document.getElementById('bv-type-label')?.value?.trim();
-  if (!key || !label) return alert('Provide key and label');
+  const name = document.getElementById('bv-type-name')?.value?.trim();
+  const description = document.getElementById('bv-type-desc')?.value?.trim() || '';
+  if (!name) return alert('Provide a BV name');
+  const key = slugify(name);
   try {
-    const { error } = await supabase.from('bv_request_types').insert([{ key, label, is_active: true }]);
+    const { error } = await supabase.from('bv_request_types').insert([{ key, label: name, description, is_active: true }]);
     if (error) throw error;
     document.getElementById('bv-type-form')?.reset();
     loadAdminBVTypes();
   } catch (err) { alert('Error adding type: '+err.message); }
 }
+
+async function editBVType(id) {
+  const item = adminBVTypes.find(t => t.id === id);
+  if (!item) return;
+  const el = document.getElementById('bv-type-' + id);
+  if (!el) return;
+  el.innerHTML = `
+    <div style="display:flex; gap:8px; align-items:center; width:100%;">
+      <input id="bv-edit-name-${id}" value="${escapeHtml(item.label)}" style="flex:1; padding:6px; background:#111; color:#fff; border:1px solid #444;" />
+      <input id="bv-edit-desc-${id}" value="${escapeHtml(item.description||'')}" style="flex:1; padding:6px; background:#111; color:#fff; border:1px solid #444;" />
+      <button class="btn-xs btn-primary" onclick="saveBVType('${id}')">Save</button>
+      <button class="btn-xs" onclick="cancelEditBVType('${id}')">Cancel</button>
+    </div>
+  `;
+}
+
+async function saveBVType(id) {
+  const name = document.getElementById('bv-edit-name-' + id)?.value?.trim();
+  const desc = document.getElementById('bv-edit-desc-' + id)?.value?.trim() || '';
+  if (!name) return alert('Name required');
+  try {
+    const { error } = await supabase.from('bv_request_types').update({ label: name, description: desc }).eq('id', id);
+    if (error) throw error;
+    loadAdminBVTypes();
+  } catch (e) { alert('Error saving: '+e.message); }
+}
+
+function cancelEditBVType(id) { loadAdminBVTypes(); }
 
 async function toggleBVTypeActive(id, isActive) {
   try { const { error } = await supabase.from('bv_request_types').update({ is_active: isActive }).eq('id', id); if (error) throw error; loadAdminBVTypes(); } catch (e) { alert('Error: '+e.message); }
@@ -84,17 +118,10 @@ async function deleteBVType(id) {
 function renderAdminLists() {
   const container = document.getElementById('bv-requests-list');
   const historyContainer = document.getElementById('bv-requests-history-list');
-  const searchTerm = (document.getElementById('bv-requests-search')?.value || '').trim().toLowerCase();
-
-  const filteredPending = adminPending.filter(r => {
-    const ign = (r.clan_users?.ign || '').toLowerCase();
-    const reason = (r.reason || '').toLowerCase();
-    return ign.includes(searchTerm) || reason.includes(searchTerm);
-  });
 
   if (container) {
-    if (!filteredPending || filteredPending.length === 0) container.innerHTML = '<p>No pending BV requests.</p>';
-    else container.innerHTML = filteredPending.map(r => `
+    if (!adminPending || adminPending.length === 0) container.innerHTML = '<p>No pending BV requests.</p>';
+    else container.innerHTML = adminPending.map(r => `
       <div class="list-item compact">
         <div class="list-item-content compact">
           <div class="list-item-title compact">${escapeHtml(r.clan_users?.ign||'Unknown')}</div>
@@ -111,13 +138,8 @@ function renderAdminLists() {
   }
 
   if (historyContainer) {
-    const filteredPast = adminPast.filter(r => {
-      const ign = (r.clan_users?.ign || '').toLowerCase();
-      const reason = (r.reason || '').toLowerCase();
-      return ign.includes(searchTerm) || reason.includes(searchTerm);
-    });
-    if (!filteredPast || filteredPast.length === 0) historyContainer.innerHTML = '<p>No history yet.</p>';
-    else historyContainer.innerHTML = filteredPast.map(r => `
+    if (!adminPast || adminPast.length === 0) historyContainer.innerHTML = '<p>No history yet.</p>';
+    else historyContainer.innerHTML = adminPast.map(r => `
       <div class="list-item compact">
         <div class="list-item-content compact">
           <div class="list-item-title compact">${escapeHtml(r.clan_users?.ign||'Unknown')}</div>
@@ -151,12 +173,14 @@ window.deleteBVRequest = deleteBVRequest;
 window.addBVType = addBVType;
 window.toggleBVTypeActive = toggleBVTypeActive;
 window.deleteBVType = deleteBVType;
+window.editBVType = editBVType;
+window.saveBVType = saveBVType;
+window.cancelEditBVType = cancelEditBVType;
 
 window.addEventListener('load', () => setTimeout(() => { 
   try { 
     loadAdminBVRequests();
-    const search = document.getElementById('bv-requests-search');
-    if (search) search.addEventListener('input', () => setTimeout(() => renderAdminLists(), 250));
+    
     const refresh = document.getElementById('bv-requests-refresh-btn');
     if (refresh) refresh.addEventListener('click', () => loadAdminBVRequests());
     const exportBtn = document.getElementById('bv-requests-export');
