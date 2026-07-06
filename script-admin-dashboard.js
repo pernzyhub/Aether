@@ -977,6 +977,16 @@ async function renderRequests(requests, container, isHistory = false) {
     `}).join("");
 }
 
+function normalizeIgn(value) {
+  return String(value || '')
+    .trim()
+    .replace(/^@+/, '')
+    .replace(/^"|"$/g, '')
+    .split(/\s+/)
+    .join(' ')
+    .toLowerCase();
+}
+
 function downloadRequestsCsvGuide() {
   const headers = ['IGN', 'Item', 'Quantity'];
   const example = ['ExamplePlayer', 'Epic Promotional Stone', '1'];
@@ -990,22 +1000,55 @@ function downloadRequestsCsvGuide() {
   document.body.removeChild(link);
 }
 
+function splitCsvLine(line, delimiter) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i += 1) {
+    const char = line[i];
+    if (char === '"') {
+      inQuotes = !inQuotes;
+      continue;
+    }
+    if (char === delimiter && !inQuotes) {
+      result.push(current);
+      current = '';
+      continue;
+    }
+    current += char;
+  }
+
+  result.push(current);
+  return result.map(cell => cell.trim().replace(/^"|"$/g, ''));
+}
+
+function detectCsvDelimiter(line) {
+  const commaCount = (line.match(/,/g) || []).length;
+  const semicolonCount = (line.match(/;/g) || []).length;
+  const tabCount = (line.match(/\t/g) || []).length;
+  if (semicolonCount > commaCount && semicolonCount >= tabCount) return ';';
+  if (tabCount > commaCount && tabCount >= semicolonCount) return '\t';
+  return ',';
+}
+
 function parseRequestCsv(raw) {
   const lines = raw.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
   if (!lines.length) return [];
 
-  const headers = lines[0].split(',').map(header => header.trim().toLowerCase());
+  const delimiter = detectCsvDelimiter(lines[0]);
+  const headers = splitCsvLine(lines[0], delimiter).map(header => header.trim().toLowerCase());
   const ignIndex = headers.findIndex(h => /ign/i.test(h));
   const itemIndex = headers.findIndex(h => /(item|name)/i.test(h));
   const qtyIndex = headers.findIndex(h => /(qty|quantity)/i.test(h));
   if (ignIndex === -1) return [];
 
   return lines.slice(1).map(line => {
-    const cells = line.split(',').map(cell => cell.trim().replace(/^"|"$/g, ''));
+    const cells = splitCsvLine(line, delimiter);
     return {
-      ign: cells[ignIndex] || '',
-      item: itemIndex >= 0 ? (cells[itemIndex] || '') : '',
-      quantity: qtyIndex >= 0 ? (cells[qtyIndex] || '') : ''
+      ign: normalizeIgn(cells[ignIndex] || ''),
+      item: itemIndex >= 0 ? normalizeIgn(cells[itemIndex] || '') : '',
+      quantity: qtyIndex >= 0 ? normalizeIgn(cells[qtyIndex] || '') : ''
     };
   }).filter(row => row.ign);
 }
@@ -1029,21 +1072,23 @@ function importRequestsFromCsv() {
       return;
     }
 
-    const lookup = new Set(rows.map(r => r.ign.toLowerCase()));
+    const lookup = new Set(rows.map(r => r.ign));
     let matched = 0;
     const notFound = new Set(lookup);
 
     document.querySelectorAll('#requests-list input[name="request-select"]').forEach(input => {
-      if (lookup.has(input.value.toLowerCase())) {
+      const value = normalizeIgn(input.value);
+      if (lookup.has(value)) {
         input.checked = true;
         matched += 1;
-        notFound.delete(input.value.toLowerCase());
+        notFound.delete(value);
       } else {
         input.checked = false;
       }
     });
 
-    statusEl.textContent = `Imported ${matched} request${matched === 1 ? '' : 's'}. ${notFound.size ? `${notFound.size} not found.` : 'All matches selected.'}`;
+    const notFoundList = Array.from(notFound).slice(0, 10).join(', ');
+    statusEl.textContent = `Imported ${matched} request${matched === 1 ? '' : 's'}. ${notFound.size ? `${notFound.size} did not match any visible request${notFound.size === 1 ? '' : 's'}${notFoundList ? `: ${notFoundList}` : ''}` : 'All matches selected.'}`;
   };
   reader.readAsText(file);
 }
