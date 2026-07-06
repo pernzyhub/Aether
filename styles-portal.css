@@ -1276,7 +1276,7 @@ body::before {
 
 .portal-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(280px, 1fr));
+  grid-template-columns: minmax(300px, 1.1fr) minmax(300px, 1.1fr) minmax(320px, 0.8fr);
   gap: 24px;
   align-items: start;
 }
@@ -1288,7 +1288,7 @@ body::before {
 
 @media (max-width: 1200px) {
   .portal-grid {
-    grid-template-columns: repeat(2, minmax(260px, 1fr));
+    grid-template-columns: minmax(320px, 1.3fr) minmax(260px, 1fr);
   }
 }
 
