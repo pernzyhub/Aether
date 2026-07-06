@@ -171,7 +171,11 @@
                 </section>
 
                 <section class="card">
-                  <h2>MANAGE USERS</h2>
+                  <h2 class="compact-title">MANAGE USERS</h2>
+                  <div class="form-group user-search-group">
+                    <label for="users-filter">Search IGN</label>
+                    <input id="users-filter" type="text" placeholder="Filter by IGN" oninput="filterUsers()" />
+                  </div>
                   <p id="users-status" class="status-text"></p>
                   <div id="users-list"></div>
                 </section>

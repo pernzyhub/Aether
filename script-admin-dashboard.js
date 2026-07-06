@@ -5,6 +5,7 @@ const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 let currentUser = null;
+let accountUsersCache = [];
 
 function isHiddenAdminAccount(user) {
   const ign = typeof user?.ign === 'string' ? user.ign.trim().toLowerCase() : '';
@@ -670,44 +671,67 @@ async function loadUsers() {
 
     const visibleUsers = (data || []).filter((user) => !isHiddenAdminAccount(user) && user.id !== currentUser?.id && user.is_hidden_from_members !== true);
 
+    accountUsersCache = visibleUsers;
     if (visibleUsers.length === 0) {
       container.innerHTML = "<p>No users yet.</p>";
       return;
     }
 
-    container.innerHTML = visibleUsers.map(user => `
-      <div class="list-item" data-id="${user.id}">
-        <div class="list-item-content">
-          <div class="list-item-title">${escapeHtml(user.ign || "IGN not set")}</div>
-          <div class="list-item-meta">
-            Username / IGN: ${escapeHtml(user.ign || "Not set")} | 
-            Joined: ${new Date(user.created_at).toLocaleDateString()}
-          </div>
-          <div class="list-item-text">
-            Status: <strong style="color: ${user.is_active ? '#00ff88' : '#ff4444'};">
-              ${user.is_active ? 'Active' : 'Inactive'}
-            </strong>
-          </div>
-        </div>
-        <div class="list-item-actions">
-          <button class="btn btn-secondary" onclick="changeUserPassword('${user.id}')">CHANGE PASSWORD</button>
-          <button class="btn btn-secondary" onclick="changeUserIgn('${user.id}', '${escapeHtml(user.ign || '')}')">CHANGE IGN</button>
-          ${user.id === currentUser?.id
-            ? `<button class="btn btn-secondary" disabled title="Cannot change your own status">SIGNED IN</button>`
-            : `<button class="btn ${user.is_active ? 'btn-danger' : 'btn-success'}" onclick="toggleUserStatus('${user.id}', ${!user.is_active})">
-                ${user.is_active ? 'DEACTIVATE' : 'ACTIVATE'}
-              </button>`
-          }
-          ${user.id === currentUser?.id ?
-            `<button class="btn btn-danger" disabled title="Cannot delete the signed-in admin">DELETE</button>` :
-            `<button class="btn btn-danger" onclick="deleteUser('${user.id}')">DELETE</button>`
-          }
-        </div>
-      </div>
-    `).join("");
+    renderUserList();
+
   } catch (err) {
     container.innerHTML = `<p class="status-text error">Error loading users: ${err.message}</p>`;
   }
+}
+
+function renderUserList(filterValue = "") {
+  const container = document.getElementById("users-list");
+  const filterTerm = String(filterValue || document.getElementById("users-filter")?.value || "").trim().toLowerCase();
+
+  const filtered = accountUsersCache.filter(user => {
+    const ign = String(user.ign || "").toLowerCase();
+    return ign.includes(filterTerm);
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = filterTerm ? "<p>No matching users found.</p>" : "<p>No users yet.</p>";
+    return;
+  }
+
+  container.innerHTML = filtered.map(user => `
+    <div class="list-item compact" data-id="${user.id}">
+      <div class="list-item-content compact">
+        <div class="list-item-title compact">${escapeHtml(user.ign || "IGN not set")}</div>
+        <div class="list-item-meta">
+          Username / IGN: ${escapeHtml(user.ign || "Not set")} | 
+          Joined: ${new Date(user.created_at).toLocaleDateString()}
+        </div>
+        <div class="list-item-text">
+          Status: <strong style="color: ${user.is_active ? '#00ff88' : '#ff4444'};">
+            ${user.is_active ? 'Active' : 'Inactive'}
+          </strong>
+        </div>
+      </div>
+      <div class="list-item-actions compact">
+        <button class="btn-xs btn-secondary" onclick="changeUserPassword('${user.id}')">PWD</button>
+        <button class="btn-xs btn-secondary" onclick="changeUserIgn('${user.id}', '${escapeHtml(user.ign || '')}')">IGN</button>
+        ${user.id === currentUser?.id
+          ? `<button class="btn-xs btn-secondary" disabled title="Cannot change your own status">SIGNED IN</button>`
+          : `<button class="btn-xs ${user.is_active ? 'btn-danger' : 'btn-success'}" onclick="toggleUserStatus('${user.id}', ${!user.is_active})">
+              ${user.is_active ? 'OFF' : 'ON'}
+            </button>`
+        }
+        ${user.id === currentUser?.id ?
+          `<button class="btn-xs btn-danger" disabled title="Cannot delete the signed-in admin">DEL</button>` :
+          `<button class="btn-xs btn-danger" onclick="deleteUser('${user.id}')">DEL</button>`
+        }
+      </div>
+    </div>
+  `).join("");
+}
+
+function filterUsers() {
+  renderUserList();
 }
 
 async function deleteUser(userId) {

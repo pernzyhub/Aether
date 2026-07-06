@@ -344,13 +344,34 @@ body::before {
 }
 
 .account-panel #users-list {
-  max-height: 420px;
+  max-height: 460px;
   overflow-y: auto;
   padding-right: 8px;
 }
 
 .account-panel #users-list .list-item {
+  margin-bottom: 8px;
+}
+
+.account-panel .user-search-group {
   margin-bottom: 12px;
+}
+
+.account-panel .user-search-group input {
+  font-size: 0.95rem;
+  padding: 10px 12px;
+}
+
+.card h2.compact-title {
+  font-size: 1.05rem;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.list-item-actions.compact {
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .btn {
