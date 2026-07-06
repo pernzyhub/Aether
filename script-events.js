@@ -1924,7 +1924,7 @@ function renderRewardLogsList() {
           <div style="font-weight:bold; font-size:15px;">${escapeHtml(log.name)}</div>
           <div style="font-size:13px; color:#aaa; margin-top:6px;">Saved: ${new Date(log.savedAt || log.created_at).toLocaleString()}</div>
         </div>
-        <span style="font-size:12px; color:#00ff88; font-weight:700;">VIEW</span>
+        <span style="font-size:12px; color:#00ff88; font-weight:700;">OPEN</span>
       </div>
     </button>
   `).join('');
@@ -1935,7 +1935,6 @@ function renderRewardLogsList() {
     const index = Number(button.dataset.index);
     const log = distributionHistory[index];
     if (log) {
-      closeRewardLogsListModal();
       openRewardLogDetailModal(log);
     }
   };
@@ -1995,6 +1994,7 @@ function openRewardLogDetailModal(log) {
   const modal = document.getElementById('reward-log-detail-modal');
   if (!modal) return;
   renderRewardLogDetailTable(log);
+  closeRewardLogsListModal();
   modal.style.display = 'grid';
   document.body.style.overflow = 'hidden';
 }
@@ -2004,6 +2004,11 @@ function closeRewardLogDetailModal() {
   if (!modal) return;
   modal.style.display = 'none';
   document.body.style.overflow = '';
+}
+
+function backToRewardLogsListModal() {
+  closeRewardLogDetailModal();
+  openRewardLogsModal();
 }
 
 async function loadDistributionHistoryFromSupabase() {
@@ -2471,6 +2476,11 @@ window.addEventListener("load", () => {
     const closeRewardLogDetailModalFooterBtn = document.getElementById("close-reward-log-detail-modal-footer-btn");
     if (closeRewardLogDetailModalFooterBtn) {
       closeRewardLogDetailModalFooterBtn.addEventListener("click", closeRewardLogDetailModal);
+    }
+
+    const backToRewardLogsListModalBtn = document.getElementById("back-to-reward-logs-list-modal-btn");
+    if (backToRewardLogsListModalBtn) {
+      backToRewardLogsListModalBtn.addEventListener("click", backToRewardLogsListModal);
     }
 
     const logoutBtn = document.getElementById("logout-button");
