@@ -265,7 +265,10 @@ function renderBVSummary(list) {
     return;
   }
 
-  const grouped = list.reduce((acc, r) => {
+  const activeRequests = list.filter((r) => String(r.status || '').toLowerCase() !== 'approved');
+  const approvedRequests = list.filter((r) => String(r.status || '').toLowerCase() === 'approved');
+
+  const grouped = activeRequests.reduce((acc, r) => {
     const title = getBVTitle(r.reason);
     const requestor = r.clan_users?.ign || 'Unknown';
     acc[title] = acc[title] || new Set();
@@ -274,7 +277,7 @@ function renderBVSummary(list) {
   }, {});
 
   const groups = Object.keys(grouped).sort();
-  const groupHtml = groups.map((title) => {
+  const groupHtml = groups.length ? groups.map((title) => {
     const names = Array.from(grouped[title]).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
     const items = names.map((name) => `<li>${escapeHtml(name)}</li>`).join('');
 
@@ -284,16 +287,14 @@ function renderBVSummary(list) {
         <ul class="bv-summary-group-list">${items}</ul>
       </div>
     `;
-  }).join('');
+  }).join('') : '<p class="empty-state">No active BV requests.</p>';
 
   const approvedPairSet = new Set();
-  list
-    .filter((r) => String(r.status || '').toLowerCase() === 'approved')
-    .forEach((r) => {
-      const title = getBVTitle(r.reason);
-      const requestor = r.clan_users?.ign || 'Unknown';
-      approvedPairSet.add(`${title} - ${requestor}`);
-    });
+  approvedRequests.forEach((r) => {
+    const title = getBVTitle(r.reason);
+    const requestor = r.clan_users?.ign || 'Unknown';
+    approvedPairSet.add(`${title} - ${requestor}`);
+  });
 
   const approvedItems = Array.from(approvedPairSet)
     .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
