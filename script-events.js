@@ -1635,6 +1635,37 @@ window.addEventListener("load", () => {
       bulkPasteArea.style.display = e.target.checked ? "block" : "none";
     });
   }
+
+  const bulkParseBtn = document.getElementById("bulk-parse-paste-btn");
+  if (bulkParseBtn) {
+    bulkParseBtn.addEventListener("click", parseBulkPaste);
+  }
+
+  const bulkDownloadBtn = document.getElementById("bulk-download-template-btn");
+  if (bulkDownloadBtn) {
+    bulkDownloadBtn.addEventListener("click", downloadBulkAttendanceTemplate);
+  }
+
+  const bulkImportBtn = document.getElementById("bulk-import-csv-btn");
+  if (bulkImportBtn) {
+    bulkImportBtn.addEventListener("click", importBulkAttendanceCsv);
+  }
+
+  const bulkToggleOnBtn = document.getElementById("bulk-toggle-on-btn");
+  if (bulkToggleOnBtn) {
+    bulkToggleOnBtn.addEventListener("click", () => toggleAllBulkMembers(true));
+  }
+
+  const bulkToggleOffBtn = document.getElementById("bulk-toggle-off-btn");
+  if (bulkToggleOffBtn) {
+    bulkToggleOffBtn.addEventListener("click", () => toggleAllBulkMembers(false));
+  }
+
+  const applyBulkAttendanceBtn = document.getElementById("apply-bulk-attendance-btn");
+  if (applyBulkAttendanceBtn) {
+    applyBulkAttendanceBtn.addEventListener("click", applyBulkAttendance);
+  }
+
   // bulk search removed per admin request (hidden in UI)
 
   const eventTypeForm = document.getElementById("event-type-form");
@@ -1687,6 +1718,8 @@ window.loadBulkEventSelect = loadBulkEventSelect;
 window.loadBulkMembers = loadBulkMembers;
 window.parseBulkPaste = parseBulkPaste;
 window.applyBulkAttendance = applyBulkAttendance;
+window.downloadBulkAttendanceTemplate = downloadBulkAttendanceTemplate;
+window.importBulkAttendanceCsv = importBulkAttendanceCsv;
 window.loadAttendance = loadAttendance;
 window.toggleAttendance = toggleAttendance;
 window.toggleAttendanceCard = toggleAttendanceCard;

@@ -164,8 +164,8 @@
               <label style="display: block; margin-bottom: 10px; font-weight: bold; color: #ff6688;">SELECT MEMBERS</label>
               <div style="border: 2px solid #ff6688; border-radius: 4px; padding: 15px; background: #0a0a0a;">
                 <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
-                  <button type="button" class="btn btn-secondary" onclick="toggleAllBulkMembers(true)" style="padding:8px 10px;">TOGGLE ALL ON</button>
-                  <button type="button" class="btn btn-secondary" onclick="toggleAllBulkMembers(false)" style="padding:8px 10px;">TOGGLE ALL OFF</button>
+                  <button type="button" id="bulk-toggle-on-btn" class="btn btn-secondary" style="padding:8px 10px;">TOGGLE ALL ON</button>
+                  <button type="button" id="bulk-toggle-off-btn" class="btn btn-secondary" style="padding:8px 10px;">TOGGLE ALL OFF</button>
                 </div>
                 <div id="bulk-members-list" style="display: block; gap: 5px; column-gap: 12px;"></div>
               </div>
@@ -183,21 +183,22 @@
                 
                 <div id="bulk-paste-area" style="display: none;">
                   <textarea id="bulk-paste-input" class="input" placeholder="Paste member IGNs here&#10;e.g., Player1, Player2, Player3&#10;or&#10;Player1&#10;Player2&#10;Player3" style="width: 100%; margin-bottom: 10px;" rows="10"></textarea>
-                  <button class="btn btn-secondary" onclick="parseBulkPaste()" style="background: #00ff88; color: #000; font-weight: bold; padding: 10px 15px; width: 100%;">PARSE PASTE</button>
+                  <button type="button" id="bulk-parse-paste-btn" class="btn btn-secondary" style="background: #00ff88; color: #000; font-weight: bold; padding: 10px 15px; width: 100%;">PARSE PASTE</button>
                 </div>
               </div>
               
               <div class="form-group" style="border:1px solid #444; padding: 12px; border-radius: 6px; background: #090909; margin-bottom: 15px;">
                 <label style="display:block; margin-bottom:6px; font-weight:bold; color:#00ff88;">CSV TEMPLATE & IMPORT</label>
                 <p style="margin:0 0 10px; color:#aaa; font-size:13px; line-height:1.4;">Download a sample CSV file to match your old attendance log. Then fill values and upload the file here.</p>
-                <button type="button" class="btn btn-secondary" style="background: #00ff88; color: #000; font-weight: bold; padding: 10px 15px; margin-bottom: 10px; width: 100%;" onclick="downloadBulkAttendanceTemplate()">DOWNLOAD CSV TEMPLATE</button>
+                <button type="button" id="bulk-download-template-btn" class="btn btn-secondary" style="background: #00ff88; color: #000; font-weight: bold; padding: 10px 15px; margin-bottom: 10px; width: 100%;">DOWNLOAD CSV TEMPLATE</button>
                 <input type="file" id="bulk-csv-file" accept=".csv" style="width:100%; color:#fff; background:#111; border:1px solid #555; padding:10px;" />
-                <button type="button" class="btn btn-secondary" onclick="importBulkAttendanceCsv()" style="background: #ff6688; color: #fff; font-weight: bold; padding: 10px 15px; margin-top: 10px; width: 100%;">IMPORT CSV</button>
+                <button type="button" id="bulk-import-csv-btn" class="btn btn-secondary" style="background: #ff6688; color: #fff; font-weight: bold; padding: 10px 15px; margin-top: 10px; width: 100%;">IMPORT CSV</button>
                 <div id="bulk-csv-status" class="status-text" style="margin-top:10px; color:#ccc;"></div>
                 <div style="margin-top:8px; color:#aaa; font-size:12px;">
                   Expected columns: <strong>IGN, Event, Date, Points, Attended</strong><br />
                   Date format: <strong>YYYY-MM-DD</strong><br />
-                  Attended values: <strong>TRUE/FALSE</strong>
+                  Attended values: <strong>TRUE/FALSE</strong><br />
+                  Event may be either the exact event name or the event ID from the dropdown.
                 </div>
               </div>
               
@@ -208,7 +209,7 @@
             </div>
           </div>
           
-          <button class="btn btn-success" onclick="applyBulkAttendance()" style="background: #00ff88; color: #000; font-weight: bold; padding: 12px 20px; font-size: 16px; width: 100%;">✓ APPLY ATTENDANCE</button>
+          <button type="button" id="apply-bulk-attendance-btn" class="btn btn-success" style="background: #00ff88; color: #000; font-weight: bold; padding: 12px 20px; font-size: 16px; width: 100%;">✓ APPLY ATTENDANCE</button>
         </div>
       </div>
 
