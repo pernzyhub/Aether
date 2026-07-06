@@ -941,14 +941,20 @@ async function renderRequests(requests, container, isHistory = false) {
     const displayClass = (storedStatus === 'approved' || remainingQty === 0) ? 'approved' : storedStatus;
     const displayText = displayClass === 'approved' ? 'FULFILLED' : displayClass.toUpperCase();
     return `
-      <div class="list-item compact ${isDone ? 'completed' : ''}" data-id="${req.id}">
-        <div class="list-item-content compact">
-          <div class="list-item-title compact">
-            ${escapeHtml(ign)} → ${escapeHtml(req.items.name)} <span class="qty-badge">${remainingQty}/${requestedQty}</span>
-            <span class="status-badge ${displayClass}">${displayText}</span>
-            <span class="request-state-badge ${stateBadgeClass}">${stateLabel}</span>
+      <div class="list-item compact ${isDone ? 'completed' : ''}" data-id="${req.id}" data-ign="${escapeHtml(ign.toLowerCase())}">
+        <div class="list-item-content compact" style="display:flex; align-items:flex-start; gap:10px;">
+          <label style="display:flex; align-items:center; margin:0; color:#ccc; font-size:13px;">
+            <input type="checkbox" name="request-select" value="${escapeHtml(ign.toLowerCase())}" style="margin-right:8px;" />
+            <span style="font-size:13px;">${escapeHtml(ign)}</span>
+          </label>
+          <div style="flex:1;">
+            <div class="list-item-title compact">
+              ${escapeHtml(req.items.name)} <span class="qty-badge">${remainingQty}/${requestedQty}</span>
+              <span class="status-badge ${displayClass}">${displayText}</span>
+              <span class="request-state-badge ${stateBadgeClass}">${stateLabel}</span>
+            </div>
+            <div class="request-progress-inline">${fulfilledQty} fulfilled • ${remainingQty} remaining</div>
           </div>
-          <div class="request-progress-inline">${fulfilledQty} fulfilled • ${remainingQty} remaining</div>
           ${req.proof_image ? `
             <div class="request-proof">
               <button class="proof-link" onclick="openImageModal('${escapeHtml(req.proof_image)}')">
@@ -969,6 +975,71 @@ async function renderRequests(requests, container, isHistory = false) {
         ` : ''}
       </div>
     `}).join("");
+}
+
+function parseRequestIgns(raw) {
+  return raw
+    .split(/[\r\n,]+/)
+    .map(line => line.trim())
+    .filter(line => line.length > 0)
+    .map(line => line.toLowerCase());
+}
+
+function importRequestsFromDiscord() {
+  const raw = document.getElementById('requests-import-input')?.value || '';
+  const statusEl = document.getElementById('requests-import-status');
+  if (!statusEl) return;
+
+  const igns = parseRequestIgns(raw);
+  if (!igns.length) {
+    statusEl.textContent = 'Paste request names from Discord before importing.';
+    return;
+  }
+
+  const lookup = new Set(igns);
+  let matched = 0;
+  const notFound = new Set(igns);
+
+  document.querySelectorAll('input[name="request-select"]').forEach(input => {
+    if (lookup.has(input.value)) {
+      input.checked = true;
+      matched += 1;
+      notFound.delete(input.value);
+    }
+  });
+
+  statusEl.textContent = `Selected ${matched} request${matched === 1 ? '' : 's'}. ${notFound.size ? `${notFound.size} not found.` : 'All names matched.'}`;
+}
+
+function exportSelectedRequests() {
+  const statusEl = document.getElementById('requests-import-status');
+  const outputEl = document.getElementById('requests-import-input');
+  if (!statusEl || !outputEl) return;
+
+  const selected = Array.from(document.querySelectorAll('input[name="request-select"]:checked')).map(el => el.value);
+  if (!selected.length) {
+    statusEl.textContent = 'Select at least one request to export.';
+    return;
+  }
+
+  const exportText = selected.join('\n');
+  outputEl.value = exportText;
+  statusEl.textContent = `Exported ${selected.length} selected request${selected.length === 1 ? '' : 's'}.`;
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(exportText).then(() => {
+      statusEl.textContent += ' Copied to clipboard.';
+    }).catch(() => {
+      // ignore clipboard failures
+    });
+  }
+}
+
+function clearRequestsImportArea() {
+  const inputEl = document.getElementById('requests-import-input');
+  const statusEl = document.getElementById('requests-import-status');
+  if (inputEl) inputEl.value = '';
+  if (statusEl) statusEl.textContent = 'Import area cleared.';
 }
 
 async function adjustQuantity(requestId, currentQuantity, requestedQty, delta) {
@@ -1227,6 +1298,21 @@ window.addEventListener("load", () => {
       loadRequests();
       attachEditorUploadHandlers();
       setAccountsTab('register');
+
+      const requestsImportBtn = document.getElementById('requests-import-btn');
+      if (requestsImportBtn) {
+        requestsImportBtn.addEventListener('click', importRequestsFromDiscord);
+      }
+
+      const requestsExportBtn = document.getElementById('requests-export-btn');
+      if (requestsExportBtn) {
+        requestsExportBtn.addEventListener('click', exportSelectedRequests);
+      }
+
+      const requestsClearImportBtn = document.getElementById('requests-clear-import-btn');
+      if (requestsClearImportBtn) {
+        requestsClearImportBtn.addEventListener('click', clearRequestsImportArea);
+      }
     }
   }, 80);
 });
