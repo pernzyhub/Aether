@@ -24,6 +24,7 @@
         <button class="module-card" data-module="warehouse" onclick="setActiveModule('warehouse')">WAREHOUSE</button>
         <button class="module-card" data-module="accounts" onclick="setActiveModule('accounts')">ACCOUNTS</button>
         <button class="module-card" data-module="requests" onclick="setActiveModule('requests')">REQUESTS</button>
+        <button class="module-card" data-module="bvrequests" onclick="setActiveModule('bvrequests')">BV REQUESTS</button>
         <button class="module-card" onclick="window.location.href='/events.html'">EVENTS</button>
       </div>
 
@@ -220,6 +221,24 @@
             </section>
           </div>
         </div>
+
+        <div class="module-panel" data-module="bvrequests">
+          <div class="dashboard-grid">
+            <section class="card">
+              <h2>MANAGE BV REQUESTS</h2>
+              <div style="display:flex; gap:8px; margin-bottom:12px;">
+                <input id="bv-requests-search" placeholder="Search IGN or reason" style="flex:1; padding:8px; background:#111; color:#fff; border:1px solid #444;" />
+                <button id="bv-requests-refresh-btn" class="btn btn-secondary">Refresh</button>
+                <button id="bv-requests-export" class="btn btn-secondary">Export CSV</button>
+              </div>
+              <div id="bv-requests-list"></div>
+            </section>
+            <section class="card">
+              <h2>BV REQUEST HISTORY</h2>
+              <div id="bv-requests-history-list"></div>
+            </section>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -237,5 +256,6 @@
   </footer>
 
   <script type="module" src="script-admin-dashboard.js"></script>
+  <script type="module" src="script-admin-bv.js"></script>
 </body>
 </html>

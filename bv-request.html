@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aether Clan - BV Request</title>
+  <link rel="stylesheet" href="styles-portal.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="logo">AETHER CLAN</div>
+    <div class="nav-links">
+      <span id="welcome-text" class="welcome-text" style="color: #00ff88;"></span>
+      <a href="/portal.html" class="nav-link">HOME</a>
+      <a href="/request-items.html" class="nav-link">REQUESTS</a>
+      <a href="/bv-request.html" class="nav-link active">BV REQUEST</a>
+      <a href="/member-attendance.html" class="nav-link">ATTENDANCE</a>
+      <a href="/leaderboard.html" class="nav-link">LEADERBOARD</a>
+      <a href="/settings.html" class="nav-link">SETTINGS</a>
+      <button class="logout-btn" onclick="logout()">LOGOUT</button>
+    </div>
+  </header>
+
+  <div class="container request-page">
+    <section class="card request-form-card request-column">
+      <h2>BV REQUEST</h2>
+      <form id="bv-request-form" onsubmit="submitBVRequest(event)">
+        <div class="form-group">
+          <label for="bv-amount">BV Amount</label>
+          <input type="number" id="bv-amount" min="1" value="1" required />
+        </div>
+        <div class="form-group">
+          <label for="bv-reason">Reason / Notes (Optional)</label>
+          <textarea id="bv-reason"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="bv-proof-image">Proof Image (Optional)</label>
+          <input type="file" id="bv-proof-image" accept="image/*" />
+        </div>
+        <button type="submit" class="btn btn-primary">SUBMIT BV REQUEST</button>
+      </form>
+      <p id="bv-request-status" class="status-text"></p>
+    </section>
+
+    <section class="card request-feed-card request-column">
+      <div class="card-heading">
+        <h2>BV REQUESTS</h2>
+        <div class="card-controls">
+          <label class="control-label" for="bv-filter">Filter</label>
+          <select id="bv-filter" class="sort-select">
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="denied">Denied</option>
+          </select>
+          <label class="control-label" for="bv-sort">Sort</label>
+          <select id="bv-sort" class="sort-select">
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="amount_desc">BV High → Low</option>
+            <option value="amount_asc">BV Low → High</option>
+          </select>
+          <button id="bv-export-csv" class="btn btn-secondary">Export CSV</button>
+        </div>
+        <span class="card-badge">LIVE</span>
+      </div>
+      <div id="bv-requests-table" class="request-feed"></div>
+      <div class="pagination-controls" style="display:flex; gap:8px; align-items:center; margin-top:12px;">
+        <button id="bv-prev-page" class="btn btn-secondary">Prev</button>
+        <span id="bv-page-indicator">Page 1</span>
+        <button id="bv-next-page" class="btn btn-secondary">Next</button>
+      </div>
+    </section>
+  </div>
+
+  <footer class="footer">
+    AETHER CLAN © 2026 | SYSTEM VERSION 2.0.4 | ALL RIGHTS RESERVED
+  </footer>
+
+  <!-- Image Modal -->
+  <div id="image-modal" class="image-modal">
+    <div class="modal-content">
+      <span class="modal-close">&times;</span>
+      <img id="modal-image" class="modal-image" src="" alt="Proof image" />
+    </div>
+  </div>
+
+  <script type="module" src="script-bv-request.js"></script>
+</body>
+</html>
