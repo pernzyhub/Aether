@@ -25,10 +25,11 @@
 
   <div class="container request-page">
     <section class="card request-form-card request-column">
-      <h2>BV REQUEST</h2>
+      <h2>BV Request Submission</h2>
+      <p class="section-copy">Submit a Battle Value request for review, and track its progress below in the request history.</p>
       <form id="bv-request-form" onsubmit="submitBVRequest(event)">
         <div class="form-group">
-          <label for="bv-select">Select Request Type</label>
+          <label for="bv-select">Request Type</label>
           <select id="bv-select" required>
             <option value="">Choose...</option>
             <option value="standard">Standard</option>
@@ -44,11 +45,11 @@
     <section class="card request-feed-card request-column">
       <div class="card-heading">
         <div>
-          <h2>BV LIST REQUEST</h2>
-          <p class="section-copy">Track past submissions and review status updates in one place.</p>
+          <h2>BV Request History</h2>
+          <p class="section-copy">View your submitted requests and their current approval status.</p>
         </div>
         <div class="card-controls">
-          <label class="control-label" for="bv-filter">Filter</label>
+          <label class="control-label" for="bv-filter">Status</label>
           <select id="bv-filter" class="sort-select">
             <option value="all">All</option>
             <option value="pending">Pending</option>
