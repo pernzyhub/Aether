@@ -648,8 +648,7 @@ function normalizeBoolean(value) {
 
 function escapeCsvValue(value) {
   const str = value == null ? '' : String(value);
-  if (/[",
-]/.test(str)) {
+  if (/[",\r\n]/.test(str)) {
     return `"${str.replace(/"/g, '""')}"`;
   }
   return str;
