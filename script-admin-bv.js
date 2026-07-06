@@ -95,12 +95,26 @@ function slugify(text) {
   return (text||'').toString().toLowerCase().trim().replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-').replace(/-+/g,'-');
 }
 
+function generateUniqueBVTypeKey(name) {
+  const baseKey = slugify(name);
+  let key = baseKey;
+  let suffix = 1;
+  while (adminBVTypes.some(t => t.key === key)) {
+    suffix += 1;
+    key = `${baseKey}-${suffix}`;
+  }
+  return key;
+}
+
 async function addBVType(e) {
   e && e.preventDefault && e.preventDefault();
   const name = document.getElementById('bv-type-name')?.value?.trim();
   const description = document.getElementById('bv-type-desc')?.value?.trim() || '';
   if (!name) return alert('Provide a BV name');
-  const key = slugify(name);
+  if (adminBVTypes.some(t => t.label.toLowerCase() === name.toLowerCase())) {
+    return alert('A BV type with that name already exists. Please choose a different name.');
+  }
+  const key = generateUniqueBVTypeKey(name);
   try {
     const { error } = await supabase.from('bv_request_types').insert([{ key, label: name, description, is_active: true }]);
     if (error) throw error;
@@ -110,6 +124,9 @@ async function addBVType(e) {
     let msg = 'Error adding type: ' + err.message;
     if (err.message && /row-level security/i.test(err.message)) {
       msg += '\n\nThis usually means your DB has RLS enabled and the current role cannot insert into `bv_request_types`. Run the migrations and ensure the admin role or RLS policies allow inserts, or run this change from a privileged SQL editor.';
+    }
+    if (err.message && /duplicate key value violates unique constraint "bv_request_types_key_key"/i.test(err.message)) {
+      msg += '\n\nThe BV type key is already taken. Try a different name or remove the existing type first.';
     }
     alert(msg);
   }
