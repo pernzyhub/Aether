@@ -240,12 +240,12 @@ body::before {
 }
 
 .bv-request-summary-section.compact-summary {
-  margin-top: 20px;
-  padding: 20px;
+  margin-top: 18px;
+  padding: 18px;
 }
 
 .bv-request-summary-section.compact-summary .card-heading {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .bv-request-summary-section.compact-summary .bv-request-summary-list {
@@ -608,16 +608,17 @@ body::before {
   }
 
   .bv-request-board-section .card-controls {
-    gap: 10px;
+    gap: 8px;
+    align-items: center;
   }
 
   .bv-request-board-section .sort-select,
   .bv-request-board-section .control-label {
-    min-width: 140px;
+    min-width: 120px;
   }
 
   .bv-request-board-section .request-feed {
-    padding-top: 10px;
+    padding-top: 8px;
   }
 
   .bv-request-board-section {
@@ -840,34 +841,34 @@ body::before {
 
   .bv-request-grid {
     display: grid;
-    gap: 12px;
+    gap: 8px;
   }
 
   .bv-request-header,
   .bv-request-row {
     display: grid;
-    grid-template-columns: minmax(180px, 1fr) minmax(200px, 1.5fr) minmax(220px, 1.3fr);
-    gap: 12px;
+    grid-template-columns: minmax(140px, 1fr) minmax(170px, 1.8fr) minmax(180px, 1.1fr);
+    gap: 10px;
     align-items: center;
   }
 
   .bv-request-header {
-    padding: 14px 16px;
-    border-radius: 16px;
-    background: rgba(0, 255, 136, 0.05);
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(0, 255, 136, 0.06);
     border: 1px solid rgba(0, 255, 136, 0.18);
-    color: #a7ffd2;
-    font-size: 0.8rem;
-    letter-spacing: 0.14em;
+    color: #c5ffdc;
+    font-size: 0.76rem;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
   }
 
   .bv-request-row {
-    padding: 16px;
+    padding: 12px 14px;
     border-radius: 18px;
     background: rgba(8, 18, 12, 0.92);
     border: 1px solid rgba(0, 255, 136, 0.12);
-    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.1);
     transition: transform 180ms ease, border-color 180ms ease;
   }
 
@@ -877,13 +878,13 @@ body::before {
   }
 
   .bv-request-cell {
-    min-height: 60px;
+    min-height: auto;
   }
 
   .bv-request-person {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
   }
 
   .bv-request-member {
