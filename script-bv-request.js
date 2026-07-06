@@ -42,7 +42,8 @@ async function checkAuthLocal() {
     window.location.href = '/';
     return false;
   }
-  currentUser = user || { id: memberSession?.id };
+
+  currentUser = memberSession ? { id: memberSession.id, ign: memberSession.ign } : user;
 
   // try to load clan_user to get ign
   try {
@@ -190,26 +191,6 @@ function updatePagination(total=0) {
   if (next) next.disabled = bvCurrentPage >= pages;
 }
 
-function exportCurrentBVPageCsv() {
-  let list = [...bvAllData];
-  switch (bvSort) {
-    case 'oldest': list.sort((a,b)=> new Date(a.created_at) - new Date(b.created_at)); break;
-    case 'amount_desc': list.sort((a,b)=> (b.amount||0)-(a.amount||0)); break;
-    case 'amount_asc': list.sort((a,b)=> (a.amount||0)-(b.amount||0)); break;
-    default: list.sort((a,b)=> new Date(b.created_at) - new Date(a.created_at));
-  }
-  const start = (bvCurrentPage - 1) * bvPageSize;
-  const pageItems = list.slice(start, start + bvPageSize);
-  const csv = [ ['IGN','Selection','Status','Created'] ].concat(
-    pageItems.map(r => [r.clan_users?.ign || '', (r.reason||'').replace(/"/g,'""'), r.status||'', r.created_at||''])
-  ).map(row => row.map(cell => `"${String(cell).replace(/"/g,'""') }"`).join(',')).join('\n');
-
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = `bv_requests_page_${bvCurrentPage}.csv`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-}
-
 function escapeHtml(text) {
   const d = document.createElement('div'); d.textContent = text; return d.innerHTML;
 }
@@ -228,7 +209,6 @@ window.addEventListener('load', () => {
     document.getElementById('bv-sort')?.addEventListener('change', (e) => { bvSort = e.target.value || 'newest'; bvCurrentPage = 1; applyBVSortAndRender(); });
     document.getElementById('bv-prev-page')?.addEventListener('click', () => { bvCurrentPage = Math.max(1, bvCurrentPage - 1); applyBVSortAndRender(); });
     document.getElementById('bv-next-page')?.addEventListener('click', () => { bvCurrentPage = bvCurrentPage + 1; applyBVSortAndRender(); });
-    document.getElementById('bv-export-csv')?.addEventListener('click', () => exportCurrentBVPageCsv());
     loadBVTypes();
     loadBVRequests();
     setActiveNavLink && setActiveNavLink();
