@@ -1076,7 +1076,7 @@ function importRequestsFromCsv() {
     let matched = 0;
     const notFound = new Set(lookup);
 
-    document.querySelectorAll('#requests-list input[name="request-select"]').forEach(input => {
+    document.querySelectorAll('#requests-list input[name="request-select"], #requests-history-list input[name="request-select"]').forEach(input => {
       const value = normalizeIgn(input.value);
       if (lookup.has(value)) {
         input.checked = true;
@@ -1088,7 +1088,7 @@ function importRequestsFromCsv() {
     });
 
     const notFoundList = Array.from(notFound).slice(0, 10).join(', ');
-    statusEl.textContent = `Imported ${matched} request${matched === 1 ? '' : 's'}. ${notFound.size ? `${notFound.size} did not match any visible request${notFound.size === 1 ? '' : 's'}${notFoundList ? `: ${notFoundList}` : ''}` : 'All matches selected.'}`;
+    statusEl.textContent = `Imported ${matched} request${matched === 1 ? '' : 's'}. ${notFound.size ? `${notFound.size} did not match any loaded request${notFound.size === 1 ? '' : 's'}${notFoundList ? `: ${notFoundList}` : ''}` : 'All matches selected.'}`;
   };
   reader.readAsText(file);
 }
