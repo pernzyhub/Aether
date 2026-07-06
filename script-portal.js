@@ -399,18 +399,15 @@ async function loadEvents() {
 /* BV Module: portal inline BV request, live list, and summary */
 async function submitPortalBVRequest(e) {
   e.preventDefault();
-  const amountInput = document.getElementById('portal-bv-amount');
-  const type = document.getElementById('portal-bv-type')?.value || 'standard';
-  const notes = document.getElementById('portal-bv-notes')?.value || null;
+  const selection = document.getElementById('portal-bv-select')?.value || null;
   const statusEl = document.getElementById('portal-bv-status');
-  const amount = Number(amountInput?.value || 0);
-  if (!amount || amount <= 0) { statusEl.textContent = 'Enter a valid BV amount.'; statusEl.className = 'status-text error'; return; }
+  if (!selection) { statusEl.textContent = 'Please choose a request type.'; statusEl.className = 'status-text error'; return; }
 
   statusEl.textContent = 'Submitting...'; statusEl.className = 'status-text';
   try {
     const userId = currentUser?.id;
     if (!userId) throw new Error('No user session');
-    const { error } = await supabase.from('bv_requests').insert([{ user_id: userId, amount, reason: `${type} - ${notes || ''}`, status: 'pending' }]);
+    const { error } = await supabase.from('bv_requests').insert([{ user_id: userId, amount: 0, reason: selection, status: 'pending' }]);
     if (error) throw error;
     statusEl.textContent = 'Submitted!'; statusEl.className = 'status-text success';
     loadBVPortalList(); loadBVPortalSummary();

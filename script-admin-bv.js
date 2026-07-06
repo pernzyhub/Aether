@@ -41,8 +41,9 @@ function renderAdminLists() {
     else container.innerHTML = filteredPending.map(r => `
       <div class="list-item compact">
         <div class="list-item-content compact">
-          <div class="list-item-title compact">${escapeHtml(r.clan_users?.ign||'Unknown')} • ${Number(r.amount)} BV</div>
+          <div class="list-item-title compact">${escapeHtml(r.clan_users?.ign||'Unknown')}</div>
           <div class="list-item-meta">${escapeHtml(r.reason||'')}</div>
+          <div class="list-item-meta">${escapeHtml((r.status||'').toUpperCase())}</div>
         </div>
         <div class="list-item-actions compact">
           <button class="btn-xs btn-success" onclick="approveBVRequest('${r.id}')">APPROVE</button>
@@ -63,7 +64,7 @@ function renderAdminLists() {
     else historyContainer.innerHTML = filteredPast.map(r => `
       <div class="list-item compact">
         <div class="list-item-content compact">
-          <div class="list-item-title compact">${escapeHtml(r.clan_users?.ign||'Unknown')} • ${Number(r.amount)} BV</div>
+          <div class="list-item-title compact">${escapeHtml(r.clan_users?.ign||'Unknown')}</div>
           <div class="list-item-meta">${escapeHtml(r.reason||'')} • ${escapeHtml((r.status||'').toUpperCase())}</div>
         </div>
       </div>
@@ -105,8 +106,8 @@ window.addEventListener('load', () => setTimeout(() => {
 }, 120));
 
 function exportAdminPendingCsv() {
-  const rows = adminPending.map(r => [r.clan_users?.ign || '', r.amount || '', r.reason || '', r.proof_image || '', r.status || '', r.created_at || '']);
-  const csv = [['IGN','BV','Reason','Proof URL','Status','Created']].concat(rows).map(row => row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const rows = adminPending.map(r => [r.clan_users?.ign || '', r.reason || '', r.status || '', r.created_at || '']);
+  const csv = [['IGN','Selection','Status','Created']].concat(rows).map(row => row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = 'admin_bv_pending.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);

@@ -47,54 +47,17 @@ async function checkAuthLocal() {
 
 async function submitBVRequest(e) {
   e.preventDefault();
-  const amount = parseInt(document.getElementById('bv-amount').value);
-  const reason = document.getElementById('bv-reason').value || null;
-  const proofInput = document.getElementById('bv-proof-image');
+  const selection = document.getElementById('bv-select')?.value || null;
   const statusEl = document.getElementById('bv-request-status');
 
-  if (!amount || amount <= 0) {
-    statusEl.textContent = 'Enter a valid BV amount.';
-    statusEl.className = 'status-text error';
-    return;
-  }
-
-  let proofData = null;
-  if (proofInput.files && proofInput.files[0]) {
-    const file = proofInput.files[0];
-    // Try to upload to Supabase Storage first
-    try {
-      const ext = (file.name.split('.').pop() || '').toLowerCase();
-      const key = `bv/${crypto.randomUUID()}.${ext}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage.from('proofs').upload(key, file);
-      if (uploadError) throw uploadError;
-      const { data: pub, error: pubErr } = await supabase.storage.from('proofs').getPublicUrl(key);
-      if (!pubErr && pub?.publicUrl) {
-        proofData = pub.publicUrl;
-      } else {
-        // fallback to base64 if public url retrieval fails
-        const reader = new FileReader();
-        await new Promise((res, rej) => {
-          reader.onload = () => { proofData = reader.result; res(); };
-          reader.onerror = rej; reader.readAsDataURL(file);
-        });
-      }
-    } catch (uploadEx) {
-      // fallback: encode as data URL
-      const reader = new FileReader();
-      await new Promise((res, rej) => {
-        reader.onload = () => { proofData = reader.result; res(); };
-        reader.onerror = rej; reader.readAsDataURL(file);
-      });
-    }
-  }
+  if (!selection) { statusEl.textContent = 'Please choose a request type.'; statusEl.className = 'status-text error'; return; }
 
   statusEl.textContent = 'Submitting BV request...'; statusEl.className = 'status-text';
-
   try {
     const userId = currentUser?.id || null;
     if (!userId) throw new Error('No user session found.');
 
-    const { error } = await supabase.from('bv_requests').insert([{ user_id: userId, amount, reason, proof_image: proofData, status: 'pending' }]);
+    const { error } = await supabase.from('bv_requests').insert([{ user_id: userId, amount: 0, reason: selection, status: 'pending' }]);
     if (error) throw error;
     statusEl.textContent = 'BV request submitted!'; statusEl.className = 'status-text success';
     document.getElementById('bv-request-form').reset();
@@ -148,9 +111,7 @@ function applyBVSortAndRender() {
   const rows = pageItems.map(r => `
     <tr>
       <td>${escapeHtml(r.clan_users?.ign || 'Unknown')}</td>
-      <td>${Number(r.amount)}</td>
       <td>${escapeHtml(r.reason || '')}</td>
-      <td>${r.proof_image ? `<button class="proof-link" onclick="openImageModal('${escapeHtml(r.proof_image)}')">View</button>` : ''}</td>
       <td>${escapeHtml((r.status || 'pending').toUpperCase())}</td>
       <td>${formatDateTime(r.created_at)}</td>
     </tr>
@@ -158,7 +119,7 @@ function applyBVSortAndRender() {
 
   container.innerHTML = `
     <table class="compact-table">
-      <thead><tr><th>IGN</th><th>BV</th><th>Reason</th><th>Proof</th><th>Status</th><th>Created</th></tr></thead>
+      <thead><tr><th>IGN</th><th>Selection</th><th>Status</th><th>Created</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   `;

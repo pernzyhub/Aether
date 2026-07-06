@@ -81,27 +81,13 @@
           <h2>BV REQUEST</h2>
           <form id="portal-bv-form" onsubmit="submitPortalBVRequest(event)">
             <div class="form-group">
-              <label for="portal-bv-type">Type</label>
-              <select id="portal-bv-type">
+              <label for="portal-bv-select">Select Request Type</label>
+              <select id="portal-bv-select" required>
+                <option value="">Choose...</option>
                 <option value="standard">Standard</option>
                 <option value="event">Event</option>
                 <option value="other">Other</option>
               </select>
-            </div>
-            <div class="form-group">
-              <label for="portal-bv-amount">BV Amount</label>
-              <select id="portal-bv-amount-select">
-                <option value="10">10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-                <option value="other">Other...</option>
-              </select>
-              <input type="number" id="portal-bv-amount" min="1" value="10" style="margin-top:8px; width:100%;" />
-            </div>
-            <div class="form-group">
-              <label for="portal-bv-notes">Notes (optional)</label>
-              <textarea id="portal-bv-notes"></textarea>
             </div>
             <button type="submit" class="btn btn-primary">SUBMIT</button>
             <p id="portal-bv-status" class="status-text"></p>
