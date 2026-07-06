@@ -56,11 +56,10 @@ function isAdminUser(user) {
 }
 
 async function updateAdminPreviewActions() {
-  const actionsEl = document.getElementById('adminPreviewActions');
   const buttonEl = document.getElementById('return-to-admin-panel-btn');
-  if (!actionsEl || !buttonEl) return;
+  if (!buttonEl) return;
 
-  actionsEl.style.display = 'none';
+  buttonEl.style.display = 'none';
   if (!isAdminPreview) return;
 
   try {
@@ -68,7 +67,7 @@ async function updateAdminPreviewActions() {
     const { data: userData } = await supabase.auth.getUser();
     const user = sessionData?.session?.user || userData?.user;
     if (user && isAdminUser(user)) {
-      actionsEl.style.display = 'block';
+      buttonEl.style.display = 'inline-flex';
       buttonEl.setAttribute('href', '/admin-dashboard.html');
     }
   } catch (err) {
