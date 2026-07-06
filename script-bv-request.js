@@ -394,21 +394,28 @@ function updateBVTypeOptions() {
   if (!select) return;
 
   const options = Array.from(select.options);
-  const placeholder = options.find(option => !option.value) || options[0];
-  const items = options.filter(option => option.value).map(option => {
-    const normalizedText = bvTypeMap.get(option.value) || option.textContent.replace(/-/g, ' ');
-    const isRequested = requestedBVTypes.has(option.value);
-    const isApproved = approvedBVTypes.has(option.value);
-    return {
-      value: option.value,
-      text: isRequested ? `${normalizedText} (requested)` : normalizedText,
-      disabled: isRequested,
-      hidden: isApproved
-    };
-  });
+  const placeholder = select.querySelector('option[value=""]') || options.find(option => !option.value) || options[0];
 
-  const availableOptions = items.filter(item => !item.disabled && !item.hidden);
-  const requestedOptions = items.filter(item => item.disabled && !item.hidden);
+  const items = options
+    .filter(option => option.value)
+    .map(option => {
+      const normalizedText = bvTypeMap.get(option.value) || option.textContent.replace(/-/g, ' ');
+      const isRequested = requestedBVTypes.has(option.value);
+      const isApproved = approvedBVTypes.has(option.value);
+      return {
+        value: option.value,
+        text: isRequested ? `${normalizedText} (requested)` : normalizedText,
+        disabled: isRequested,
+        hidden: isApproved
+      };
+    });
+
+  const availableOptions = items
+    .filter(item => !item.disabled && !item.hidden)
+    .sort((a, b) => a.text.localeCompare(b.text, undefined, { sensitivity: 'base' }));
+  const requestedOptions = items
+    .filter(item => item.disabled && !item.hidden)
+    .sort((a, b) => a.text.localeCompare(b.text, undefined, { sensitivity: 'base' }));
 
   select.innerHTML = '';
   if (placeholder) {
@@ -481,6 +488,10 @@ window.addEventListener('load', () => {
     loadBVTypes();
     loadBVRequests();
     setActiveNavLink && setActiveNavLink();
+
+    window.addEventListener('focus', () => {
+      loadBVRequests();
+    });
 
     // modal close handlers
     document.querySelectorAll('.modal-close').forEach(btn => btn.addEventListener('click', () => {
