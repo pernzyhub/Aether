@@ -1913,6 +1913,7 @@ function renderRewardLogsList() {
         No saved reward logs available.
       </div>
     `;
+    listContainer.onclick = null;
     return;
   }
 
@@ -1923,13 +1924,13 @@ function renderRewardLogsList() {
     </button>
   `).join('');
 
-  listContainer.querySelectorAll('.reward-log-summary-btn').forEach(button => {
-    button.addEventListener('click', (event) => {
-      const index = Number(event.currentTarget.dataset.index);
-      const log = distributionHistory[index];
-      if (log) openRewardLogDetailModal(log);
-    });
-  });
+  listContainer.onclick = (event) => {
+    const button = event.target.closest('.reward-log-summary-btn');
+    if (!button) return;
+    const index = Number(button.dataset.index);
+    const log = distributionHistory[index];
+    if (log) openRewardLogDetailModal(log);
+  };
 }
 
 function renderRewardLogDetailTable(log) {
