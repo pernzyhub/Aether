@@ -200,11 +200,13 @@ body::before {
 
 .request-page {
   display: grid;
-  grid-template-columns: minmax(260px, 0.9fr) minmax(340px, 1.2fr) minmax(280px, 0.95fr);
-  align-items: start;
-  gap: 20px;
-}
+    grid-template-columns: minmax(260px, 0.95fr) minmax(420px, 1.6fr);
+    align-items: start;
+    gap: 20px;
+  }
 
+  .bv-request-wider {
+    grid-template-columns: minmax(280px, 0.9fr) minmax(520px, 1.8fr);
 .request-column {
   min-width: 0;
 }
@@ -220,13 +222,19 @@ body::before {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-}
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+  }
 
-.card-controls {
-  display: flex;
-  align-items: center;
+  .card-heading h2 {
+    font-size: 1.8rem;
+    letter-spacing: 0.06em;
+    margin: 0;
+  }
+
+  .card-heading .section-copy {
+    font-size: 0.95rem;
+    max-width: 560px;
   gap: 8px;
   margin-left: auto;
 }
@@ -388,8 +396,17 @@ body::before {
     background: rgba(5, 13, 8, 0.91);
     border: 1px solid rgba(0, 255, 136, 0.14);
     border-radius: 20px;
-    padding: 18px;
-    min-height: 320px;
+    padding: 24px;
+    min-height: 360px;
+  }
+
+  .bv-request-board-section {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .bv-request-board-section .request-feed {
+    overflow-x: visible;
   }
 
   .bv-summary-heading {
