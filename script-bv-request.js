@@ -12,9 +12,26 @@ const bvPageSize = 10;
 let bvSort = 'newest';
 
 async function checkAuthLocal() {
+  const welcomeEl = document.getElementById("welcome-text");
+  const statusEl = document.getElementById('bv-request-status');
+  const badge = document.getElementById('adminPreviewBadge');
+  const adminBtn = document.getElementById('return-to-admin-panel-btn');
+
   if (isAdminPreview) {
-    const welcomeEl = document.getElementById("welcome-text");
     if (welcomeEl) welcomeEl.textContent = "ADMIN PREVIEW MODE";
+    if (badge) badge.style.display = 'block';
+    if (adminBtn) adminBtn.style.display = 'inline-flex';
+
+    const form = document.getElementById('bv-request-form');
+    if (form) {
+      form.querySelectorAll('input, select, textarea, button').forEach((el) => {
+        el.disabled = true;
+      });
+    }
+    if (statusEl) {
+      statusEl.textContent = 'Preview mode: request submission is disabled.';
+      statusEl.className = 'status-text';
+    }
     return true;
   }
 
