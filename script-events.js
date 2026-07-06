@@ -1453,11 +1453,59 @@ function setEventsTab(tabName) {
     if (tabName === "attendance") loadAttendance();
     if (tabName === "bulk-attendance") loadBulkMembers();
     if (tabName === "members") loadMembersSheet();
+    if (tabName === "item-distribution") loadItemDistribution();
   } catch (err) {
     console.error('Error switching tab', err);
     const generalStatus = document.getElementById('events-status');
     if (generalStatus) showStatus('events-status', `Tab switch error: ${err.message}`, 'error');
   }
+}
+
+/* ITEM DISTRIBUTION */
+function loadItemDistribution() {
+  console.log('loadItemDistribution() called');
+  const statusEl = document.getElementById('item-distribution-status');
+  const logContainer = document.getElementById('distribution-log');
+  if (statusEl) statusEl.textContent = 'Ready to log item distributions.';
+  if (logContainer) {
+    logContainer.innerHTML = '<p style="color:#ccc;">No distributions logged yet.</p>';
+  }
+}
+
+function logItemDistribution() {
+  const itemName = document.getElementById('distribution-item-name')?.value.trim();
+  const quantity = Number(document.getElementById('distribution-item-quantity')?.value);
+  const recipientIgn = document.getElementById('distribution-recipient')?.value.trim();
+  const notes = document.getElementById('distribution-notes')?.value.trim();
+  const statusEl = document.getElementById('item-distribution-status');
+  const logContainer = document.getElementById('distribution-log');
+
+  if (!itemName || !recipientIgn || Number.isNaN(quantity) || quantity < 1) {
+    if (statusEl) showStatus('item-distribution-status', 'Item name, quantity, and recipient IGN are required.', 'error');
+    return;
+  }
+
+  const timestamp = new Date().toLocaleString();
+  const entryHtml = `
+    <div class="list-item" style="margin-bottom:12px; padding:14px; background:#111; border:1px solid #333;">
+      <div class="list-item-content">
+        <div class="list-item-title">${escapeHtml(itemName)} <span class="qty-badge">x${quantity}</span></div>
+        <div class="list-item-meta">Recipient: <strong>${escapeHtml(recipientIgn)}</strong> | ${escapeHtml(timestamp)}</div>
+        <div class="list-item-text">${escapeHtml(notes || 'No notes')}</div>
+      </div>
+    </div>
+  `;
+
+  if (logContainer) {
+    const previous = logContainer.innerHTML.includes('No distributions logged yet.') ? '' : logContainer.innerHTML;
+    logContainer.innerHTML = entryHtml + previous;
+  }
+
+  if (statusEl) showStatus('item-distribution-status', 'Item distribution logged locally.', 'success');
+  document.getElementById('distribution-item-name').value = '';
+  document.getElementById('distribution-item-quantity').value = '';
+  document.getElementById('distribution-recipient').value = '';
+  document.getElementById('distribution-notes').value = '';
 }
 
 /* MEMBERS SHEET */
@@ -1703,6 +1751,11 @@ window.addEventListener("load", () => {
       applyBulkAttendanceBtn.addEventListener("click", applyBulkAttendance);
     }
 
+    const distributionSubmitBtn = document.getElementById("distribution-submit-btn");
+    if (distributionSubmitBtn) {
+      distributionSubmitBtn.addEventListener("click", logItemDistribution);
+    }
+
     const logoutBtn = document.getElementById("logout-button");
     if (logoutBtn) {
       logoutBtn.addEventListener("click", logout);
@@ -1737,6 +1790,11 @@ window.addEventListener("load", () => {
   const eventForm = document.getElementById("event-form");
   if (eventForm) {
     eventForm.addEventListener("submit", createEvent);
+  }
+
+  const distributionSubmitBtn = document.getElementById("distribution-submit-btn");
+  if (distributionSubmitBtn) {
+    distributionSubmitBtn.addEventListener("click", logItemDistribution);
   }
 
   window.setTimeout(async () => {
@@ -1795,3 +1853,4 @@ window.deleteAttendance = deleteAttendance;
 window.loadMonthlyPoints = loadMonthlyPoints;
 window.setEventsTab = setEventsTab;
 window.toggleAllBulkMembers = toggleAllBulkMembers;
+window.logItemDistribution = logItemDistribution;
