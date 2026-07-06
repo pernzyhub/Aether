@@ -9,5 +9,5 @@ DROP POLICY IF EXISTS "Authenticated users can view BV requests" ON public.bv_re
 CREATE POLICY "Authenticated users can view BV requests"
   ON public.bv_requests
   FOR SELECT
-  TO authenticated
+  TO anon, authenticated
   USING (true);
