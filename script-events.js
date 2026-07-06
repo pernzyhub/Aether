@@ -519,10 +519,6 @@ async function deleteEvent(eventId) {
 
 /* BULK ATTENDANCE */
 let allMembers = [];
-let distributionMembers = [];
-let distributionAssignments = [];
-let distributionSaved = false;
-let distributionHistory = [];
 
 async function loadBulkEventSelect() {
   console.log('loadBulkEventSelect() called');
