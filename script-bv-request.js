@@ -84,19 +84,36 @@ async function submitBVRequest(e) {
   }
 }
 
+const BV_TYPE_FALLBACKS = [
+  { key: 'standard', label: 'Standard' },
+  { key: 'event', label: 'Event' },
+  { key: 'other', label: 'Other' }
+];
+
 async function loadBVTypes() {
+  const select = document.getElementById('bv-select');
+  if (!select) return;
+  select.disabled = true;
+  select.innerHTML = '<option value="">Loading types...</option>';
+
   try {
     const { data, error } = await supabase.from('bv_request_types').select('*').eq('is_active', true).order('sort_order', { ascending: true });
-    if (error) throw error;
-    const select = document.getElementById('bv-select');
-    if (!select) return;
-    // rebuild options with a placeholder
+    const types = (!error && Array.isArray(data) && data.length > 0) ? data : BV_TYPE_FALLBACKS;
+
     select.innerHTML = '<option value="">Choose...</option>';
-    (data || []).forEach(t => {
-      const opt = document.createElement('option'); opt.value = t.key; opt.textContent = t.label; select.appendChild(opt);
+    types.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.key;
+      opt.textContent = t.label;
+      select.appendChild(opt);
     });
   } catch (e) {
     console.warn('Could not load BV types:', e.message);
+    select.innerHTML = '<option value="">Choose...</option>' + BV_TYPE_FALLBACKS.map(t => `<option value="${t.key}">${t.label}</option>`).join('');
+  } finally {
+    if (!isAdminPreview) {
+      select.disabled = false;
+    }
   }
 }
 
