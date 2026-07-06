@@ -1951,7 +1951,7 @@ function renderRewardLogDetailTable(log) {
 
   log.assignments = (log.assignments || []).map(item => ({
     ...item,
-    status: item.status || 'Distributed'
+    status: item.status || ''
   }));
 
   if (!log.assignments.length) {
@@ -1966,15 +1966,21 @@ function renderRewardLogDetailTable(log) {
   body.innerHTML = log.assignments.map((row, index) => {
     const distributedActive = row.status === 'Distributed';
     const pendingActive = row.status === 'Pending';
+    const distributedBg = distributedActive ? '#1a8f3a' : '#3a3a3a';
+    const pendingBg = pendingActive ? '#aa1f1f' : '#3a3a3a';
+    const distributedBorder = distributedActive ? '#1a8f3a' : '#4d4d4d';
+    const pendingBorder = pendingActive ? '#aa1f1f' : '#4d4d4d';
+    const distributedColor = distributedActive ? '#fff' : '#ccc';
+    const pendingColor = pendingActive ? '#fff' : '#ccc';
     return `
       <tr style="border-bottom:1px solid #222;">
         <td style="padding:12px 10px; vertical-align:top;">${escapeHtml(row.item)}</td>
         <td style="padding:12px 10px; vertical-align:top; text-align:center;">${row.quantity}</td>
         <td style="padding:12px 10px; vertical-align:top;">${escapeHtml(row.ign)}</td>
         <td style="padding:12px 10px; vertical-align:top;">
-          <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button type="button" class="reward-log-status-btn" data-index="${index}" data-status="Distributed" style="padding:8px 12px; background:${distributedActive ? '#1a8f3a' : '#2d2d2d'}; color:${distributedActive ? '#fff' : '#ccc'}; border:1px solid ${distributedActive ? '#1a8f3a' : '#444'}; border-radius:6px; cursor:pointer;">Distributed</button>
-            <button type="button" class="reward-log-status-btn" data-index="${index}" data-status="Pending" style="padding:8px 12px; background:${pendingActive ? '#aa1f1f' : '#2d2d2d'}; color:${pendingActive ? '#fff' : '#ccc'}; border:1px solid ${pendingActive ? '#aa1f1f' : '#444'}; border-radius:6px; cursor:pointer;">Pending</button>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <button type="button" class="reward-log-status-btn" data-index="${index}" data-status="Distributed" style="padding:8px 12px; min-width:100px; background:${distributedBg}; color:${distributedColor}; border:1px solid ${distributedBorder}; border-radius:6px; cursor:pointer;">Distributed</button>
+            <button type="button" class="reward-log-status-btn" data-index="${index}" data-status="Pending" style="padding:8px 12px; min-width:100px; background:${pendingBg}; color:${pendingColor}; border:1px solid ${pendingBorder}; border-radius:6px; cursor:pointer;">Pending</button>
           </div>
         </td>
       </tr>
