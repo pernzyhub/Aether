@@ -15,10 +15,6 @@ function showSettingsStatus(message, type) {
 
 async function loadUser() {
   if (isAdminPreview) {
-    const welcomeEl = document.getElementById("welcome-text");
-    if (welcomeEl) {
-      welcomeEl.textContent = "ADMIN PREVIEW MODE";
-    }
     showSettingsStatus("Preview mode: settings are disabled.", "error");
     const form = document.getElementById("settings-form");
     if (form) {

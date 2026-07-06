@@ -18,7 +18,6 @@ async function checkAuthLocal() {
   const adminBtn = document.getElementById('return-to-admin-panel-btn');
 
   if (isAdminPreview) {
-    if (welcomeEl) welcomeEl.textContent = "ADMIN PREVIEW MODE";
     if (badge) badge.style.display = 'block';
     if (adminBtn) adminBtn.style.display = 'inline-flex';
 

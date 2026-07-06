@@ -8,10 +8,6 @@ const isAdminPreview = isAdminPreviewMode();
 
 async function checkAuth() {
   if (isAdminPreview) {
-    const welcomeEl = document.getElementById("welcome-text");
-    if (welcomeEl) {
-      welcomeEl.textContent = "ADMIN PREVIEW MODE";
-    }
     const form = document.getElementById("request-form");
     if (form) {
       form.querySelectorAll("input, select, textarea, button").forEach((el) => {

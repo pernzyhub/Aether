@@ -79,10 +79,6 @@ async function loadUser() {
   if (isAdminPreview) {
     const badge = document.getElementById('adminPreviewBadge');
     if (badge) badge.style.display = 'block';
-    const welcomeEl = document.getElementById('welcome-text');
-    if (welcomeEl) {
-      welcomeEl.textContent = 'ADMIN PREVIEW MODE';
-    }
     await updateAdminPreviewActions();
     return;
   }
