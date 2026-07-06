@@ -1890,6 +1890,51 @@ function confirmDistribution() {
   renderDistributionDetails();
 
   if (statusEl) showStatus('item-distribution-status', 'Distribution confirmed and saved.', 'success');
+
+  // Clear selections and inputs after confirming
+  try {
+    // Clear assignment arrays and entries
+    distributionAssignments = [];
+    distributionItemEntries = [];
+    distributionSaved = false;
+
+    // Clear item textarea and file input
+    const textarea = document.getElementById('distribution-items-input');
+    if (textarea) textarea.value = '';
+    const fileInput = document.getElementById('distribution-items-file');
+    if (fileInput) fileInput.value = '';
+
+    // Uncheck all member checkboxes
+    document.querySelectorAll('input[name="distribution-member"]').forEach(input => { input.checked = false; });
+    updateDistributionMemberCount();
+
+    // Reset preview and details panels
+    const preview = document.getElementById('distribution-preview-list');
+    if (preview) preview.innerHTML = '<p style="color:#ccc; margin:0;">No assignments yet.</p>';
+    const panel = document.getElementById('distribution-details-panel');
+    if (panel) panel.innerHTML = '<p style="color:#ccc; margin:0;">Toggle details after distribution.</p>';
+
+    // Disable confirm button briefly to avoid double submits
+    const confirmBtn = document.getElementById('confirm-distribution-btn');
+    if (confirmBtn) {
+      confirmBtn.disabled = true;
+      const origText = confirmBtn.textContent;
+      confirmBtn.textContent = 'SAVED';
+      setTimeout(() => {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = origText;
+      }, 2000);
+    }
+
+    // Focus and scroll to Item List textarea (top of item list)
+    const itemTextarea = document.getElementById('distribution-items-input');
+    if (itemTextarea) {
+      itemTextarea.focus({ preventScroll: false });
+      itemTextarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  } catch (err) {
+    console.warn('Error clearing distribution UI after confirm:', err);
+  }
 }
 
 function loadItemDistribution() {
