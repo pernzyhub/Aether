@@ -6,6 +6,7 @@ let currentClanUser = null;
 const isAdminPreview = isAdminPreviewMode();
 
 // UI state
+let bvAllDataRaw = [];
 let bvAllData = [];
 let requestedBVTypes = new Set();
 let bvCurrentPage = 1;
@@ -151,45 +152,33 @@ async function loadBVRequests() {
 
   const filter = document.getElementById('bv-filter')?.value || 'all';
   try {
-    const { data, error } = await supabase.rpc('get_bv_requests_for_user', { target_user_id: userId });
-    if (error) throw error;
-    bvAllData = Array.isArray(data) ? data : (data ? [data] : []);
+    const { data, error } = await supabase
+    .from('bv_requests')
+    .select('*, clan_users(ign)')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  bvAllDataRaw = Array.isArray(data) ? data : [];
+  bvAllDataRaw = Array.from(new Map(bvAllDataRaw.map((r) => [r.id, r])).values());
 
-    if (bvAllData.length === 0) {
-      // Fallback: try direct query when supabase auth is present
-      const { data: directData, error: directError } = await supabase
-        .from('bv_requests')
-        .select('*, clan_users(ign)')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(50);
-      if (!directError && Array.isArray(directData) && directData.length > 0) {
-        bvAllData = directData;
-      }
-    }
+  requestedBVTypes = new Set(bvAllDataRaw.filter((r) => r.user_id === userId).map((r) => r.reason));
+  updateBVTypeOptions();
 
-    requestedBVTypes = new Set(bvAllData.map((r) => r.reason));
-    updateBVTypeOptions();
+  bvAllData = filter === 'all' ? [...bvAllDataRaw] : bvAllDataRaw.filter((r) => r.status === filter);
 
-    if (filter !== 'all') {
-      bvAllData = bvAllData.filter((r) => r.status === filter);
-    }
+  renderBVSummary(bvAllDataRaw);
 
-    if (!bvAllData || bvAllData.length === 0) {
-      container.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-state-title">No BV requests found</div>
-          <p>Submit a BV request above to see it listed here for review.</p>
-        </div>
-      `;
-      updatePagination(0);
-      return;
-    }
+  if (!bvAllData || bvAllData.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-title">No BV requests found</div>
+        <p>Change the status filter or submit a BV request above to see it listed here.</p>
+      </div>
+    `;
+    updatePagination(0);
+    return;
+  }
 
-    // Remove any duplicate requests by ID before rendering.
-    bvAllData = Array.from(new Map(bvAllData.map((r) => [r.id, r])).values());
-    renderBVSummary(bvAllData);
-    applyBVSortAndRender();
+  applyBVSortAndRender();
   } catch (err) {
     container.innerHTML = `<p class="empty-state error">Error loading BV requests: ${err.message}</p>`;
   }
@@ -214,13 +203,14 @@ function applyBVSortAndRender() {
     const rawReason = bvTypeMap.get(r.reason) || r.reason || 'Unknown';
     const reasonLabel = String(rawReason).replace(/-/g, ' ');
     const amount = Number(r.amount ?? r.request_amount ?? 0);
-    const summaryText = amount > 0 ? `${amount} BV requested` : 'Review pending';
+    const summaryText = amount > 0 ? `${amount} BV requested` : '';
     const statusText = formatBVStatus(String(r.status || 'pending').toLowerCase());
+    const requestor = r.clan_users?.ign || 'Unknown';
 
     return `
       <div class="bv-request-row">
         <div class="bv-request-cell bv-request-person">
-          <div class="bv-request-member">${escapeHtml(currentUser?.ign || 'You')}</div>
+          <div class="bv-request-member">${escapeHtml(requestor)}</div>
           <div class="bv-request-created">${formatDateTime(r.created_at)}</div>
         </div>
         <div class="bv-request-cell bv-request-reason">${escapeHtml(reasonLabel)}</div>
@@ -255,64 +245,33 @@ function renderBVSummary(list) {
   if (!container) return;
 
   if (!list || list.length === 0) {
-    container.innerHTML = '<p class="empty-state">No requests yet. Submit a BV request to create one.</p>';
+    container.innerHTML = '<p class="empty-state">No BV requests available.</p>';
     return;
   }
 
-  const grouped = list.reduce((acc, r) => {
-    const rawReason = bvTypeMap.get(r.reason) || r.reason || 'Unknown';
-    const reasonLabel = String(rawReason).replace(/-/g, ' ');
-    const amount = Number(r.amount ?? r.request_amount ?? 0);
-    const summaryText = amount > 0 ? `${amount} BV requested` : 'Review pending';
+  const items = list.map((r, index) => {
+    const requestor = r.clan_users?.ign || 'Unknown';
+    const reasonLabel = String(bvTypeMap.get(r.reason) || r.reason || 'Unknown').replace(/-/g, ' ');
     const statusClass = String(r.status || 'pending').toLowerCase();
     const statusLabel = formatBVStatus(statusClass);
     const isPending = statusClass === 'pending';
 
-    if (!acc[reasonLabel]) {
-      acc[reasonLabel] = {
-        reasonLabel,
-        summaryText,
-        statusLabel,
-        statusClass,
-        requests: []
-      };
-    }
-
-    const group = acc[reasonLabel];
-    if (group.statusClass === 'pending' && statusClass !== 'pending') {
-      group.statusClass = statusClass;
-      group.statusLabel = formatBVStatus(statusClass);
-    }
-
-    group.requests.push({
-      id: r.id,
-      name: (r.clan_users?.ign || currentUser?.ign || 'You'),
-      isPending
-    });
-
-    return acc;
-  }, {});
-
-  const items = Object.values(grouped).map(group => `
-      <div class="bv-summary-row">
-        <div class="bv-summary-top">
-          <div class="bv-summary-reason">${escapeHtml(group.reasonLabel)}</div>
-          <div class="bv-summary-status status-${escapeHtml(group.statusClass)}">${escapeHtml(group.statusLabel)}</div>
+    return `
+      <div class="bv-summary-item">
+        <div class="summary-left">
+          <span class="bv-summary-person">${index + 1}. ${escapeHtml(requestor)}</span>
+          <span class="bv-summary-meta">${escapeHtml(reasonLabel)}</span>
         </div>
-        <div class="bv-summary-meta">${escapeHtml(group.summaryText)}</div>
-        <div class="bv-summary-list">
-          ${group.requests.map((req, index) => `
-            <div class="bv-summary-item">
-              <span class="bv-summary-person">${index + 1}. ${escapeHtml(req.name)}</span>
-              <div class="bv-summary-actions">
-                <button type="button" class="btn btn-small btn-success bv-summary-action" data-request-id="${req.id}" data-action="approved" ${req.isPending ? '' : 'disabled'}>DONE</button>
-                <button type="button" class="btn btn-small btn-danger bv-summary-action" data-request-id="${req.id}" data-action="denied" ${req.isPending ? '' : 'disabled'}>CANCEL</button>
-              </div>
-            </div>
-          `).join('')}
+        <div class="summary-right">
+          <span class="status-dot status-${escapeHtml(statusClass)}" title="${escapeHtml(statusLabel)}"></span>
+          <div class="bv-summary-actions">
+            <button type="button" class="btn btn-small btn-success bv-summary-action" data-request-id="${r.id}" data-action="approved" ${isPending ? '' : 'disabled'}>DONE</button>
+            <button type="button" class="btn btn-small btn-danger bv-summary-action" data-request-id="${r.id}" data-action="denied" ${isPending ? '' : 'disabled'}>CANCEL</button>
+          </div>
         </div>
       </div>
-    `).join('');
+    `;
+  }).join('');
 
   container.innerHTML = items;
   attachBVSummaryActionHandlers();
