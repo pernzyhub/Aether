@@ -1982,13 +1982,13 @@ function renderRewardLogDetailTable(log) {
     const pendingColor = pendingActive ? '#fff' : '#ccc';
     return `
       <tr style="border-bottom:1px solid #222;">
-        <td style="padding:12px 10px; vertical-align:top;">${escapeHtml(row.item)}</td>
-        <td style="padding:12px 10px; vertical-align:top; text-align:center;">${row.quantity}</td>
-        <td style="padding:12px 10px; vertical-align:top;">${escapeHtml(row.ign)}</td>
-        <td style="padding:12px 10px; vertical-align:top;">
-          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-            <button type="button" class="reward-log-status-btn" data-index="${index}" data-status="Distributed" style="padding:8px 12px; min-width:100px; background:${distributedBg}; color:${distributedColor}; border:1px solid ${distributedBorder}; border-radius:6px; cursor:pointer;">Distributed</button>
-            <button type="button" class="reward-log-status-btn" data-index="${index}" data-status="Pending" style="padding:8px 12px; min-width:100px; background:${pendingBg}; color:${pendingColor}; border:1px solid ${pendingBorder}; border-radius:6px; cursor:pointer;">Pending</button>
+        <td style="padding:10px 8px; vertical-align:top; font-size:13px; line-height:1.3;">${escapeHtml(row.item)}</td>
+        <td style="padding:10px 8px; vertical-align:top; text-align:center; font-size:13px; line-height:1.3;">${row.quantity}</td>
+        <td style="padding:10px 8px; vertical-align:top; font-size:13px; line-height:1.3;">${escapeHtml(row.ign)}</td>
+        <td style="padding:10px 8px; vertical-align:top;">
+          <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center; justify-content:flex-start;">
+            <button type="button" class="reward-log-status-btn" data-index="${index}" data-status="Distributed" style="padding:6px 10px; min-width:88px; background:${distributedBg}; color:${distributedColor}; border:1px solid ${distributedBorder}; border-radius:6px; cursor:pointer; font-size:12px;">Distributed</button>
+            <button type="button" class="reward-log-status-btn" data-index="${index}" data-status="Pending" style="padding:6px 10px; min-width:88px; background:${pendingBg}; color:${pendingColor}; border:1px solid ${pendingBorder}; border-radius:6px; cursor:pointer; font-size:12px;">Pending</button>
           </div>
         </td>
       </tr>
