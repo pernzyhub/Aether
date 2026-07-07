@@ -2009,6 +2009,23 @@ function renderRewardLogDetailTable(log) {
   }
 }
 
+function preventModalOverlayClose(modalId) {
+  const modal = document.getElementById(modalId);
+  if (!modal) return;
+  const content = modal.querySelector(':scope > div');
+  if (content) {
+    content.addEventListener('click', (event) => {
+      event.stopPropagation();
+    });
+  }
+  modal.addEventListener('click', (event) => {
+    if (event.target === modal) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  });
+}
+
 function openRewardLogsModal() {
   const modal = document.getElementById('reward-logs-list-modal');
   if (!modal) return;
@@ -2516,6 +2533,9 @@ window.addEventListener("load", () => {
     if (backToRewardLogsListModalBtn) {
       backToRewardLogsListModalBtn.addEventListener("click", backToRewardLogsListModal);
     }
+
+    preventModalOverlayClose('reward-logs-list-modal');
+    preventModalOverlayClose('reward-log-detail-modal');
 
     const logoutBtn = document.getElementById("logout-button");
     if (logoutBtn) {
