@@ -277,7 +277,7 @@
         </div>
 
         <div id="reward-logs-list-modal" style="display:none; position:fixed; inset:0; z-index:10000; background:rgba(0,0,0,0.92); align-items:center; justify-content:center; padding:16px;">
-          <div style="width:clamp(320px,calc(100vw - 40px),1240px); max-width:calc(100vw - 40px); background:#101010; border:1px solid #333; border-radius:12px; overflow:hidden; display:flex; flex-direction:column; max-height:calc(100vh - 40px); height:auto; box-sizing:border-box;">
+          <div style="width:min(100%,calc(100vw - 40px)); max-width:2200px; background:#101010; border:1px solid #333; border-radius:12px; overflow:hidden; display:flex; flex-direction:column; max-height:calc(100vh - 40px); height:auto; box-sizing:border-box;">
             <div style="padding:14px 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; background:#120f16; gap:10px;">
               <div>
                 <div style="font-size:19px; font-weight:bold; color:#fff; margin-bottom:4px;">Reward Logs</div>
@@ -290,7 +290,7 @@
         </div>
 
         <div id="reward-log-detail-modal" style="display:none; position:fixed; inset:0; z-index:10001; background:rgba(0,0,0,0.92); align-items:center; justify-content:center; padding:16px;">
-          <div style="width:clamp(320px,calc(100vw - 40px),1240px); max-width:calc(100vw - 40px); background:#101010; border:1px solid #333; border-radius:12px; overflow:hidden; display:flex; flex-direction:column; max-height:calc(100vh - 40px); height:auto; box-sizing:border-box;">
+          <div style="width:min(100%,calc(100vw - 40px)); max-width:2200px; background:#101010; border:1px solid #333; border-radius:12px; overflow:hidden; display:flex; flex-direction:column; max-height:calc(100vh - 40px); height:auto; box-sizing:border-box;">
             <div style="padding:14px 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #222; background:#120f16; gap:10px;">
               <div>
                 <div style="font-size:12px; color:#7bf59f; font-weight:700; letter-spacing:1px; margin-bottom:5px;">DETAIL VIEW</div>
@@ -301,7 +301,7 @@
               <button type="button" id="close-reward-log-detail-modal-btn" class="btn btn-secondary" style="background:#333; color:#fff; padding:7px 10px;">Close</button>
             </div>
             <div id="reward-log-detail-table-container" style="padding:12px; overflow:auto; flex:1; min-height:0;">
-              <table id="reward-log-detail-table" style="width:100%; border-collapse:collapse; color:#fff; min-width:920px;">
+              <table id="reward-log-detail-table" style="width:100%; border-collapse:collapse; color:#fff; min-width:0;">
                 <thead>
                   <tr style="background:#111; color:#fff; text-align:left;">
                     <th style="padding:10px 8px; border-bottom:1px solid #222;">Item</th>
